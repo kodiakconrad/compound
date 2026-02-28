@@ -1,0 +1,18 @@
+# Binary
+compound
+
+# SQLite
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Claude
+.claude/
