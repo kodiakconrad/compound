@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. **All referenced docs are mandatory reading before writing code.**
 
 ## Build & Run Commands
 
@@ -17,11 +17,26 @@ Compound is a workout planning app where users create custom programs from modul
 
 - **Phase 1** (current): Go backend + SQLite, local for 1 user, no frontend
 - **Phase 2**: React Native (Expo) frontend in `/app`
-- **Phase 3**: Cloud infra (Postgres), user accounts, template sharing
+- **Phase 3**: AI integration — exercise suggestions, program generation, form tips
+- **Phase 4**: Cloud infra (Postgres), user accounts, template sharing
 
-See [docs/architecture.md](docs/architecture.md) for high-level overview and links to all design docs.
-See [docs/local-development.md](docs/local-development.md) for local setup and dev workflow.
-See [docs/implementation-plan.md](docs/implementation-plan.md) for phased build steps.
+## Design Docs (MUST follow)
+
+Before writing or modifying code, consult these docs. They define binding conventions — not suggestions.
+
+| Doc | What it governs |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | High-level overview, data model hierarchy, links to all docs |
+| [docs/schema-design.md](docs/schema-design.md) | Database tables, columns, types, ER diagram, design rationale |
+| [docs/persistence.md](docs/persistence.md) | Store struct, DBTX interface, transactions, raw SQL, timestamps (ISO 8601 UTC), UUIDs, soft deletes, nullable fields |
+| [docs/architecture-patterns.md](docs/architecture-patterns.md) | DDD (aggregates, value objects, domain errors), DTOs, two-layer validation, logging (`log/slog`), config (YAML) |
+| [docs/project-structure.md](docs/project-structure.md) | Package layout (`domain/` → `store/` → `handler/`), dependency flow, file organization |
+| [docs/naming-conventions.md](docs/naming-conventions.md) | Receivers (single letter), constructors (`NewXxx`), interfaces (`-er`), errors (`NewXxxError`), files (`domain_layer.go`), tests (`TestSubject_Behavior`), exports |
+| [docs/api.md](docs/api.md) | REST API endpoints, URL structure |
+| [docs/testing-strategy.md](docs/testing-strategy.md) | BDD-first development flow, acceptance tests (godog/Cucumber at HTTP level), integration tests (in-memory SQLite), unit tests |
+| [docs/git-strategy.md](docs/git-strategy.md) | Trunk-based dev, short-lived `type/description` branches, PRs to main, CI requirements |
+| [docs/local-development.md](docs/local-development.md) | First-run behavior, config file, Makefile targets, seeding, dev workflow |
+| [docs/implementation-plan.md](docs/implementation-plan.md) | Phased build steps |
 
 ## Terminology
 
@@ -29,52 +44,44 @@ See [docs/implementation-plan.md](docs/implementation-plan.md) for phased build 
 - **Workout** — one day's exercises within a program
 - **Section** — a movement group within a workout (e.g., compound, isolation, burnout)
 - **Exercise** — a single movement with target sets/reps/weight, belongs to a section
-- **Template** — a reusable program blueprint (prebuilt: 5/3/1, PPL, Starting Strength)
+- **Template** — a reusable program blueprint (a program with `is_template=1`)
 - **Cycle** — an active run of a program, created when a user starts a program
 - **Session** — one workout instance within a cycle, tracks actual performance
 
-## MVP
+## Key Rules (summary — details in docs above)
 
-- Programs span multiple days and consist of workouts (one per day)
-- Workouts contain sections (compound, isolation, burnout, etc.) which group exercises with custom sets/reps
-- Sections have optional rest periods (rest_seconds column)
-- Programs can be created from scratch or from templates (programs with is_template=1)
-- Running a program creates a cycle with one session per workout
-- Sessions have dynamic weights that adjust based on progress
-- Users track completed reps per set during sessions
-
-## User Stories
-
-- Users can create templates for workout programs
-- Users can create programs from templates or from scratch
-- Users can run programs and track progress
-- Weight increases are calculated automatically based on session performance
-- When building programs, users can get AI suggestions for exercises
-
-## Stack
-
-- Go 1.26 with chi router (`go-chi/chi/v5`)
-- SQLite via `modernc.org/sqlite` (pure Go, no CGO)
-- `database/sql` with hand-written queries (no ORM)
-
-## Patterns
-
-- Hybrid package structure: `domain/` → `store/` → `handler/` (layer separation, files organized by domain)
+### Architecture
+- Hybrid package structure: `domain/` → `store/` → `handler/` with one-way dependency flow
 - Full DDD: rich domain models with validation, value objects, aggregate boundaries
+- Domain package has zero infrastructure dependencies (no SQL, no HTTP)
 - Request flow: handler (decode + validate DTO) → store (via DBTX) → domain
-- Single `Store` struct with DBTX interface for transparent transaction support
+
+### Persistence
+- Single `Store` struct, methods accept `DBTX` interface (works with both `*sql.DB` and `*sql.Tx`)
+- Raw SQL queries — no ORM, no query builder
+- All timestamps: `time.Time` in Go, ISO 8601 text in SQLite, always UTC
+- UUIDs generated Go-side (`google/uuid`), every table has integer PK + UUID column
+
+### API & Data
 - Separate DTOs for request/response — domain models never serialized directly to JSON
-- Domain error types (`NotFoundError`, `ValidationError`) mapped to HTTP status in handlers
-- SQL migrations embedded via `//go:embed`, run automatically on startup
-- When adding a new domain, follow: domain model → store methods → DTOs → handler → route registration
+- Responses expose `uuid` as external identifier, never integer `id`
+- Domain error types (`NotFoundError`, `ValidationError`, `ConflictError`) mapped to HTTP status in handlers
+
+### Naming
+- Receivers: single letter (`e`, `s`, `h`)
+- Constructors: `NewXxx()`, errors: `NewXxxError()`
+- Files: `domain_layer.go` (e.g., `exercise_store.go`)
+- Tests: `TestSubject_Behavior` (e.g., `TestCreateExercise_EmptyName`)
+- Acronyms: all caps (`ID`, `UUID`, `HTTP`)
+
+### Development Flow
+- BDD-first: write Cucumber acceptance tests → build feature → add unit tests for edge cases
+- When adding a new domain: domain model → store methods → DTOs → handler → route registration
+- Trunk-based dev: short-lived `type/description` branches, PRs to main, CI must pass
 
 ## Gotchas
 
-- Programs and Templates are structurally identical — a Template is a Program flagged as shareable/reusable
+- Programs and Templates are structurally identical — a Template is a Program with `is_template=1`
 - "Sections" are workout sub-groups (compound, isolation, burnout), not page sections
-- Go backend and future RN app coexist in the same repo (Go at root, RN in /app)
-
-## Workflow
-
-- Build incrementally: get each step compiling and testable via curl before moving on
-- Test API endpoints with curl or .http files — no frontend in Phase 1
+- Go backend and future RN app coexist in the same repo (Go at root, RN in `/app`)
+- Soft deletes only on `exercises` and `programs` — everything else cascades or is immutable log data

@@ -44,4 +44,5 @@ When generating session targets, the system checks the `progression_rules` for e
 | [local-development.md](local-development.md) | Local setup, Makefile, dev workflow |
 | [git-strategy.md](git-strategy.md) | Trunk-based dev, branching, PRs, CI pipeline |
 | [testing-strategy.md](testing-strategy.md) | BDD-first development, test types, conventions |
+| [naming-conventions.md](naming-conventions.md) | Go naming: receivers, constructors, files, tests, exports |
 | [implementation-plan.md](implementation-plan.md) | Phased build steps |
