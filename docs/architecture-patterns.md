@@ -79,65 +79,9 @@ A `Program` is always created/loaded with its full tree. Partial updates (add a 
 | "Begin transaction for nested write" | Handler (orchestration) | `Store.WithTx()` |
 | "Calculate next weight" | Domain (business logic) | `ProgressionRule.NextWeight()` |
 
-## Error Handling — Domain Error Types
+## Error Handling
 
-### Domain Errors
-
-Defined in `domain/errors.go`. Custom types that carry context:
-
-```go
-type NotFoundError struct {
-    Entity string // "exercise", "program", etc.
-    ID     int64
-}
-
-func (e *NotFoundError) Error() string {
-    return fmt.Sprintf("%s with id %d not found", e.Entity, e.ID)
-}
-
-type ValidationError struct {
-    Field   string
-    Message string
-}
-
-func (e *ValidationError) Error() string {
-    return fmt.Sprintf("validation failed on %s: %s", e.Field, e.Message)
-}
-
-type ConflictError struct {
-    Message string
-}
-
-func (e *ConflictError) Error() string {
-    return e.Message
-}
-```
-
-### HTTP Error Mapping
-
-Handlers map domain errors to HTTP responses in a shared helper:
-
-```go
-func respondError(w http.ResponseWriter, err error) {
-    var notFound *domain.NotFoundError
-    var validation *domain.ValidationError
-    var conflict *domain.ConflictError
-
-    switch {
-    case errors.As(err, &notFound):
-        respond(w, http.StatusNotFound, map[string]string{"error": err.Error()})
-    case errors.As(err, &validation):
-        respond(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-    case errors.As(err, &conflict):
-        respond(w, http.StatusConflict, map[string]string{"error": err.Error()})
-    default:
-        slog.Error("internal error", "error", err)
-        respond(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
-    }
-}
-```
-
-Store methods return domain errors (e.g., `&NotFoundError{...}` when a query returns no rows). Handlers call `respondError` — never construct HTTP status codes from business logic.
+See [error-handling.md](error-handling.md) for domain error types, HTTP mapping, error response format, and multiple validation error handling.
 
 ## DTOs — Separate Request/Response Types
 

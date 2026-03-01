@@ -29,10 +29,11 @@ Before writing or modifying code, consult these docs. They define binding conven
 | [docs/architecture.md](docs/architecture.md) | High-level overview, data model hierarchy, links to all docs |
 | [docs/schema-design.md](docs/schema-design.md) | Database tables, columns, types, ER diagram, design rationale |
 | [docs/persistence.md](docs/persistence.md) | Store struct, DBTX interface, transactions, raw SQL, timestamps (ISO 8601 UTC), UUIDs, soft deletes, nullable fields |
-| [docs/architecture-patterns.md](docs/architecture-patterns.md) | DDD (aggregates, value objects, domain errors), DTOs, two-layer validation, logging (`log/slog`), config (YAML) |
+| [docs/architecture-patterns.md](docs/architecture-patterns.md) | DDD (aggregates, value objects), DTOs, two-layer validation, logging (`log/slog`), config (YAML) |
+| [docs/error-handling.md](docs/error-handling.md) | Domain error types, HTTP mapping, error response format, multiple validation errors |
 | [docs/project-structure.md](docs/project-structure.md) | Package layout (`domain/` → `store/` → `handler/`), dependency flow, file organization |
 | [docs/naming-conventions.md](docs/naming-conventions.md) | Receivers (single letter), constructors (`NewXxx`), interfaces (`-er`), errors (`NewXxxError`), files (`domain_layer.go`), tests (`TestSubject_Behavior`), exports |
-| [docs/api.md](docs/api.md) | REST API endpoints, URL structure |
+| [docs/api.md](docs/api.md) | REST API (`/api/v1`), cursor pagination, idempotency keys, sorting, response envelope, error codes |
 | [docs/testing-strategy.md](docs/testing-strategy.md) | BDD-first development flow, acceptance tests (godog/Cucumber at HTTP level), integration tests (in-memory SQLite), unit tests |
 | [docs/git-strategy.md](docs/git-strategy.md) | Trunk-based dev, short-lived `type/description` branches, PRs to main, CI requirements |
 | [docs/local-development.md](docs/local-development.md) | First-run behavior, config file, Makefile targets, seeding, dev workflow |
@@ -63,9 +64,13 @@ Before writing or modifying code, consult these docs. They define binding conven
 - UUIDs generated Go-side (`google/uuid`), every table has integer PK + UUID column
 
 ### API & Data
+- All endpoints prefixed with `/api/v1`
+- Response envelope: `{"data": ...}` for success, `{"error": {"code": "...", "message": "...", "details": [...]}}` for errors
+- Cursor-based pagination on list endpoints (`limit`, `cursor` params)
+- Idempotency-Key header on POST requests
 - Separate DTOs for request/response — domain models never serialized directly to JSON
 - Responses expose `uuid` as external identifier, never integer `id`
-- Domain error types (`NotFoundError`, `ValidationError`, `ConflictError`) mapped to HTTP status in handlers
+- Domain error types (`NotFoundError`, `ValidationError`, `ConflictError`) mapped to HTTP status codes and error codes in handlers
 
 ### Naming
 - Receivers: single letter (`e`, `s`, `h`)
