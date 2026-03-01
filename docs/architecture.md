@@ -42,4 +42,6 @@ When generating session targets, the system checks the `progression_rules` for e
 | [project-structure.md](project-structure.md) | Package layout, file organization, dependency flow |
 | [api.md](api.md) | REST API endpoints |
 | [local-development.md](local-development.md) | Local setup, Makefile, dev workflow |
+| [git-strategy.md](git-strategy.md) | Trunk-based dev, branching, PRs, CI pipeline |
+| [testing-strategy.md](testing-strategy.md) | BDD-first development, test types, conventions |
 | [implementation-plan.md](implementation-plan.md) | Phased build steps |

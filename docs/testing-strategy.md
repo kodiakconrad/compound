@@ -1,0 +1,301 @@
+# Testing Strategy
+
+BDD-first development with acceptance tests at the HTTP API level, supported by unit and integration tests.
+
+## Development Flow — BDD First
+
+When building a new feature, follow this order:
+
+### 1. Write Acceptance Tests (Cucumber)
+
+Start by defining the user-facing behavior in Gherkin:
+
+```gherkin
+Feature: Exercise Management
+
+  Scenario: Create a custom exercise
+    When I create an exercise with:
+      | name           | Bulgarian Split Squat |
+      | muscle_group   | legs                  |
+      | equipment      | dumbbell              |
+      | tracking_type  | weight_reps           |
+    Then the response status should be 201
+    And the response should include:
+      | name           | Bulgarian Split Squat |
+      | tracking_type  | weight_reps           |
+    And the exercise should have a uuid
+
+  Scenario: Cannot create exercise without a name
+    When I create an exercise with:
+      | muscle_group | chest |
+    Then the response status should be 400
+    And the response should include error "name"
+
+  Scenario: List exercises filtered by muscle group
+    Given the following exercises exist:
+      | name         | muscle_group |
+      | Bench Press  | chest        |
+      | Squat        | legs         |
+      | Deadlift     | back         |
+    When I list exercises with muscle_group "chest"
+    Then the response status should be 200
+    And the response should contain 1 exercise
+    And the response should include exercise "Bench Press"
+```
+
+These tests will fail — no code exists yet. That's the point.
+
+### 2. Build the Feature
+
+Work through the layers to make the acceptance tests pass:
+
+1. **Domain model** — define the struct, value objects, `Validate()` method
+2. **Store** — write the SQL queries (CREATE, GET, LIST, etc.)
+3. **DTOs** — define request/response types and mapping functions
+4. **Handler** — wire up the HTTP endpoint (decode → validate → store → respond)
+5. **Route** — register in `routes.go`
+
+Run `make test` after each layer to see progress. Acceptance tests go from failing → partially passing → fully green.
+
+### 3. Add Unit Tests for Complex Logic
+
+After the feature works end-to-end, add targeted unit tests for:
+- Domain validation edge cases
+- Value object behavior
+- Business logic (progression calculations, etc.)
+
+These are only needed where the acceptance tests don't cover the edge cases well enough.
+
+## Test Types
+
+### Acceptance Tests (Cucumber / godog)
+
+**What:** End-to-end tests through the HTTP API. A real HTTP server starts with an in-memory SQLite database. Scenarios make HTTP requests and assert responses.
+
+**Where:** `tests/acceptance/`
+
+```
+tests/
+  acceptance/
+    features/
+      exercises.feature
+      programs.feature
+      cycles.feature
+      sessions.feature
+      progress.feature
+    steps/
+      common_steps.go      — shared step definitions (HTTP helpers, response assertions)
+      exercise_steps.go
+      program_steps.go
+      cycle_steps.go
+      session_steps.go
+    main_test.go           — test server setup, godog suite runner
+```
+
+**How they run:**
+
+```go
+// main_test.go
+func TestFeatures(t *testing.T) {
+    // Start a real server with in-memory SQLite
+    db, _ := sql.Open("sqlite", ":memory:")
+    runMigrations(db)
+    store := store.New(db)
+    srv := server.New(store)
+    ts := httptest.NewServer(srv.Router())
+    defer ts.Close()
+
+    suite := godog.TestSuite{
+        ScenarioInitializer: func(ctx *godog.ScenarioContext) {
+            // Register step definitions with the test server URL
+            InitializeCommonSteps(ctx, ts.URL)
+            InitializeExerciseSteps(ctx)
+            InitializeProgramSteps(ctx)
+            // ...
+        },
+        Options: &godog.Options{
+            Format: "pretty",
+            Paths:  []string{"features"},
+        },
+    }
+    if suite.Run() != 0 {
+        t.Fatal("non-zero exit from godog")
+    }
+}
+```
+
+**Key conventions:**
+- Each scenario gets a fresh database (reset between scenarios)
+- Step definitions are thin — they make HTTP calls and check responses
+- Use data tables for structured input/output
+- Scenarios describe user intent, not implementation details
+
+### Integration Tests (Store Layer)
+
+**What:** Test SQL queries against a real in-memory SQLite database. Verify that store methods correctly read/write data, handle transactions, and return proper domain errors.
+
+**Where:** `internal/store/*_test.go`
+
+```go
+func TestCreateAndGetExercise(t *testing.T) {
+    s := setupTestStore(t)
+    ctx := context.Background()
+
+    ex := &domain.Exercise{
+        Name:         "Bench Press",
+        TrackingType: domain.TrackingWeightReps,
+        IsCustom:     true,
+    }
+    err := s.CreateExercise(ctx, s.DB, ex)
+    require.NoError(t, err)
+    assert.NotZero(t, ex.ID)
+
+    got, err := s.GetExercise(ctx, s.DB, ex.ID)
+    require.NoError(t, err)
+    assert.Equal(t, "Bench Press", got.Name)
+    assert.Equal(t, domain.TrackingWeightReps, got.TrackingType)
+}
+
+func TestGetExercise_NotFound(t *testing.T) {
+    s := setupTestStore(t)
+    _, err := s.GetExercise(context.Background(), s.DB, 999)
+    var notFound *domain.NotFoundError
+    assert.ErrorAs(t, err, &notFound)
+}
+```
+
+**What to test:**
+- CRUD operations return correct data
+- Filters and search work (e.g., list by muscle_group)
+- Transactions commit/rollback correctly
+- Soft deletes hide records from queries
+- Foreign key constraints are enforced
+- Domain errors are returned (not raw SQL errors)
+
+### Unit Tests (Domain Layer)
+
+**What:** Test domain model validation, value objects, and business logic in isolation. No database, no HTTP.
+
+**Where:** `internal/domain/*_test.go`
+
+```go
+func TestExercise_Validate(t *testing.T) {
+    tests := []struct {
+        name    string
+        ex      Exercise
+        wantErr bool
+    }{
+        {
+            name: "valid exercise",
+            ex:   Exercise{Name: "Squat", TrackingType: TrackingWeightReps},
+        },
+        {
+            name:    "empty name",
+            ex:      Exercise{Name: "", TrackingType: TrackingWeightReps},
+            wantErr: true,
+        },
+        {
+            name:    "invalid tracking type",
+            ex:      Exercise{Name: "Squat", TrackingType: "invalid"},
+            wantErr: true,
+        },
+    }
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            err := tt.ex.Validate()
+            if tt.wantErr {
+                assert.Error(t, err)
+            } else {
+                assert.NoError(t, err)
+            }
+        })
+    }
+}
+
+func TestTrackingType_IsValid(t *testing.T) {
+    assert.True(t, TrackingWeightReps.IsValid())
+    assert.True(t, TrackingDuration.IsValid())
+    assert.False(t, TrackingType("invalid").IsValid())
+}
+```
+
+**What to test:**
+- Validation rules (required fields, enum values, constraints)
+- Value object behavior (TrackingType, ProgressionStrategy)
+- Business logic (ProgressionRule.NextWeight, deload calculations)
+
+## What Gets Tested Where
+
+| Concern | Test Type | Example |
+|---|---|---|
+| "User can create an exercise via API" | Acceptance | Cucumber scenario |
+| "User journey: create program → start cycle → log sets" | Acceptance | Multi-step Cucumber scenario |
+| "Store correctly inserts and retrieves an exercise" | Integration | Store test |
+| "Soft delete hides exercise from list" | Integration | Store test |
+| "Transaction rolls back on error" | Integration | Store test |
+| "Exercise name must not be empty" | Unit | Domain test |
+| "Progression rule calculates correct next weight" | Unit | Domain test |
+| "TrackingType enum validates correctly" | Unit | Domain test |
+
+## When NOT to Write Tests
+
+- Don't unit test simple getters/setters or struct construction
+- Don't write integration tests for queries already covered by acceptance tests (unless testing edge cases)
+- Don't test framework behavior (chi routing, JSON marshaling)
+- Don't test the same validation in both unit and acceptance tests — acceptance tests cover the happy path, unit tests cover edge cases
+
+## Test Helpers
+
+Shared helpers reduce boilerplate:
+
+```go
+// tests/acceptance/steps/common_steps.go
+
+// HTTP helper for step definitions
+type TestClient struct {
+    BaseURL    string
+    LastStatus int
+    LastBody   map[string]any
+}
+
+func (c *TestClient) Post(path string, body any) error { ... }
+func (c *TestClient) Get(path string) error { ... }
+func (c *TestClient) AssertStatus(expected int) error { ... }
+func (c *TestClient) AssertBodyContains(key, value string) error { ... }
+```
+
+```go
+// internal/store/test_helpers_test.go
+
+func setupTestStore(t *testing.T) *Store {
+    t.Helper()
+    db, err := sql.Open("sqlite", ":memory:")
+    require.NoError(t, err)
+    t.Cleanup(func() { db.Close() })
+    runMigrations(db)
+    return New(db)
+}
+```
+
+## Running Tests
+
+```bash
+# All tests (unit + integration + acceptance)
+make test
+
+# Just acceptance tests
+go test ./tests/acceptance/...
+
+# Just store integration tests
+go test ./internal/store/...
+
+# Just domain unit tests
+go test ./internal/domain/...
+
+# Verbose output
+go test -v ./...
+```
+
+## CI
+
+All tests run in CI on every PR via `go test ./...`. See [git-strategy.md](git-strategy.md) for CI pipeline details.
