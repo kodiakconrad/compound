@@ -4,10 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Run Commands
 
-- `go build` — compile the binary
-- `go run main.go` — start the HTTP server
-- `go test ./...` — run all tests
-- `go vet ./...` — static analysis
+- `make run` — start the HTTP server
+- `make build` — compile the binary
+- `make test` — run all tests
+- `make vet` — static analysis
+- `make seed` — seed exercises and prebuilt templates
+- `make reset-db` — delete the database (re-run `make run` + `make seed` after)
 
 ## Project
 
@@ -17,7 +19,8 @@ Compound is a workout planning app where users create custom programs from modul
 - **Phase 2**: React Native (Expo) frontend in `/app`
 - **Phase 3**: Cloud infra (Postgres), user accounts, template sharing
 
-See [docs/architecture.md](docs/architecture.md) for data model, API endpoints, and backend structure.
+See [docs/architecture.md](docs/architecture.md) for high-level overview and links to all design docs.
+See [docs/local-development.md](docs/local-development.md) for local setup and dev workflow.
 See [docs/implementation-plan.md](docs/implementation-plan.md) for phased build steps.
 
 ## Terminology
@@ -34,8 +37,8 @@ See [docs/implementation-plan.md](docs/implementation-plan.md) for phased build 
 
 - Programs span multiple days and consist of workouts (one per day)
 - Workouts contain sections (compound, isolation, burnout, etc.) which group exercises with custom sets/reps
-- Workouts also contain rest periods
-- Programs can be created from scratch or from templates (prebuilt: 5/3/1, PPL, Starting Strength)
+- Sections have optional rest periods (rest_seconds column)
+- Programs can be created from scratch or from templates (programs with is_template=1)
 - Running a program creates a cycle with one session per workout
 - Sessions have dynamic weights that adjust based on progress
 - Users track completed reps per set during sessions
@@ -56,12 +59,14 @@ See [docs/implementation-plan.md](docs/implementation-plan.md) for phased build 
 
 ## Patterns
 
-- Request flow: handler/ → store/ → SQLite
-- Each domain (exercises, programs, cycles, etc.) has its own handler + store file
-- Nested writes use transactions (e.g., creating a program with workouts/sections/exercises)
-- SQL migrations embedded via `//go:embed`, run on startup
-- Weight progression calculated server-side when generating session targets
-- When adding a new domain, follow: model → store → handler → route registration
+- Hybrid package structure: `domain/` → `store/` → `handler/` (layer separation, files organized by domain)
+- Full DDD: rich domain models with validation, value objects, aggregate boundaries
+- Request flow: handler (decode + validate DTO) → store (via DBTX) → domain
+- Single `Store` struct with DBTX interface for transparent transaction support
+- Separate DTOs for request/response — domain models never serialized directly to JSON
+- Domain error types (`NotFoundError`, `ValidationError`) mapped to HTTP status in handlers
+- SQL migrations embedded via `//go:embed`, run automatically on startup
+- When adding a new domain, follow: domain model → store methods → DTOs → handler → route registration
 
 ## Gotchas
 
