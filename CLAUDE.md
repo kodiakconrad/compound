@@ -17,7 +17,7 @@ Compound is a workout planning app where users create custom programs from modul
 
 - **Phase 1** (current): Go backend + SQLite, local for 1 user, no frontend
 - **Phase 2**: React Native (Expo) frontend in `/app`
-- **Phase 3**: AI integration — exercise suggestions, program generation, form tips
+- **Phase 3**: AI integration — exercise suggestions, template generation, program generation, form tips
 - **Phase 4**: Cloud infra (Postgres), user accounts, template sharing
 
 ## Design Docs (MUST follow)
@@ -38,6 +38,7 @@ Before writing or modifying code, consult these docs. They define binding conven
 | [docs/testing-strategy.md](docs/testing-strategy.md) | BDD-first development flow, acceptance tests (godog/Cucumber at HTTP level), integration tests (in-memory SQLite), unit tests |
 | [docs/git-strategy.md](docs/git-strategy.md) | Trunk-based dev, short-lived `type/description` branches, PRs to main, CI requirements |
 | [docs/local-development.md](docs/local-development.md) | First-run behavior, config file, Makefile targets, seeding, dev workflow |
+| [docs/ai.md](docs/ai.md) | AI feature design: exercise suggestions, template generation, program generation, form tips (Phase 3) |
 | [docs/implementation-plan.md](docs/implementation-plan.md) | Phased build steps |
 
 ## Terminology
