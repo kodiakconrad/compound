@@ -38,7 +38,7 @@ When generating session targets, the system checks the `progression_rules` for e
 |---|---|
 | [schema-design.md](schema-design.md) | Database tables, columns, ER diagram, and rationale for each design decision |
 | [persistence.md](persistence.md) | Store struct, DBTX interface, transactions, query conventions, timestamps, UUIDs, soft deletes |
-| [architecture-patterns.md](architecture-patterns.md) | DDD, error handling, DTOs, validation, logging, config, testing strategy |
+| [implementation-patterns.md](implementation-patterns.md) | DTOs, two-layer validation, logging, config |
 | [project-structure.md](project-structure.md) | Package layout, file organization, dependency flow |
 | [api.md](api.md) | REST API endpoints, pagination, idempotency, sorting, response format |
 | [domain-model.md](domain-model.md) | Aggregates, entities, value objects, state machines, business rules (WIP) |
@@ -47,4 +47,5 @@ When generating session targets, the system checks the `progression_rules` for e
 | [git-strategy.md](git-strategy.md) | Trunk-based dev, branching, PRs, CI pipeline |
 | [testing-strategy.md](testing-strategy.md) | BDD-first development, test types, conventions |
 | [naming-conventions.md](naming-conventions.md) | Go naming: receivers, constructors, files, tests, exports |
+| [ai.md](ai.md) | AI feature design: exercise suggestions, template generation, program generation, form tips (Phase 3) |
 | [implementation-plan.md](implementation-plan.md) | Phased build steps |
