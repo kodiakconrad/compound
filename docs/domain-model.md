@@ -353,7 +353,9 @@ func (r *ProgressionRule) NextWeight(current float64, consecutiveFailures int) f
     case ProgressionPercentage:
         return current * (1 + *r.IncrementPct/100)
     case ProgressionWave:
-        // wave loading — implementation TBD
+        // Wave loading deferred — seeded 5/3/1 programs use static
+        // target weights set at template creation time. Dynamic wave
+        // progression will be designed and implemented in a future phase.
         return current
     }
     return current
