@@ -125,6 +125,17 @@ erDiagram
         TIMESTAMP created_at
     }
 
+    idempotency_keys {
+        INTEGER id PK
+        TEXT key UK
+        TEXT method
+        TEXT path
+        INTEGER status
+        TEXT response
+        TIMESTAMP created_at
+        TIMESTAMP expires_at
+    }
+
     programs ||--o{ program_workouts : "has"
     program_workouts ||--o{ sections : "has"
     sections ||--o{ section_exercises : "has"
@@ -233,3 +244,17 @@ erDiagram
 - Mutable tables also get `updated_at TIMESTAMP NOT NULL` (set to `created_at` on insert, updated on every write)
 - `set_logs` is append-only — `created_at` only, no `updated_at`
 - Domain event timestamps (`started_at`, `completed_at` on cycles/sessions) are separate from metadata timestamps (`created_at`, `updated_at`)
+- `idempotency_keys` is append-only — `created_at` only, no `updated_at`
+
+## 12. Idempotency Keys → Separate Table, Lazy Expiry
+
+**Decision:** Store idempotency key records in an `idempotency_keys` table. Expired keys are filtered out on read — no background cleanup job.
+
+**Columns:**
+- `key` — the client-provided `Idempotency-Key` header value (unique)
+- `method` + `path` — stored to detect misuse: same key on a different endpoint returns 422
+- `status` — HTTP status code, replayed as-is on duplicate requests
+- `response` — full JSON response body blob, useful for debugging and correct replay
+- `expires_at` — `created_at + 24h`; lookup query filters `WHERE expires_at > now()`
+
+**Rationale:** Lazy filtering avoids a background job. At single-user scale, stale rows accumulate slowly and have no meaningful performance impact. Storing the full response body enables exact replay and aids debugging when clients retry unexpectedly.

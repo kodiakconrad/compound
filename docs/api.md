@@ -110,9 +110,10 @@ Content-Type: application/json
 
 **How it works:**
 1. Client generates a unique key (UUID recommended) and sends it with the request
-2. Server stores the key + response in an `idempotency_keys` table
+2. Server stores the key, method, path, status, and full response body in the `idempotency_keys` table
 3. If the same key is sent again, server returns the stored response without re-executing
-4. Keys expire after 24 hours
+4. Using the same key on a different endpoint returns 422
+5. Keys expire after 24 hours; expired keys are filtered out on read (no background cleanup)
 
 **When to use:** All POST (create) endpoints. PUT endpoints are naturally idempotent (same input → same result). DELETE endpoints are naturally idempotent (deleting twice → same outcome).
 
