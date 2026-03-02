@@ -1,14 +1,6 @@
-# Architecture Patterns
+# Implementation Patterns
 
-Architectural decisions and conventions for the Compound Go backend. Read alongside [persistence.md](persistence.md) (store layer details), [schema-design.md](schema-design.md) (database schema), and [project-structure.md](project-structure.md) (package layout).
-
-## DDD — Full Domain-Driven Design
-
-See [domain-model.md](domain-model.md) for the complete domain specification: aggregates, entities, value objects, state machines, business rules, code examples, and the "what lives where" responsibility table.
-
-## Error Handling
-
-See [error-handling.md](error-handling.md) for domain error types, HTTP mapping, error response format, and multiple validation error handling.
+Cross-cutting implementation conventions for the Compound Go backend: DTOs, two-layer validation, logging, and configuration.
 
 ## DTOs — Separate Request/Response Types
 
@@ -156,7 +148,3 @@ type LogConfig struct {
 ```
 
 Defaults are applied when fields are absent from the file. If no config file exists on first run, the app runs with defaults.
-
-## Testing
-
-See [testing-strategy.md](testing-strategy.md) for full testing strategy, BDD-first development flow, and conventions.
