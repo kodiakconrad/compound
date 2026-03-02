@@ -188,6 +188,7 @@ DELETE /api/v1/programs/{id}              — soft delete
 POST   /api/v1/programs/{id}/workouts                — add workout day
 PUT    /api/v1/programs/{id}/workouts/{wid}          — update workout
 DELETE /api/v1/programs/{id}/workouts/{wid}          — delete workout
+PUT    /api/v1/programs/{id}/workouts/reorder        — reorder workouts
 ```
 
 ### Sections (within a workout)
@@ -196,15 +197,29 @@ DELETE /api/v1/programs/{id}/workouts/{wid}          — delete workout
 POST   /api/v1/programs/{id}/workouts/{wid}/sections              — add section
 PUT    /api/v1/programs/{id}/workouts/{wid}/sections/{sid}        — update
 DELETE /api/v1/programs/{id}/workouts/{wid}/sections/{sid}        — delete
+PUT    /api/v1/programs/{id}/workouts/{wid}/sections/reorder      — reorder sections
 ```
 
 ### Section Exercises
 
 ```
-POST   /api/v1/programs/{id}/workouts/{wid}/sections/{sid}/exercises        — add exercise
-PUT    /api/v1/programs/{id}/workouts/{wid}/sections/{sid}/exercises/{eid}  — update targets
-DELETE /api/v1/programs/{id}/workouts/{wid}/sections/{sid}/exercises/{eid}  — remove
+POST   /api/v1/programs/{id}/workouts/{wid}/sections/{sid}/exercises              — add exercise
+PUT    /api/v1/programs/{id}/workouts/{wid}/sections/{sid}/exercises/{eid}        — update targets
+DELETE /api/v1/programs/{id}/workouts/{wid}/sections/{sid}/exercises/{eid}        — remove
+PUT    /api/v1/programs/{id}/workouts/{wid}/sections/{sid}/exercises/reorder      — reorder exercises
 ```
+
+### Reorder Request Shape
+
+All three reorder endpoints use the same request body — an ordered list of UUIDs:
+
+```json
+{
+  "uuids": ["uuid-c", "uuid-a", "uuid-b"]
+}
+```
+
+The server reindexes `sort_order` sequentially (1, 2, 3...) to match the supplied order. Returns 200 with the updated list. Returns 422 if any UUID doesn't belong to the parent resource.
 
 ### Cycles
 
@@ -218,10 +233,11 @@ PUT    /api/v1/cycles/{id}                 — pause/complete cycle
 ### Sessions
 
 ```
-GET    /api/v1/cycles/{cid}/sessions/{sid}          — get session detail
-POST   /api/v1/cycles/{cid}/sessions/{sid}/start    — start a session
+GET    /api/v1/cycles/{cid}/sessions/{sid}          — get session detail (targets + logged sets)
+POST   /api/v1/cycles/{cid}/sessions/{sid}/start    — start a session (pending → in_progress)
 POST   /api/v1/cycles/{cid}/sessions/{sid}/sets     — log a set
-PUT    /api/v1/cycles/{cid}/sessions/{sid}/complete  — complete session
+PUT    /api/v1/cycles/{cid}/sessions/{sid}/complete  — complete session (in_progress → completed)
+PUT    /api/v1/cycles/{cid}/sessions/{sid}/skip      — skip session (pending or in_progress → skipped)
 ```
 
 ### Progress
