@@ -47,5 +47,6 @@ When generating session targets, the system checks the `progression_rules` for e
 | [git-strategy.md](git-strategy.md) | Trunk-based dev, branching, PRs, CI pipeline |
 | [testing-strategy.md](testing-strategy.md) | BDD-first development, test types, conventions |
 | [naming-conventions.md](naming-conventions.md) | Go naming: receivers, constructors, files, tests, exports |
+| [phase2.md](phase2.md) | React Native frontend plan: connectivity model, offline strategy, navigation, API contract considerations (Phase 2) |
 | [ai.md](ai.md) | AI feature design: exercise suggestions, template generation, program generation, form tips (Phase 3) |
 | [implementation-plan.md](implementation-plan.md) | Phased build steps |

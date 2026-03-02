@@ -38,6 +38,7 @@ Before writing or modifying code, consult these docs. They define binding conven
 | [docs/testing-strategy.md](docs/testing-strategy.md) | BDD-first development flow, acceptance tests (godog/Cucumber at HTTP level), integration tests (in-memory SQLite), unit tests |
 | [docs/git-strategy.md](docs/git-strategy.md) | Trunk-based dev, short-lived `type/description` branches, PRs to main, CI requirements |
 | [docs/local-development.md](docs/local-development.md) | First-run behavior, config file, Makefile targets, seeding, dev workflow |
+| [docs/phase2.md](docs/phase2.md) | React Native frontend plan: connectivity model, offline strategy, navigation, API contract considerations (Phase 2) |
 | [docs/ai.md](docs/ai.md) | AI feature design: exercise suggestions, template generation, program generation, form tips (Phase 3) |
 | [docs/implementation-plan.md](docs/implementation-plan.md) | Phased build steps |
 
