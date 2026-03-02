@@ -1,58 +1,166 @@
 # Implementation Plan — Phase 1 (Go Backend MVP)
 
-## Step 1 — Project Setup & Database
+Each step follows the BDD-first development flow from [testing-strategy.md](testing-strategy.md):
+1. Write Gherkin acceptance tests (they will fail — that's the point)
+2. Implement: domain model → store → DTOs → handler → route registration
+3. Add unit tests for complex business logic
+4. Run `make test` — acceptance tests should go green
 
-1. Update `go.mod` with dependencies (`go-chi/chi/v5` for routing, `modernc.org/sqlite` for pure-Go SQLite)
-2. Create `internal/store/sqlite.go` — DB connection, migration runner
-3. Create `internal/migration/001_initial.sql` — all tables
-4. Create `internal/server/server.go` and `internal/server/routes.go` — HTTP server setup
-5. Update `main.go` — init DB, run migrations, start HTTP server
-6. **Verify**: `go run main.go` starts server, DB file created with tables
+---
+
+## Step 1 — Project Setup & Infrastructure
+
+No BDD here — pure infrastructure. Verify by running the server.
+
+1. Initialize `go.mod` with dependencies:
+   - `github.com/go-chi/chi/v5` — routing
+   - `modernc.org/sqlite` — pure-Go SQLite driver
+   - `github.com/google/uuid` — UUID generation
+   - `github.com/cucumber/godog` — acceptance test runner
+   - `gopkg.in/yaml.v3` — YAML config
+2. Write `internal/config/config.go` — YAML config loading with defaults (`server`, `database`, `log`)
+3. Write `internal/migration/001_initial.sql` — all `CREATE TABLE` statements from the schema
+4. Write `internal/migration/migrations.go` — embedded SQL runner, `schema_migrations` tracking table
+5. Write `internal/store/store.go` — `Store` struct, `DBTX` interface, `WithTx` helper
+6. Write `internal/server/server.go` — HTTP server setup, middleware (logging, recovery)
+7. Write `internal/server/routes.go` — empty route skeleton (just `/api/v1` prefix)
+8. Write `main.go` — load config, open DB, run migrations, start server
+
+**Verify:** `make run` starts without errors, DB file created, `GET /api/v1/` returns 404 cleanly.
+
+---
 
 ## Step 2 — Exercise Library
 
-1. Define `internal/model/exercise.go`
-2. Implement `internal/store/exercise_store.go` — CRUD + search
-3. Implement `internal/handler/exercises.go` — REST handlers
-4. Seed ~80-100 exercises in `internal/seed/exercises.go`
-5. Register routes, wire up in `main.go`
-6. **Verify**: `curl` to create, list, search exercises
+**Acceptance tests first** (`tests/acceptance/features/exercises.feature`):
+- Create a custom exercise — 201 with uuid in response
+- Cannot create exercise without a name — 400 validation error
+- Cannot create exercise with invalid tracking_type — 400 validation error
+- Get exercise by uuid — 200 with full fields
+- Get non-existent exercise — 404
+- List exercises — 200 paginated list
+- List exercises filtered by muscle_group — filtered results
+- Search exercises by name — filtered results
+- Update a custom exercise — 200 with updated fields
+- Cannot update a prebuilt exercise — 422
+- Soft delete a custom exercise — 204, hidden from list
+- Cannot delete a prebuilt exercise — 422
 
-## Step 3 — Programs & Workout Builder
+**Implement:**
+1. `internal/domain/exercise.go` — `Exercise` struct, `TrackingType` value object, `Validate()`
+2. `internal/domain/errors.go` — `NotFoundError`, `ValidationError`, `ConflictError`
+3. `internal/store/exercise_store.go` — `CreateExercise`, `GetExercise`, `ListExercises`, `UpdateExercise`, `DeleteExercise`
+4. `internal/handler/dto/exercise.go` — `CreateExerciseRequest`, `UpdateExerciseRequest`, `ExerciseResponse`, `ToExerciseResponse`
+5. `internal/handler/handler.go` — shared helpers: `respond`, `decode`, `respondError`, error mapping
+6. `internal/handler/exercise_handler.go` — REST handlers
+7. Register exercise routes in `routes.go`
 
-1. Define models for Program, Workout, Section, SectionExercise, RestPeriod
-2. Implement stores with transactional writes (creating a program with nested structure)
-3. Implement handlers for full CRUD on the program tree
-4. **Verify**: Create a program via API, add workouts/sections/exercises, retrieve full tree
+**Unit tests** (`internal/domain/exercise_test.go`):
+- `TestExercise_Validate` — empty name, invalid tracking_type, valid exercise
+- `TestTrackingType_IsValid`
 
-## Step 4 — Templates
+**Seed:** `make seed` loads ~80–100 common exercises from `internal/seed/exercises.go`.
 
-1. Define Template model (a template is essentially a saved program structure)
-2. Implement "create program from template" (deep copy of the program structure)
-3. Implement "save program as template"
-4. Seed prebuilt templates: 5/3/1, PPL, Starting Strength
-5. **Verify**: List templates, create program from 5/3/1 template, verify program has correct structure
+---
 
-## Step 5 — Cycles & Sessions
+## Step 3 — Programs, Templates & Workout Builder
 
-1. Define Cycle and Session models
-2. "Start cycle" — creates cycle + generates sessions (one per workout in program)
-3. Session start — loads the workout structure with target weights (calculated from previous sessions)
-4. Set logging — record actual reps/weight per set
-5. Session completion — marks done, stores summary
-6. Weight progression logic — compare previous session to calculate next target weights
-7. **Verify**: Start cycle, log sets in a session, complete it, start next session and verify weights adjusted
+**Acceptance tests first** (`tests/acceptance/features/programs.feature`):
+- Create a program — 201 with uuid
+- Create a template (`is_template=true`) — 201
+- List programs — paginated list
+- List templates only (`?is_template=true`) — filtered
+- Get program with full tree (workouts → sections → exercises) — 200
+- Deep copy a template into a new program — 201, independent copy
+- Update program metadata — 200
+- Soft delete a program — 204
+- Cannot delete a prebuilt program — 422
+- Add a workout to a program — 201
+- Cannot add workout with duplicate day_number — 409
+- Update a workout — 200
+- Delete a workout — 204
+- Reorder workouts — 200, sort_order updated
+- Add a section to a workout — 201
+- Reorder sections — 200
+- Add an exercise to a section — 201
+- Update section exercise targets — 200
+- Remove an exercise from a section — 204
+- Reorder exercises within a section — 200
+- Cannot modify a program with an active cycle — 422
 
-## Step 6 — Progress Tracking
+**Implement:**
+1. `internal/domain/program.go` — `Program`, `ProgramWorkout`, `Section`, `SectionExercise`, `ProgressionRule`, `ProgressionStrategy` value object, aggregate invariant methods (`AddWorkout`, `AddSection`, etc.), `DeepCopy`
+2. `internal/store/program_store.go` — program CRUD, `CopyProgram`
+3. `internal/store/workout_store.go` — workout, section, section_exercise CRUD + reorder methods
+4. `internal/handler/dto/program.go` — all program/workout/section/exercise DTOs
+5. `internal/handler/program_handler.go` — all program + nested resource handlers
+6. Register routes in `routes.go`
 
-1. Implement progress queries — per-exercise history, PRs, volume trends
-2. Return structured data ready for charting (the RN app will render charts in Phase 2)
-3. **Verify**: After logging several sessions, progress endpoints return correct data
+**Unit tests** (`internal/domain/program_test.go`):
+- `TestProgram_AddWorkout_DuplicateDayNumber`
+- `TestProgram_DeepCopy` — verify new UUIDs, independence from source
+- `TestProgressionRule_NextWeight` — linear, percentage, deload trigger
+
+**Seed:** `internal/seed/programs.go` — prebuilt templates: 5/3/1, PPL, Starting Strength.
+
+---
+
+## Step 4 — Cycles & Sessions
+
+**Acceptance tests first** (`tests/acceptance/features/cycles.feature`, `sessions.feature`):
+- Start a cycle from a program — 201, sessions pre-generated
+- Cannot modify program while cycle is active — 422
+- List cycles — paginated
+- Get cycle with sessions — 200
+- Pause a cycle — 200
+- Resume a paused cycle — 200
+- Complete a cycle — 200
+- Start a session — 200, status → in_progress
+- Log a set — 201 set_log created
+- Log a set with a substituted exercise (different exercise_id than planned) — 201
+- Complete a session — 200, status → completed
+- Skip a session — 200, status → skipped
+- Get session detail with target weights and logged sets — 200
+- Target weight increases after successful session — verified via second session fetch
+- Target weight unchanged after failed session (missed reps) — verified
+- Deload applied after N consecutive failures — verified
+
+**Implement:**
+1. `internal/domain/cycle.go` — `Cycle`, `CycleStatus`, `Session`, `SessionStatus`, `SetLog`, state transition methods
+2. `internal/store/cycle_store.go` — `CreateCycle`, `GetCycle`, `ListCycles`, `UpdateCycle`, session pre-generation
+3. `internal/store/session_store.go` — `GetSession`, `UpdateSession`, `LogSet`
+4. `internal/domain/progression.go` (or on `ProgressionRule`) — target weight calculation, consecutive failure computation from set_logs
+5. `internal/handler/dto/cycle.go`, `session.go` — DTOs
+6. `internal/handler/cycle_handler.go`, `session_handler.go` — handlers
+7. Register routes in `routes.go`
+
+**Unit tests** (`internal/domain/progression_test.go`):
+- `TestProgressionRule_NextWeight_Linear`
+- `TestProgressionRule_NextWeight_Percentage`
+- `TestProgressionRule_NextWeight_Deload`
+- `TestConsecutiveFailures` — various hit/miss sequences
+
+---
+
+## Step 5 — Progress Tracking
+
+**Acceptance tests first** (`tests/acceptance/features/progress.feature`):
+- Get exercise history — ordered list of weight/reps over time
+- Get personal records — best weight per exercise
+- Get summary — total sessions completed, current streak
+
+**Implement:**
+1. `internal/store/progress_store.go` — `GetExerciseHistory`, `GetPersonalRecords`, `GetSummary`
+2. `internal/handler/dto/progress.go` — response DTOs
+3. `internal/handler/progress_handler.go` — handlers
+4. Register routes in `routes.go`
+
+---
 
 ## Verification (all steps)
 
 After each step:
-1. `go build` compiles without errors
-2. `go run main.go` starts the server
-3. Test endpoints with `curl` or a `.http` file
-4. `go test ./...` passes (add tests as we go)
+- `make build` compiles without errors
+- `make test` — all acceptance tests pass, no regressions
+- `make vet` — no static analysis issues
+- Manual smoke test with `curl` or a `.http` file
