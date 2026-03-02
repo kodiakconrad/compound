@@ -41,7 +41,7 @@ When generating session targets, the system checks the `progression_rules` for e
 | [implementation-patterns.md](implementation-patterns.md) | DTOs, two-layer validation, logging, config |
 | [project-structure.md](project-structure.md) | Package layout, file organization, dependency flow |
 | [api.md](api.md) | REST API endpoints, pagination, idempotency, sorting, response format |
-| [domain-model.md](domain-model.md) | Aggregates, entities, value objects, state machines, business rules (WIP) |
+| [domain-model.md](domain-model.md) | Aggregates, entities, value objects, state machines, business rules, struct definitions |
 | [error-handling.md](error-handling.md) | Domain error types, HTTP mapping, error response format |
 | [local-development.md](local-development.md) | Local setup, Makefile, dev workflow |
 | [git-strategy.md](git-strategy.md) | Trunk-based dev, branching, PRs, CI pipeline |

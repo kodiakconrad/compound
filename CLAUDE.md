@@ -30,7 +30,7 @@ Before writing or modifying code, consult these docs. They define binding conven
 | [docs/schema-design.md](docs/schema-design.md) | Database tables, columns, types, ER diagram, design rationale |
 | [docs/persistence.md](docs/persistence.md) | Store struct, DBTX interface, transactions, raw SQL, timestamps (ISO 8601 UTC), UUIDs, soft deletes, nullable fields |
 | [docs/implementation-patterns.md](docs/implementation-patterns.md) | DTOs, two-layer validation, logging (`log/slog`), config (YAML) |
-| [docs/domain-model.md](docs/domain-model.md) | Aggregates, entities, value objects, state machines, business rules (WIP — flesh out before implementing) |
+| [docs/domain-model.md](docs/domain-model.md) | Aggregates, entities, value objects, state machines, business rules, struct definitions |
 | [docs/error-handling.md](docs/error-handling.md) | Domain error types, HTTP mapping, error response format, multiple validation errors |
 | [docs/project-structure.md](docs/project-structure.md) | Package layout (`domain/` → `store/` → `handler/`), dependency flow, file organization |
 | [docs/naming-conventions.md](docs/naming-conventions.md) | Receivers (single letter), constructors (`NewXxx`), interfaces (`-er`), errors (`NewXxxError`), files (`domain_layer.go`), tests (`TestSubject_Behavior`), exports |
