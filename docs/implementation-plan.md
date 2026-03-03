@@ -19,7 +19,7 @@ No BDD here — pure infrastructure. Verify by running the server.
    - `github.com/google/uuid` — UUID generation
    - `github.com/cucumber/godog` — acceptance test runner
    - `gopkg.in/yaml.v3` — YAML config
-2. Write `internal/config/config.go` — YAML config loading with defaults (`server`, `database`, `log`); env var overrides: `PORT` overrides `server.port`, `DATABASE_PATH` overrides `database.path`
+2. Write `internal/config/config.go` — YAML config loading with defaults (`server`, `database`, `log`); generate `compound.yaml` on first run if missing; env var overrides: `PORT` overrides `server.port`, `DATABASE_PATH` overrides `database.path`; `server.allowed_origins` defaults to `["*"]`
 3. Write `internal/migration/001_initial.sql` — all `CREATE TABLE` statements from the schema
 4. Write `internal/migration/migrations.go` — embedded SQL runner, `schema_migrations` tracking table
 5. Write `internal/store/store.go` — `Store` struct, `DBTX` interface, `WithTx` helper

@@ -28,6 +28,8 @@ The database will be empty (no exercises or templates). Run `make seed` to popul
 server:
   port: 8080
   host: "localhost"
+  allowed_origins:
+    - "*"   # tighten before enabling OAuth2 in Phase 2
 
 database:
   path: "compound.db"
@@ -136,14 +138,17 @@ make seed             # repopulate
 No frontend in Phase 1. Test with curl:
 
 ```bash
+# Health check
+curl http://localhost:8080/health
+
 # List exercises
-curl http://localhost:8080/api/exercises
+curl http://localhost:8080/api/v1/exercises
 
 # Create a custom exercise
-curl -X POST http://localhost:8080/api/exercises \
+curl -X POST http://localhost:8080/api/v1/exercises \
   -H "Content-Type: application/json" \
   -d '{"name": "Bulgarian Split Squat", "muscle_group": "legs", "equipment": "dumbbell", "tracking_type": "weight_reps"}'
 
 # Get a program with full tree
-curl http://localhost:8080/api/programs/{uuid}
+curl http://localhost:8080/api/v1/programs/{uuid}
 ```

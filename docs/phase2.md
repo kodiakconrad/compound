@@ -124,6 +124,7 @@ If the user closes the app mid-session, reopening it should land back on the in-
 ## Open Decisions for Phase 2 Start
 
 - [x] Connectivity model — **Hybrid A + C** (local for dev, Fly.io for gym use; backend cloud-ready from Phase 1)
+- [ ] OAuth2 protection — required before Fly.io deployment. The Go backend must validate OAuth2 tokens on every request. Provider TBD (Auth0, Clerk, etc.). CORS `allowed_origins` in `compound.yaml` should be tightened to the actual app origin at the same time. This is a Phase 2 backend addition, not Phase 1.
 - [ ] State management library
 - [ ] UI component library
 - [ ] Rest timer — in-app timer, or just display rest_seconds and let the user time manually?

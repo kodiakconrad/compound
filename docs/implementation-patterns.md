@@ -124,6 +124,8 @@ log:
   level: "info"   # debug, info, warn, error
 ```
 
+This is the pre-`allowed_origins` shape shown as a reference for struct mapping. The full generated config (including `allowed_origins`) is in [local-development.md](local-development.md).
+
 ```go
 // internal/config/config.go
 
@@ -147,4 +149,22 @@ type LogConfig struct {
 }
 ```
 
-Defaults are applied when fields are absent from the file. If no config file exists on first run, the app runs with defaults.
+If no config file exists on first run, the app generates `compound.yaml` with defaults and writes it to the current directory. Subsequent runs load the file. Defaults are applied for any fields absent from the file.
+
+The YAML includes an `allowed_origins` list under `server` for CORS. Default is `["*"]` (wildcard) — suitable for local development and the single-user cloud deployment. Tighten this before adding OAuth2 protection in Phase 2.
+
+```yaml
+server:
+  port: 8080
+  host: "localhost"
+  allowed_origins:
+    - "*"
+
+database:
+  path: "compound.db"
+
+log:
+  level: "info"
+```
+
+The `ServerConfig` struct gains an `AllowedOrigins []string` field. The chi CORS middleware reads this slice at startup.

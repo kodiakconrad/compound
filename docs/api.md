@@ -159,6 +159,14 @@ Error responses use a consistent format with a machine-readable code and human-r
 
 ## Endpoints
 
+### Health
+
+```
+GET /health    — returns 200 {"status": "ok"} — used by cloud platform health checks (Fly.io etc.)
+```
+
+This endpoint is intentionally outside the `/api/v1` prefix and requires no auth. It is not versioned.
+
 ### Exercises
 
 ```
