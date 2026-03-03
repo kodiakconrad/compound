@@ -1,20 +1,75 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
+	"log/slog"
+	"os"
+	"strings"
+
+	"compound/internal/config"
+	"compound/internal/migration"
+	"compound/internal/server"
+	"compound/internal/store"
+
+	_ "modernc.org/sqlite"
 )
 
-//TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
-// the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
 func main() {
-	//TIP <p>Press <shortcut actionId="ShowIntentionActions"/> when your caret is at the underlined text
-	// to see how GoLand suggests fixing the warning.</p><p>Alternatively, if available, click the lightbulb to view possible fixes.</p>
-	s := "gopher"
-	fmt.Printf("Hello and welcome, %s!\n", s)
-
-	for i := 1; i <= 5; i++ {
-		//TIP <p>To start your debugging session, right-click your code in the editor and select the Debug option.</p> <p>We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-		// for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.</p>
-		fmt.Println("i =", 100/i)
+	// 1. Load configuration.
+	cfgPath := config.ConfigPath("compound.yaml")
+	cfg, err := config.Load(cfgPath)
+	if err != nil {
+		slog.Error("failed to load config", "path", cfgPath, "error", err)
+		os.Exit(1)
 	}
+
+	// 2. Configure slog from config level.
+	setupLogger(cfg.Log.Level)
+
+	slog.Info("config loaded", "path", cfgPath)
+
+	// 3. Open SQLite database.
+	db, err := sql.Open("sqlite", cfg.Database.Path)
+	if err != nil {
+		slog.Error("failed to open database", "path", cfg.Database.Path, "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	// Enable WAL mode for better concurrent read performance.
+	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
+		slog.Error("failed to set WAL mode", "error", err)
+		os.Exit(1)
+	}
+
+	// 4. Run migrations.
+	if err := migration.Run(db); err != nil {
+		slog.Error("migration failed", "error", err)
+		os.Exit(1)
+	}
+
+	// 5. Build store and server.
+	s := store.New(db)
+	srv := server.NewServer(&cfg.Server, s)
+
+	// 6. Start HTTP server.
+	if err := srv.Start(); err != nil {
+		slog.Error("server stopped", "error", err)
+		os.Exit(1)
+	}
+}
+
+func setupLogger(level string) {
+	var lvl slog.Level
+	switch strings.ToLower(level) {
+	case "debug":
+		lvl = slog.LevelDebug
+	case "warn":
+		lvl = slog.LevelWarn
+	case "error":
+		lvl = slog.LevelError
+	default:
+		lvl = slog.LevelInfo
+	}
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: lvl})))
 }

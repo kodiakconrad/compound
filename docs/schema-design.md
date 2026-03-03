@@ -113,7 +113,7 @@ erDiagram
         TEXT uuid UK
         INTEGER session_id FK
         INTEGER exercise_id FK
-        INTEGER section_exercise_id FK
+        INTEGER section_exercise_id FK "nullable"
         INTEGER set_number
         INTEGER target_reps
         INTEGER actual_reps
@@ -226,12 +226,17 @@ erDiagram
 
 ## 10. Soft Deletes
 
-**Decision:** `deleted_at INTEGER` (nullable unix ms) on `exercises` and `programs`. Queries filter `WHERE deleted_at IS NULL`.
+**Decision:** `deleted_at TIMESTAMP` (nullable ISO 8601 text, same convention as all other timestamps) on `exercises` and `programs`. Queries filter `WHERE deleted_at IS NULL`.
 
 **Rationale:** Historical set logs reference exercises and programs. Hard deleting would break those references or require cascading deletes that destroy workout history. Soft deletes preserve data integrity while hiding deleted items from active listings.
 
 **Tables with soft delete:** `exercises`, `programs`
-**Tables without:** Everything else cascades from programs or is immutable log data.
+**Tables without:** Everything else hard-deletes via cascade from the parent, or is immutable log data (`set_logs`).
+
+**Cascade behavior on program delete:**
+- `program_workouts`, `sections`, `section_exercises`, `progression_rules` — hard-deleted via `ON DELETE CASCADE`
+- `cycles` and their `sessions` — a program **cannot be soft-deleted while it has an active cycle**. The handler enforces this before setting `deleted_at`. Completed/paused cycles are preserved (historical data); their `program_id` FK remains valid because the soft-deleted program row still exists.
+- `set_logs` — always preserved; reference `exercise_id` and `session_id` directly, unaffected by program deletion.
 
 ## 11. Timestamps → ISO 8601 Text, All UTC
 
