@@ -8,9 +8,11 @@ Each step follows the BDD-first development flow from [testing-strategy.md](test
 
 ---
 
-## Step 1 — Project Setup & Infrastructure
+## Step 1 — Project Setup & Infrastructure ✅
 
 No BDD here — pure infrastructure. Verify by running the server.
+
+> **Completed** — merged in PR #1. All Makefile targets work (`run`, `build`, `test`, `vet`, `seed`, `reset-db`). Server starts, DB created, migrations applied, `GET /health` returns OK.
 
 1. Initialize `go.mod` with dependencies:
    - `github.com/go-chi/chi/v5` — routing
