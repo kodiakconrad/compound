@@ -3,6 +3,7 @@ package acceptance
 import (
 	"database/sql"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
 
 	"github.com/cucumber/godog"
@@ -38,6 +39,12 @@ func TestFeatures(t *testing.T) {
 	srv := server.NewServer(&testCfg, s)
 	testServer = httptest.NewServer(srv.Router())
 	defer testServer.Close()
+
+	// Skip if no .feature files exist yet (Step 1 has none).
+	features, _ := filepath.Glob("features/*.feature")
+	if len(features) == 0 {
+		t.Skip("no feature files found — skipping acceptance tests")
+	}
 
 	suite := godog.TestSuite{
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
