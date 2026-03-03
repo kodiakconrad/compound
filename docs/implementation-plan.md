@@ -14,19 +14,26 @@ No BDD here — pure infrastructure. Verify by running the server.
 
 1. Initialize `go.mod` with dependencies:
    - `github.com/go-chi/chi/v5` — routing
+   - `github.com/go-chi/cors` — CORS middleware
    - `modernc.org/sqlite` — pure-Go SQLite driver
    - `github.com/google/uuid` — UUID generation
    - `github.com/cucumber/godog` — acceptance test runner
    - `gopkg.in/yaml.v3` — YAML config
-2. Write `internal/config/config.go` — YAML config loading with defaults (`server`, `database`, `log`)
+2. Write `internal/config/config.go` — YAML config loading with defaults (`server`, `database`, `log`); env var overrides: `PORT` overrides `server.port`, `DATABASE_PATH` overrides `database.path`
 3. Write `internal/migration/001_initial.sql` — all `CREATE TABLE` statements from the schema
 4. Write `internal/migration/migrations.go` — embedded SQL runner, `schema_migrations` tracking table
 5. Write `internal/store/store.go` — `Store` struct, `DBTX` interface, `WithTx` helper
-6. Write `internal/server/server.go` — HTTP server setup, middleware (logging, recovery)
-7. Write `internal/server/routes.go` — empty route skeleton (just `/api/v1` prefix)
+6. Write `internal/server/server.go` — HTTP server setup, middleware (logging, recovery, CORS)
+7. Write `internal/server/routes.go` — route skeleton with `/api/v1` prefix and `GET /health` endpoint
 8. Write `main.go` — load config, open DB, run migrations, start server
 
-**Verify:** `make run` starts without errors, DB file created, `GET /api/v1/` returns 404 cleanly.
+**Cloud-readiness additions (Phase 2 hybrid A+C support):**
+- `github.com/go-chi/cors` middleware — allows the React Native app to call the backend regardless of host
+- `PORT` env var override — required by Fly.io and similar platforms (e.g., `fly deploy` sets `$PORT` at runtime)
+- `DATABASE_PATH` env var override — required for cloud deployments where the DB lives on a mounted volume
+- `GET /health` route — required by cloud platform health checks; returns `200 OK` with `{"status": "ok"}`
+
+**Verify:** `make run` starts without errors, DB file created, `GET /health` returns `{"status":"ok"}`, `GET /api/v1/` returns 404 cleanly.
 
 ---
 

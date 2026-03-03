@@ -27,10 +27,10 @@ Move data storage into the phone using Expo SQLite. The Go backend becomes irrel
 **Option C — Deploy backend early (bridge to Phase 4)**
 Host the Go backend somewhere accessible (even a simple VPS or Fly.io free tier) ahead of the Phase 4 cloud plan. App always has connectivity. No offline complexity, but pulls forward cloud infra work.
 
-**Recommendation: Option A with offline queue.**
-Keep the Go backend as the source of truth. The app caches read data locally (exercises, programs, templates) and queues write operations (set logs, session status changes) when offline. Syncs when the backend is reachable. This avoids duplicating business logic and sets up the sync pattern Phase 4 will need anyway.
+**Decision: Hybrid A + C.**
+Start Phase 2 development using Option A (local network). When ready to use at the gym, deploy to Fly.io (Option C) — a one-time 30-minute step. The backend is built cloud-ready from Phase 1 (CORS, `PORT` env var, `DATABASE_PATH` env var, `/health` endpoint), so no rework is needed to flip to cloud.
 
-This decision needs to be finalised before Phase 2 begins — it affects the RN app architecture significantly.
+Even on Option C (cloud-hosted), an offline resilience layer on the phone is still worthwhile — gym WiFi is unreliable. The offline queue queues writes when the connection drops and flushes on reconnect, using idempotency keys already supported by the backend.
 
 ---
 
@@ -123,7 +123,7 @@ If the user closes the app mid-session, reopening it should land back on the in-
 
 ## Open Decisions for Phase 2 Start
 
-- [ ] Connectivity model (Option A / B / C above)
+- [x] Connectivity model — **Hybrid A + C** (local for dev, Fly.io for gym use; backend cloud-ready from Phase 1)
 - [ ] State management library
 - [ ] UI component library
 - [ ] Rest timer — in-app timer, or just display rest_seconds and let the user time manually?
