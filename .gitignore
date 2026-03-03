@@ -1,6 +1,9 @@
 # Binary
 compound
 
+# Config (generated on first run)
+compound.yaml
+
 # SQLite
 *.db
 *.db-journal
