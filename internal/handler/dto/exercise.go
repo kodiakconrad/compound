@@ -9,6 +9,12 @@ import (
 
 // --- Request DTOs ---
 
+// Compile-time interface checks — ensure request DTOs implement Validator.
+var (
+	_ Validator = (*CreateExerciseRequest)(nil)
+	_ Validator = (*UpdateExerciseRequest)(nil)
+)
+
 // CreateExerciseRequest is the JSON body for POST /api/v1/exercises.
 type CreateExerciseRequest struct {
 	Name         string  `json:"name"`
