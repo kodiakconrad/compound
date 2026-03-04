@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -23,23 +22,8 @@ func NewExerciseHandler(s *store.Store) *ExerciseHandler {
 }
 
 // HandleCreate handles POST /api/v1/exercises.
+// Idempotency is handled by middleware — this handler only does business logic.
 func (h *ExerciseHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
-	// Check idempotency key.
-	idempotencyKey := r.Header.Get("Idempotency-Key")
-	if idempotencyKey != "" {
-		result, err := h.store.CheckIdempotencyKey(r.Context(), h.store.DB, idempotencyKey, r.Method, r.URL.Path)
-		if err != nil {
-			respondError(w, err)
-			return
-		}
-		if result != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(result.Status)
-			w.Write(result.Response)
-			return
-		}
-	}
-
 	var req dto.CreateExerciseRequest
 	if err := decode(r, &req); err != nil {
 		respondJSON(w, http.StatusBadRequest, errorResponse("bad_request", "invalid JSON body", nil))
@@ -66,17 +50,7 @@ func (h *ExerciseHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slog.Info("exercise created", "uuid", exercise.UUID, "name", exercise.Name)
-
-	// Build response and save idempotency key if present.
-	respData := dto.ToExerciseResponse(exercise)
-	status := http.StatusCreated
-
-	if idempotencyKey != "" {
-		body, _ := json.Marshal(map[string]any{"data": respData})
-		_ = h.store.SaveIdempotencyKey(r.Context(), h.store.DB, idempotencyKey, r.Method, r.URL.Path, status, body)
-	}
-
-	respond(w, status, respData)
+	respond(w, http.StatusCreated, dto.ToExerciseResponse(exercise))
 }
 
 // HandleGet handles GET /api/v1/exercises/{id}.

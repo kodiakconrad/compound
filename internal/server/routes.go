@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"compound/internal/handler"
+	"compound/internal/handler/middleware"
 )
 
 func (s *Server) registerRoutes() {
@@ -18,6 +19,8 @@ func (s *Server) registerRoutes() {
 
 	// API v1
 	s.router.Route("/api/v1", func(r chi.Router) {
+		r.Use(middleware.Idempotency(s.store))
+
 		// Exercise routes
 		eh := handler.NewExerciseHandler(s.store)
 		r.Route("/exercises", func(r chi.Router) {
