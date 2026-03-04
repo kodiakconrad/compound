@@ -45,3 +45,18 @@ func (e *ConflictError) Error() string {
 func NewConflictError(message string) *ConflictError {
 	return &ConflictError{Message: message}
 }
+
+// UnprocessableError indicates a semantically invalid operation (e.g., editing
+// a prebuilt exercise, starting a completed cycle). Mapped to HTTP 422.
+type UnprocessableError struct {
+	Message string
+}
+
+func (e *UnprocessableError) Error() string {
+	return e.Message
+}
+
+// NewUnprocessableError creates an UnprocessableError with the given message.
+func NewUnprocessableError(message string) *UnprocessableError {
+	return &UnprocessableError{Message: message}
+}

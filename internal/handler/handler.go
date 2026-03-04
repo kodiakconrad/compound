@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"compound/internal/domain"
+	"compound/internal/handler/dto"
 )
 
 // --- Response helpers ---
@@ -24,16 +25,19 @@ func respondError(w http.ResponseWriter, err error) {
 	var notFound *domain.NotFoundError
 	var validation *domain.ValidationError
 	var conflict *domain.ConflictError
+	var unprocessable *domain.UnprocessableError
 
 	switch {
 	case errors.As(err, &notFound):
 		respondJSON(w, http.StatusNotFound, errorResponse("not_found", err.Error(), nil))
 	case errors.As(err, &validation):
-		respondJSON(w, http.StatusBadRequest, errorResponse("validation_failed", "Request validation failed", []FieldError{
+		respondJSON(w, http.StatusBadRequest, errorResponse("validation_failed", "Request validation failed", []dto.FieldError{
 			{Field: validation.Field, Message: validation.Message},
 		}))
 	case errors.As(err, &conflict):
 		respondJSON(w, http.StatusConflict, errorResponse("conflict", err.Error(), nil))
+	case errors.As(err, &unprocessable):
+		respondJSON(w, http.StatusUnprocessableEntity, errorResponse("unprocessable", err.Error(), nil))
 	default:
 		slog.Error("internal error", "error", err)
 		respondJSON(w, http.StatusInternalServerError, errorResponse("internal_error", "internal server error", nil))
@@ -50,7 +54,7 @@ func respondJSON(w http.ResponseWriter, status int, body any) {
 }
 
 // RespondValidationErrors writes a 400 response with multiple field errors.
-func RespondValidationErrors(w http.ResponseWriter, errs []FieldError) {
+func RespondValidationErrors(w http.ResponseWriter, errs []dto.FieldError) {
 	respondJSON(w, http.StatusBadRequest, errorResponse("validation_failed", "Request validation failed", errs))
 }
 
@@ -64,25 +68,34 @@ func decode(r *http.Request, v any) error {
 	return nil
 }
 
-// --- Error response types ---
-
-// FieldError represents a single field validation error.
-type FieldError struct {
-	Field   string `json:"field"`
-	Message string `json:"message"`
+// decodeAndValidate decodes the JSON body into req and runs DTO validation.
+// Returns true if the request is valid and the handler should continue.
+// On failure, writes the appropriate error response and returns false.
+func decodeAndValidate[T dto.Validator](w http.ResponseWriter, r *http.Request, req T) bool {
+	if err := decode(r, req); err != nil {
+		respondJSON(w, http.StatusBadRequest, errorResponse("bad_request", "invalid JSON body", nil))
+		return false
+	}
+	if errs := req.Validate(); len(errs) > 0 {
+		RespondValidationErrors(w, errs)
+		return false
+	}
+	return true
 }
 
+// --- Error response types ---
+
 type errorBody struct {
-	Code    string       `json:"code"`
-	Message string       `json:"message"`
-	Details []FieldError `json:"details,omitempty"`
+	Code    string           `json:"code"`
+	Message string           `json:"message"`
+	Details []dto.FieldError `json:"details,omitempty"`
 }
 
 type errorEnvelope struct {
 	Error errorBody `json:"error"`
 }
 
-func errorResponse(code string, message string, details []FieldError) errorEnvelope {
+func errorResponse(code string, message string, details []dto.FieldError) errorEnvelope {
 	return errorEnvelope{
 		Error: errorBody{
 			Code:    code,

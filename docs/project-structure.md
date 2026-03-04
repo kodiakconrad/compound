@@ -36,10 +36,13 @@ File and package layout for the Compound Go backend.
       session_handler.go
       progress_handler.go
       dto/                   — request/response types
+        common.go            — FieldError
         exercise.go
         program.go
         cycle.go
         session.go
+      middleware/             — chi middleware
+        idempotency.go       — Idempotency-Key header handling
 
     server/
       server.go              — HTTP server setup, middleware
@@ -60,7 +63,8 @@ File and package layout for the Compound Go backend.
   tests/
     acceptance/
       features/              — Cucumber .feature files (user journeys)
-      steps/                 — step definitions
+      common_steps.go        — shared step definitions (TestClient, assertions)
+      exercise_steps.go      — exercise-specific step definitions
       main_test.go           — test server setup, godog runner
 ```
 
@@ -71,10 +75,11 @@ Packages are organized by layer, with files within each layer organized by domai
 ### Dependency Flow
 
 ```
-handler → store → domain
-handler → dto   → domain
-server  → handler
-seed    → store → domain
+handler    → store → domain
+handler    → dto   → domain
+middleware → store → domain
+server     → handler, middleware
+seed       → store → domain
 ```
 
 Dependencies flow inward toward `domain`. The domain package has zero internal dependencies — it is pure business logic.

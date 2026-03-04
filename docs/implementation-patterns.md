@@ -88,6 +88,18 @@ func (e *Exercise) Validate() error {
 
 Handler validation catches malformed input early. Domain validation enforces business rules regardless of entry point (handler, seed data, tests).
 
+## Idempotency — Chi Middleware
+
+Idempotency key handling is implemented as chi middleware (`handler/middleware/idempotency.go`), applied once at the `/api/v1` route group level. Handlers do not contain any idempotency logic.
+
+**How it works:**
+1. Middleware checks for `Idempotency-Key` header — no header means passthrough
+2. If the key was seen before (and method+path match), replays the stored response
+3. If the key is new, wraps the `ResponseWriter` in a `responseRecorder` to capture status + body
+4. After the handler completes, saves the response for 2xx status codes only (errors are not cached)
+
+**Adding idempotency to a new POST handler:** No handler changes needed. The middleware is already applied to all `/api/v1` routes.
+
 ## Logging — `log/slog`
 
 Use Go's stdlib structured logger. No external dependencies.
