@@ -130,3 +130,4 @@ If the user closes the app mid-session, reopening it should land back on the in-
 - [ ] Rest timer — in-app timer, or just display rest_seconds and let the user time manually?
 - [ ] `GET /api/v1/sessions/active` convenience endpoint vs. client-side resolution
 - [ ] Offline queue persistence format (in-memory, AsyncStorage, or Expo SQLite)
+- [ ] `GET /api/v1/exercises/filters` endpoint — returns allowed values for muscle_group, equipment, and tracking_type so the frontend can build filter UIs dynamically without hardcoding enums

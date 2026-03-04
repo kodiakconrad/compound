@@ -5,6 +5,34 @@ import (
 	"time"
 )
 
+// --- Validation messages ---
+// Built from the source-of-truth slices so they never drift.
+
+// ValidTrackingTypes returns the allowed tracking type string values.
+func ValidTrackingTypes() []string {
+	return []string{
+		string(TrackingWeightReps),
+		string(TrackingBodyweightReps),
+		string(TrackingDuration),
+		string(TrackingDistance),
+	}
+}
+
+// TrackingTypeMessage returns the validation error message for tracking_type.
+func TrackingTypeMessage() string {
+	return "must be one of: " + strings.Join(ValidTrackingTypes(), ", ")
+}
+
+// MuscleGroupMessage returns the validation error message for muscle_group.
+func MuscleGroupMessage() string {
+	return "must be one of: " + strings.Join(ValidMuscleGroups, ", ")
+}
+
+// EquipmentMessage returns the validation error message for equipment.
+func EquipmentMessage() string {
+	return "must be one of: " + strings.Join(ValidEquipment, ", ")
+}
+
 // --- Value Objects ---
 
 // TrackingType determines which fields are relevant for an exercise.
@@ -82,16 +110,13 @@ func (e *Exercise) Validate() error {
 		return NewValidationError("name", "must not be empty")
 	}
 	if !e.TrackingType.IsValid() {
-		return NewValidationError("tracking_type",
-			"must be one of: weight_reps, bodyweight_reps, duration, distance")
+		return NewValidationError("tracking_type", TrackingTypeMessage())
 	}
 	if e.MuscleGroup != nil && !IsValidMuscleGroup(*e.MuscleGroup) {
-		return NewValidationError("muscle_group",
-			"must be one of: chest, back, legs, shoulders, biceps, triceps, core, cardio, other")
+		return NewValidationError("muscle_group", MuscleGroupMessage())
 	}
 	if e.Equipment != nil && !IsValidEquipment(*e.Equipment) {
-		return NewValidationError("equipment",
-			"must be one of: barbell, dumbbell, cable, machine, bodyweight, band, kettlebell, other")
+		return NewValidationError("equipment", EquipmentMessage())
 	}
 	return nil
 }

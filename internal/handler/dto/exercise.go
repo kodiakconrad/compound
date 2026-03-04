@@ -25,16 +25,13 @@ func (r *CreateExerciseRequest) Validate() []FieldError {
 		errs = append(errs, FieldError{Field: "name", Message: "is required"})
 	}
 	if r.TrackingType != "" && !domain.TrackingType(r.TrackingType).IsValid() {
-		errs = append(errs, FieldError{Field: "tracking_type",
-			Message: "must be one of: weight_reps, bodyweight_reps, duration, distance"})
+		errs = append(errs, FieldError{Field: "tracking_type", Message: domain.TrackingTypeMessage()})
 	}
 	if r.MuscleGroup != nil && !domain.IsValidMuscleGroup(*r.MuscleGroup) {
-		errs = append(errs, FieldError{Field: "muscle_group",
-			Message: "must be one of: chest, back, legs, shoulders, biceps, triceps, core, cardio, other"})
+		errs = append(errs, FieldError{Field: "muscle_group", Message: domain.MuscleGroupMessage()})
 	}
 	if r.Equipment != nil && !domain.IsValidEquipment(*r.Equipment) {
-		errs = append(errs, FieldError{Field: "equipment",
-			Message: "must be one of: barbell, dumbbell, cable, machine, bodyweight, band, kettlebell, other"})
+		errs = append(errs, FieldError{Field: "equipment", Message: domain.EquipmentMessage()})
 	}
 	return errs
 }
@@ -72,16 +69,13 @@ func (r *UpdateExerciseRequest) Validate() []FieldError {
 		errs = append(errs, FieldError{Field: "name", Message: "must not be empty"})
 	}
 	if r.TrackingType != nil && !domain.TrackingType(*r.TrackingType).IsValid() {
-		errs = append(errs, FieldError{Field: "tracking_type",
-			Message: "must be one of: weight_reps, bodyweight_reps, duration, distance"})
+		errs = append(errs, FieldError{Field: "tracking_type", Message: domain.TrackingTypeMessage()})
 	}
 	if r.MuscleGroup != nil && !domain.IsValidMuscleGroup(*r.MuscleGroup) {
-		errs = append(errs, FieldError{Field: "muscle_group",
-			Message: "must be one of: chest, back, legs, shoulders, biceps, triceps, core, cardio, other"})
+		errs = append(errs, FieldError{Field: "muscle_group", Message: domain.MuscleGroupMessage()})
 	}
 	if r.Equipment != nil && !domain.IsValidEquipment(*r.Equipment) {
-		errs = append(errs, FieldError{Field: "equipment",
-			Message: "must be one of: barbell, dumbbell, cable, machine, bodyweight, band, kettlebell, other"})
+		errs = append(errs, FieldError{Field: "equipment", Message: domain.EquipmentMessage()})
 	}
 	return errs
 }
