@@ -1,9 +1,9 @@
 package acceptance
 
 import (
+	"context"
 	"database/sql"
 	"net/http/httptest"
-	"path/filepath"
 	"testing"
 
 	"github.com/cucumber/godog"
@@ -17,6 +17,9 @@ import (
 
 // testServer is the shared httptest server for all scenarios.
 var testServer *httptest.Server
+
+// testDB is the shared database for direct inserts in step definitions.
+var testDB *sql.DB
 
 func TestFeatures(t *testing.T) {
 	// Set up in-memory SQLite database.
@@ -34,21 +37,35 @@ func TestFeatures(t *testing.T) {
 		t.Fatalf("run migrations: %v", err)
 	}
 
+	testDB = db
 	s := store.New(db)
 	testCfg := server.TestServerConfig()
 	srv := server.NewServer(&testCfg, s)
 	testServer = httptest.NewServer(srv.Router())
 	defer testServer.Close()
 
-	// Skip if no .feature files exist yet (Step 1 has none).
-	features, _ := filepath.Glob("features/*.feature")
-	if len(features) == 0 {
-		t.Skip("no feature files found — skipping acceptance tests")
-	}
-
 	suite := godog.TestSuite{
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
-			// Step definitions will be registered here in Step 2+.
+			client := NewTestClient(testServer.URL, testDB)
+
+			// Truncate all tables before each scenario (reverse FK order).
+			ctx.Before(func(goCtx context.Context, sc *godog.Scenario) (context.Context, error) {
+				tables := []string{
+					"set_logs", "sessions", "cycles",
+					"progression_rules", "section_exercises", "sections",
+					"program_workouts", "programs", "exercises",
+					"idempotency_keys",
+				}
+				for _, table := range tables {
+					if _, err := testDB.Exec("DELETE FROM " + table); err != nil {
+						return goCtx, err
+					}
+				}
+				return goCtx, nil
+			})
+
+			InitializeCommonSteps(ctx, client)
+			InitializeExerciseSteps(ctx, client)
 		},
 		Options: &godog.Options{
 			Format:   "pretty",

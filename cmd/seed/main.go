@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log/slog"
 	"os"
 
 	"compound/internal/config"
 	"compound/internal/migration"
+	"compound/internal/seed"
+	"compound/internal/store"
 
 	_ "modernc.org/sqlite"
 )
@@ -31,6 +34,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Seed functions will be added in Step 2 (exercises) and Step 3 (programs/templates).
-	slog.Info("seed complete (no seed data defined yet)")
+	s := store.New(db)
+
+	if err := seed.SeedExercises(context.Background(), s); err != nil {
+		slog.Error("failed to seed exercises", "error", err)
+		os.Exit(1)
+	}
+
+	// Program/template seeds will be added in Step 3.
+	slog.Info("seed complete")
 }

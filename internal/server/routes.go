@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+
+	"compound/internal/handler"
 )
 
 func (s *Server) registerRoutes() {
@@ -16,7 +18,18 @@ func (s *Server) registerRoutes() {
 
 	// API v1
 	s.router.Route("/api/v1", func(r chi.Router) {
-		// Exercise routes (Step 2)
+		// Exercise routes
+		eh := handler.NewExerciseHandler(s.store)
+		r.Route("/exercises", func(r chi.Router) {
+			r.Get("/", eh.HandleList)
+			r.Post("/", eh.HandleCreate)
+			r.Route("/{id}", func(r chi.Router) {
+				r.Get("/", eh.HandleGet)
+				r.Put("/", eh.HandleUpdate)
+				r.Delete("/", eh.HandleDelete)
+			})
+		})
+
 		// Program routes (Step 3)
 		// Cycle routes (Step 4)
 		// Session routes (Step 4)
