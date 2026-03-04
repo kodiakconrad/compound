@@ -25,14 +25,7 @@ func NewExerciseHandler(s *store.Store) *ExerciseHandler {
 // Idempotency is handled by middleware — this handler only does business logic.
 func (h *ExerciseHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateExerciseRequest
-	if err := decode(r, &req); err != nil {
-		respondJSON(w, http.StatusBadRequest, errorResponse("bad_request", "invalid JSON body", nil))
-		return
-	}
-
-	// DTO-level validation (request shape, collects all errors).
-	if errs := req.Validate(); len(errs) > 0 {
-		RespondValidationErrors(w, errs)
+	if !decodeAndValidate(w, r, &req) {
 		return
 	}
 
@@ -122,14 +115,7 @@ func (h *ExerciseHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req dto.UpdateExerciseRequest
-	if err := decode(r, &req); err != nil {
-		respondJSON(w, http.StatusBadRequest, errorResponse("bad_request", "invalid JSON body", nil))
-		return
-	}
-
-	// DTO-level validation.
-	if errs := req.Validate(); len(errs) > 0 {
-		RespondValidationErrors(w, errs)
+	if !decodeAndValidate(w, r, &req) {
 		return
 	}
 

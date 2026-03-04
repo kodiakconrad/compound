@@ -68,6 +68,21 @@ func decode(r *http.Request, v any) error {
 	return nil
 }
 
+// decodeAndValidate decodes the JSON body into req and runs DTO validation.
+// Returns true if the request is valid and the handler should continue.
+// On failure, writes the appropriate error response and returns false.
+func decodeAndValidate[T dto.Validator](w http.ResponseWriter, r *http.Request, req T) bool {
+	if err := decode(r, req); err != nil {
+		respondJSON(w, http.StatusBadRequest, errorResponse("bad_request", "invalid JSON body", nil))
+		return false
+	}
+	if errs := req.Validate(); len(errs) > 0 {
+		RespondValidationErrors(w, errs)
+		return false
+	}
+	return true
+}
+
 // --- Error response types ---
 
 type errorBody struct {
