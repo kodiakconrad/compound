@@ -376,6 +376,77 @@ No refinement step. No apply step. Purely read-only — nothing persists.
 
 ---
 
+## Feature 5: Exercise Substitution
+
+Suggests alternative exercises for a planned exercise during an active session — e.g., when equipment is unavailable or the user wants a change. Follows the same suggest → (optionally refine) → apply pattern. Operates at the set_log level; the program is never modified.
+
+### Endpoints
+
+- `POST /api/v1/ai/exercise-substitutions` — suggest alternatives for a given exercise
+- `POST /api/v1/ai/exercise-substitutions/refine` — stateless refinement
+- `POST /api/v1/ai/exercise-substitutions/apply` — record substitution for this session
+
+### Initial Request
+
+```json
+{
+  "exercise_uuid": "abc-123",
+  "session_uuid": "def-456",
+  "context": "leg press machine is taken, prefer free weights"
+}
+```
+
+- `context` is optional freeform — the AI uses it along with the exercise's muscle group and attributes to generate targeted alternatives
+- `session_uuid` is required — scopes the substitution to a specific session
+
+### Suggestion Shape
+
+Same shape as exercise suggestions (reused):
+
+```json
+{
+  "name": "Hack Squat",
+  "muscle_group": "quads",
+  "equipment": "machine",
+  "tracking_type": "weight_reps",
+  "target_sets": 4,
+  "target_reps": 10,
+  "target_weight": 60.0,
+  "rationale": "Same quad-dominant pattern as leg press with similar loading.",
+  "existing_uuid": "abc-123"
+}
+```
+
+- `existing_uuid` non-null → exercise already in library; apply links directly
+- `existing_uuid` null → apply creates the exercise first, then links
+
+### Refinement
+
+Same stateless pattern. Freeform note + previous suggestions echoed back.
+
+Examples: "something with less knee stress", "bodyweight only", "has to be a barbell movement"
+
+### Apply Request
+
+Works for both AI-picked and user-typed substitutes:
+
+```json
+{
+  "session_uuid": "abc-123",
+  "original_exercise_uuid": "def-456",
+  "substitute": { "...suggestion shape..." }
+}
+```
+
+Apply runs a single transaction:
+- `existing_uuid` set → use that exercise
+- `existing_uuid` null → create exercise first
+- Records the substitution at the session level (see open question in [implementation-plan.md](implementation-plan.md) Step 4)
+
+Substitution is session-only — the program and template are never touched.
+
+---
+
 ## Testing
 
 - `MockProvider` lives in `internal/ai/testutil/mock.go` — accessible to both `ai` package unit tests and acceptance tests
