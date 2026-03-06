@@ -1,4 +1,3 @@
-@wip
 Feature: Programs, Templates & Workout Builder
   Manage programs and templates with nested workouts, sections,
   and section exercises. Supports deep copy, reorder, and
