@@ -4,27 +4,26 @@ Feature: Exercise Library
 
   Scenario: Create a custom exercise
     When I create an exercise with:
-      | name          | Bulgarian Split Squat |
-      | muscle_group  | legs                  |
-      | equipment     | dumbbell              |
-      | tracking_type | weight_reps           |
+      | name                  | muscle_group | equipment | tracking_type |
+      | Bulgarian Split Squat | legs         | dumbbell  | weight_reps   |
     Then the response status should be 201
     And the response should include:
-      | name          | Bulgarian Split Squat |
-      | tracking_type | weight_reps           |
+      | name                  | tracking_type |
+      | Bulgarian Split Squat | weight_reps   |
     And the response should have a uuid
 
   Scenario: Cannot create exercise without a name
     When I create an exercise with:
-      | muscle_group | chest |
+      | muscle_group |
+      | chest        |
     Then the response status should be 400
     And the response should have error code "validation_failed"
     And the response should have field error "name"
 
   Scenario: Cannot create exercise with invalid tracking_type
     When I create an exercise with:
-      | name          | Bad Exercise |
-      | tracking_type | invalid_type |
+      | name         | tracking_type |
+      | Bad Exercise | invalid_type  |
     Then the response status should be 400
     And the response should have error code "validation_failed"
     And the response should have field error "tracking_type"
@@ -36,10 +35,8 @@ Feature: Exercise Library
     When I get the exercise "Bench Press"
     Then the response status should be 200
     And the response should include:
-      | name          | Bench Press |
-      | muscle_group  | chest       |
-      | equipment     | barbell     |
-      | tracking_type | weight_reps |
+      | name        | muscle_group | equipment | tracking_type |
+      | Bench Press | chest        | barbell   | weight_reps   |
 
   Scenario: Get non-existent exercise
     When I get an exercise with uuid "00000000-0000-0000-0000-000000000000"
@@ -82,19 +79,20 @@ Feature: Exercise Library
       | name        | muscle_group | is_custom |
       | My Exercise | chest        | true      |
     When I update the exercise "My Exercise" with:
-      | name         | Updated Exercise |
-      | muscle_group | back             |
+      | name             | muscle_group |
+      | Updated Exercise | back         |
     Then the response status should be 200
     And the response should include:
-      | name         | Updated Exercise |
-      | muscle_group | back             |
+      | name             | muscle_group |
+      | Updated Exercise | back         |
 
   Scenario: Cannot update a prebuilt exercise
     Given the following exercises exist:
       | name        | muscle_group | is_custom |
       | Bench Press | chest        | false     |
     When I update the exercise "Bench Press" with:
-      | name | New Name |
+      | name     |
+      | New Name |
     Then the response status should be 422
     And the response should have error code "unprocessable"
 
@@ -117,13 +115,13 @@ Feature: Exercise Library
 
   Scenario: Replaying a create with same Idempotency-Key returns original response
     When I create an exercise with idempotency key "test-key-001":
-      | name          | Idempotent Exercise |
-      | tracking_type | weight_reps         |
+      | name                | tracking_type |
+      | Idempotent Exercise | weight_reps   |
     Then the response status should be 201
     And the response should have a uuid
     When I create an exercise with idempotency key "test-key-001":
-      | name          | Idempotent Exercise |
-      | tracking_type | weight_reps         |
+      | name                | tracking_type |
+      | Idempotent Exercise | weight_reps   |
     Then the response status should be 201
     And the response uuid should match the previous response
     When I list exercises

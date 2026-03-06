@@ -7,21 +7,22 @@ Feature: Programs, Templates & Workout Builder
 
   Scenario: Create a program
     When I create a program with:
-      | name        | My Training Plan |
-      | description | A custom plan    |
+      | name             | description   |
+      | My Training Plan | A custom plan |
     Then the response status should be 201
     And the response should have a uuid
     And the response should include:
-      | name        | My Training Plan |
-      | is_template | false            |
+      | name             | is_template |
+      | My Training Plan | false       |
 
   Scenario: Create a template
     When I create a program with:
-      | name        | My Template |
-      | is_template | true        |
+      | name        | is_template |
+      | My Template | true        |
     Then the response status should be 201
     And the response should include:
-      | is_template | true |
+      | is_template |
+      | true        |
 
   Scenario: List programs
     Given the following programs exist:
@@ -47,17 +48,17 @@ Feature: Programs, Templates & Workout Builder
       | name      | is_template |
       | Full Plan | false       |
     And the program "Full Plan" has a workout:
-      | name       | Day 1 - Push |
-      | day_number | 1            |
+      | name         | day_number |
+      | Day 1 - Push | 1          |
     And the workout "Day 1 - Push" has a section:
-      | name | Compound Lifts |
+      | name           |
+      | Compound Lifts |
     And the following exercises exist:
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the section "Compound Lifts" has exercise "Bench Press" with:
-      | target_sets   | 3   |
-      | target_reps   | 5   |
-      | target_weight | 135 |
+      | target_sets | target_reps | target_weight |
+      | 3           | 5           | 135           |
     When I get the program "Full Plan"
     Then the response status should be 200
     And the response should have 1 workout
@@ -69,22 +70,23 @@ Feature: Programs, Templates & Workout Builder
       | name            | is_template |
       | Source Template | true        |
     And the program "Source Template" has a workout:
-      | name       | Day 1 |
-      | day_number | 1     |
+      | name  | day_number |
+      | Day 1 | 1          |
     And the workout "Day 1" has a section:
-      | name | Main Lifts |
+      | name       |
+      | Main Lifts |
     And the following exercises exist:
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the section "Main Lifts" has exercise "Bench Press" with:
-      | target_sets   | 3   |
-      | target_reps   | 5   |
-      | target_weight | 135 |
+      | target_sets | target_reps | target_weight |
+      | 3           | 5           | 135           |
     When I copy the program "Source Template"
     Then the response status should be 201
     And the response should have a uuid
     And the response should include:
-      | is_template | false |
+      | is_template |
+      | false       |
     And the response should have 1 workout
 
   Scenario: Update program metadata
@@ -92,12 +94,12 @@ Feature: Programs, Templates & Workout Builder
       | name     | is_template |
       | Old Name | false       |
     When I update the program "Old Name" with:
-      | name        | New Name     |
-      | description | Updated desc |
+      | name     | description  |
+      | New Name | Updated desc |
     Then the response status should be 200
     And the response should include:
-      | name        | New Name     |
-      | description | Updated desc |
+      | name     | description  |
+      | New Name | Updated desc |
 
   Scenario: Soft delete a program
     Given the following programs exist:
@@ -123,8 +125,8 @@ Feature: Programs, Templates & Workout Builder
       | name    | is_template |
       | My Plan | false       |
     When I add a workout to program "My Plan" with:
-      | name       | Day 1 - Push |
-      | day_number | 1            |
+      | name         | day_number |
+      | Day 1 - Push | 1          |
     Then the response status should be 201
     And the response should have a uuid
 
@@ -133,11 +135,11 @@ Feature: Programs, Templates & Workout Builder
       | name    | is_template |
       | My Plan | false       |
     And the program "My Plan" has a workout:
-      | name       | Day 1 |
-      | day_number | 1     |
+      | name  | day_number |
+      | Day 1 | 1          |
     When I add a workout to program "My Plan" with:
-      | name       | Another Day 1 |
-      | day_number | 1             |
+      | name          | day_number |
+      | Another Day 1 | 1          |
     Then the response status should be 409
     And the response should have error code "conflict"
 
@@ -146,21 +148,23 @@ Feature: Programs, Templates & Workout Builder
       | name    | is_template |
       | My Plan | false       |
     And the program "My Plan" has a workout:
-      | name       | Day 1 |
-      | day_number | 1     |
+      | name  | day_number |
+      | Day 1 | 1          |
     When I update the workout "Day 1" with:
-      | name | Day 1 - Push |
+      | name         |
+      | Day 1 - Push |
     Then the response status should be 200
     And the response should include:
-      | name | Day 1 - Push |
+      | name         |
+      | Day 1 - Push |
 
   Scenario: Delete a workout
     Given the following programs exist:
       | name    | is_template |
       | My Plan | false       |
     And the program "My Plan" has a workout:
-      | name       | Day 1 |
-      | day_number | 1     |
+      | name  | day_number |
+      | Day 1 | 1          |
     When I delete the workout "Day 1"
     Then the response status should be 204
 
@@ -169,11 +173,11 @@ Feature: Programs, Templates & Workout Builder
       | name    | is_template |
       | My Plan | false       |
     And the program "My Plan" has a workout:
-      | name       | Day 1 |
-      | day_number | 1     |
+      | name  | day_number |
+      | Day 1 | 1          |
     And the program "My Plan" has a workout:
-      | name       | Day 2 |
-      | day_number | 2     |
+      | name  | day_number |
+      | Day 2 | 2          |
     When I reorder workouts for program "My Plan" to "Day 2,Day 1"
     Then the response status should be 200
 
@@ -184,10 +188,11 @@ Feature: Programs, Templates & Workout Builder
       | name    | is_template |
       | My Plan | false       |
     And the program "My Plan" has a workout:
-      | name       | Day 1 |
-      | day_number | 1     |
+      | name  | day_number |
+      | Day 1 | 1          |
     When I add a section to workout "Day 1" with:
-      | name | Compound Lifts |
+      | name           |
+      | Compound Lifts |
     Then the response status should be 201
     And the response should have a uuid
 
@@ -196,12 +201,14 @@ Feature: Programs, Templates & Workout Builder
       | name    | is_template |
       | My Plan | false       |
     And the program "My Plan" has a workout:
-      | name       | Day 1 |
-      | day_number | 1     |
+      | name  | day_number |
+      | Day 1 | 1          |
     And the workout "Day 1" has a section:
-      | name | Section A |
+      | name      |
+      | Section A |
     And the workout "Day 1" has a section:
-      | name | Section B |
+      | name      |
+      | Section B |
     When I reorder sections for workout "Day 1" to "Section B,Section A"
     Then the response status should be 200
 
@@ -215,14 +222,14 @@ Feature: Programs, Templates & Workout Builder
       | name    | is_template |
       | My Plan | false       |
     And the program "My Plan" has a workout:
-      | name       | Day 1 |
-      | day_number | 1     |
+      | name  | day_number |
+      | Day 1 | 1          |
     And the workout "Day 1" has a section:
-      | name | Main Lifts |
+      | name       |
+      | Main Lifts |
     When I add exercise "Bench Press" to section "Main Lifts" with:
-      | target_sets   | 3   |
-      | target_reps   | 5   |
-      | target_weight | 135 |
+      | target_sets | target_reps | target_weight |
+      | 3           | 5           | 135           |
     Then the response status should be 201
     And the response should have a uuid
 
@@ -234,18 +241,17 @@ Feature: Programs, Templates & Workout Builder
       | name    | is_template |
       | My Plan | false       |
     And the program "My Plan" has a workout:
-      | name       | Day 1 |
-      | day_number | 1     |
+      | name  | day_number |
+      | Day 1 | 1          |
     And the workout "Day 1" has a section:
-      | name | Main Lifts |
+      | name       |
+      | Main Lifts |
     And the section "Main Lifts" has exercise "Bench Press" with:
-      | target_sets   | 3   |
-      | target_reps   | 5   |
-      | target_weight | 135 |
+      | target_sets | target_reps | target_weight |
+      | 3           | 5           | 135           |
     When I update section exercise "Bench Press" in section "Main Lifts" with:
-      | target_sets   | 5   |
-      | target_reps   | 3   |
-      | target_weight | 185 |
+      | target_sets | target_reps | target_weight |
+      | 5           | 3           | 185           |
     Then the response status should be 200
 
   Scenario: Remove an exercise from a section
@@ -256,13 +262,14 @@ Feature: Programs, Templates & Workout Builder
       | name    | is_template |
       | My Plan | false       |
     And the program "My Plan" has a workout:
-      | name       | Day 1 |
-      | day_number | 1     |
+      | name  | day_number |
+      | Day 1 | 1          |
     And the workout "Day 1" has a section:
-      | name | Main Lifts |
+      | name       |
+      | Main Lifts |
     And the section "Main Lifts" has exercise "Bench Press" with:
-      | target_sets | 3 |
-      | target_reps | 5 |
+      | target_sets | target_reps |
+      | 3           | 5           |
     When I remove exercise "Bench Press" from section "Main Lifts"
     Then the response status should be 204
 
@@ -275,14 +282,17 @@ Feature: Programs, Templates & Workout Builder
       | name    | is_template |
       | My Plan | false       |
     And the program "My Plan" has a workout:
-      | name       | Day 1 |
-      | day_number | 1     |
+      | name  | day_number |
+      | Day 1 | 1          |
     And the workout "Day 1" has a section:
-      | name | Main Lifts |
+      | name       |
+      | Main Lifts |
     And the section "Main Lifts" has exercise "Bench Press" with:
-      | target_sets | 3 |
+      | target_sets |
+      | 3           |
     And the section "Main Lifts" has exercise "Squat" with:
-      | target_sets | 3 |
+      | target_sets |
+      | 3           |
     When I reorder exercises in section "Main Lifts" to "Squat,Bench Press"
     Then the response status should be 200
 
@@ -294,6 +304,7 @@ Feature: Programs, Templates & Workout Builder
       | My Plan | false       |
     And the program "My Plan" has an active cycle
     When I update the program "My Plan" with:
-      | name | Updated Name |
+      | name         |
+      | Updated Name |
     Then the response status should be 422
     And the response should have error code "unprocessable"

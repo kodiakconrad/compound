@@ -199,12 +199,8 @@ func (c *TestClient) theResponseShouldInclude(table *godog.Table) error {
 	if err != nil {
 		return err
 	}
-	for _, row := range table.Rows {
-		if len(row.Cells) != 2 {
-			continue
-		}
-		key := row.Cells[0].Value
-		expected := row.Cells[1].Value
+	fields := tableToMap(table)
+	for key, expected := range fields {
 		actual := fmt.Sprintf("%v", data[key])
 		if actual != expected {
 			return fmt.Errorf("expected %s=%q, got %q", key, expected, actual)
@@ -239,15 +235,14 @@ func (c *TestClient) dataArray() ([]any, error) {
 	return data, nil
 }
 
-// tableToMap converts a 2-column godog table to a map[string]string.
+// tableToMap converts a godog table with a header row and a single data row
+// into a map[string]string keyed by header names.
 func tableToMap(table *godog.Table) map[string]string {
-	m := make(map[string]string)
-	for _, row := range table.Rows {
-		if len(row.Cells) == 2 {
-			m[row.Cells[0].Value] = row.Cells[1].Value
-		}
+	rows := tableToMapSlice(table)
+	if len(rows) == 0 {
+		return make(map[string]string)
 	}
-	return m
+	return rows[0]
 }
 
 // tableToMapSlice converts a godog table with a header row to a slice of maps.
