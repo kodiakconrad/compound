@@ -12,9 +12,22 @@ internal/store/
   exercise_store.go     — CreateExercise, GetExercise, ListExercises, UpdateExercise, DeleteExercise
   program_store.go      — CreateProgram, GetProgram, ListPrograms, UpdateProgram, DeleteProgram, CopyProgram
   workout_store.go      — CreateWorkout, CreateSection, CreateSectionExercise, etc.
+  mapper.go             — dbgen → domain mapper functions
   cycle_store.go        — CreateCycle, GetCycle, ListCycles, UpdateCycle
   session_store.go      — CreateSession, GetSession, UpdateSession, LogSet
   progress_store.go     — GetExerciseHistory, GetPersonalRecords, GetSummary
+
+internal/db/
+  schema.sql            — sqlc schema (kept in sync with migration files)
+  query/
+    exercises.sql       — named SQL queries for exercises
+    programs.sql        — named SQL queries for programs
+    workouts.sql        — named SQL queries for workouts, sections, section exercises, progression rules
+  db.go                 — generated (do not edit)
+  models.go             — generated (do not edit)
+  exercises.sql.go      — generated (do not edit)
+  programs.sql.go       — generated (do not edit)
+  workouts.sql.go       — generated (do not edit)
 ```
 
 ```go
@@ -43,6 +56,7 @@ Store methods accept a `DBTX` parameter instead of `*sql.DB` directly. This inte
 ```go
 type DBTX interface {
     ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+    PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
     QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
     QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 }
@@ -51,22 +65,15 @@ type DBTX interface {
 Store methods are unaware of whether they're running inside a transaction:
 
 ```go
-func (s *Store) CreateExercise(ctx context.Context, db DBTX, e *model.Exercise) error {
-    e.UUID = uuid.NewString()
-    now := time.Now().UTC()
-    e.CreatedAt = now
-    e.UpdatedAt = now
-    result, err := db.ExecContext(ctx,
-        `INSERT INTO exercises (uuid, name, muscle_group, equipment, tracking_type, notes, is_custom, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        e.UUID, e.Name, e.MuscleGroup, e.Equipment, e.TrackingType, e.Notes, e.IsCustom, e.CreatedAt, e.UpdatedAt,
-    )
-    if err != nil {
-        return err
+func (s *Store) GetExerciseByUUID(ctx context.Context, db DBTX, id string) (*domain.Exercise, error) {
+    row, err := dbgen.New(db).GetExerciseByUUID(ctx, id)
+    if errors.Is(err, sql.ErrNoRows) {
+        return nil, domain.NewNotFoundError("exercise", id)
     }
-    id, _ := result.LastInsertId()
-    e.ID = id
-    return nil
+    if err != nil {
+        return nil, err
+    }
+    return mapExercise(row), nil
 }
 ```
 
@@ -119,37 +126,77 @@ func (s *Store) WithTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 - If `fn` returns an error, the defer fires `Rollback()` before the error propagates
 - If `fn` panics, the defer still fires `Rollback()`
 
-## Queries — Raw SQL
+## Queries — sqlc
 
-All queries are hand-written SQL strings in store methods. No ORM, no query builder, no codegen.
+SQL query files in `internal/db/query/` are the source of truth. `make gen` runs `sqlc generate` to produce typed Go code in `internal/db/`. **Never edit generated files directly.**
 
-**Why:** Full control over queries, no hidden behavior, easy to debug with SQLite CLI. The schema is small enough that raw SQL stays manageable.
+Each query is annotated with a name and return type:
 
-**Convention:**
+```sql
+-- name: GetExerciseByUUID :one
+SELECT id, uuid, name, muscle_group, equipment, tracking_type, notes, is_custom, created_at, updated_at
+FROM exercises WHERE uuid = ? AND deleted_at IS NULL;
+```
+
+Store methods call generated code via `dbgen.New(db)`:
+
+```go
+func (s *Store) GetExerciseByUUID(ctx context.Context, db DBTX, id string) (*domain.Exercise, error) {
+    row, err := dbgen.New(db).GetExerciseByUUID(ctx, id)
+    // ...
+    return mapExercise(row), nil
+}
+```
+
+**Key rule:** `dbgen.New(db)` is called inside each store method, not stored on `Store`. Storing it would bind the queries to `*sql.DB` rather than the current transaction's `*sql.Tx`, breaking `WithTx`.
+
+**`internal/db/schema.sql`** is a copy of the latest migration SQL (without the `schema_migrations` table). It must be kept in sync with `internal/migration/*.sql` — add new tables here whenever a new migration is added.
+
+Generated files are committed to the repository. `sqlc` does not need to be installed to build or run the project.
+
+## Dynamic Queries — Raw SQL
+
+Some queries cannot be expressed as static SQL and stay as hand-written `db.QueryContext` / `db.ExecContext` calls:
+
+- **`ListExercises`** — dynamic `WHERE` filters (muscle group, equipment, tracking type, search term) and configurable `ORDER BY` column/direction
+- **`ListPrograms`** — same pattern
+- **`reorderByUUIDs`** — uses `fmt.Sprintf` with dynamic table and column names
+- **`reindexSortOrder`** — same
+- **`GetProgramWithTree`** — bulk-load queries using `IN (...)` clauses built from integer slices; sqlc SQLite support for slice parameters is limited
+
+**Convention for raw SQL:**
 - Use backtick multi-line strings for readability
-- Always use `?` placeholders (never string interpolation)
+- Always use `?` placeholders (never string interpolation for values)
 - Always pass `context.Context` through to `ExecContext`/`QueryContext`
-- Use `QueryRowContext` for single-row lookups, `QueryContext` + row scanning for lists
+- Use mapper functions (see below) on results where applicable
+
+## Mappers
+
+sqlc generates its own model types in `internal/db/` (package `dbgen`). These are never used outside the store layer. `internal/store/mapper.go` contains one mapper function per domain type that converts dbgen structs to domain structs:
+
+```go
+func mapExercise(row dbgen.Exercise) *domain.Exercise {
+    e := &domain.Exercise{
+        ID:           row.ID,
+        UUID:         row.Uuid,
+        Name:         row.Name,
+        TrackingType: domain.TrackingType(row.TrackingType),
+        IsCustom:     row.IsCustom,
+        CreatedAt:    row.CreatedAt,
+        UpdatedAt:    row.UpdatedAt,
+    }
+    e.MuscleGroup = row.MuscleGroup
+    e.Equipment   = row.Equipment
+    e.Notes       = row.Notes
+    return e
+}
+```
+
+Domain types (`internal/domain`) are the contract for the entire application above the store layer. Handler, DTO, and domain packages never import `internal/db`.
 
 ## Timestamps
 
-Go models use `time.Time` for all timestamp fields. Stored in SQLite as ISO 8601 text (UTC).
-
-```go
-type Exercise struct {
-    ID           int64      `json:"id"`
-    UUID         string     `json:"uuid"`
-    Name         string     `json:"name"`
-    MuscleGroup  *string    `json:"muscle_group"`
-    Equipment    *string    `json:"equipment"`
-    TrackingType string     `json:"tracking_type"`
-    Notes        *string    `json:"notes"`
-    IsCustom     bool       `json:"is_custom"`
-    CreatedAt    time.Time  `json:"created_at"`
-    UpdatedAt    time.Time  `json:"updated_at"`
-    DeletedAt    *time.Time `json:"deleted_at,omitempty"`
-}
-```
+Go models use `time.Time` for all timestamp fields. Stored in SQLite as ISO 8601 text (UTC). The column type `DATETIME` is declared in the schema so sqlc generates `time.Time` fields directly; the modernc.org/sqlite driver DSN includes `?_loc=UTC` to ensure consistent UTC parsing.
 
 **Convention:**
 - Generate with `time.Now().UTC()`
@@ -179,19 +226,7 @@ Only `exercises` and `programs` use soft deletes. All queries against these tabl
 SELECT ... FROM exercises WHERE deleted_at IS NULL
 ```
 
-The delete store method sets the timestamp rather than removing the row:
-
-```go
-func (s *Store) DeleteExercise(ctx context.Context, db DBTX, id int64) error {
-    _, err := db.ExecContext(ctx,
-        `UPDATE exercises SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL`,
-        time.Now().UTC(), time.Now().UTC(), id,
-    )
-    return err
-}
-```
-
-Historical `set_logs` retain their `exercise_id` references — the data is still there, just hidden from active listings.
+The delete store method sets the timestamp rather than removing the row. Historical `set_logs` retain their `exercise_id` references — the data is still there, just hidden from active listings.
 
 ## Nullable Fields
 
@@ -199,13 +234,13 @@ Optional columns use Go pointer types:
 
 | SQL column | Go type | JSON behavior |
 |---|---|---|
-| `TEXT` (required) | `string` | always present |
+| `TEXT NOT NULL` | `string` | always present |
 | `TEXT` (nullable) | `*string` | omitted when nil with `omitempty` |
-| `INTEGER` (nullable) | `*int` | omitted when nil |
+| `INTEGER` (nullable) | `*int64` | omitted when nil |
 | `REAL` (nullable) | `*float64` | omitted when nil |
-| `TIMESTAMP` (nullable) | `*time.Time` | omitted when nil |
+| `DATETIME` (nullable) | `*time.Time` | omitted when nil |
 
-When scanning nullable columns from SQL, use `sql.NullString`, `sql.NullInt64`, `sql.NullFloat64`, `sql.NullTime` and convert to pointers after scanning.
+sqlc emits pointer types directly via `emit_pointers_for_null_types: true` — no intermediate `sql.NullString` / `sql.NullTime` scanning required.
 
 ## Migrations
 
