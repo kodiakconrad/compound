@@ -14,14 +14,22 @@ import (
 
 // TestClient holds state for a single scenario.
 type TestClient struct {
-	BaseURL  string
-	DB       *sql.DB
+	BaseURL    string
+	DB         *sql.DB
 	LastStatus int
 	LastBody   map[string]any
 	LastRawBody []byte
 
 	// UUID lookups keyed by name (set by Given steps).
-	ExerciseUUIDs map[string]string
+	ExerciseUUIDs        map[string]string
+	ProgramUUIDs         map[string]string
+	WorkoutUUIDs         map[string]string
+	SectionUUIDs         map[string]string
+	SectionExerciseUUIDs map[string]string // keyed by "exerciseName:sectionName"
+
+	// Parent relationship maps for nested URL construction.
+	WorkoutProgramUUID map[string]string // workout name → program UUID
+	SectionWorkoutUUID map[string]string // section name → workout UUID
 
 	// Stores the UUID from the previous response for idempotency assertions.
 	PreviousUUID string
@@ -30,9 +38,15 @@ type TestClient struct {
 // NewTestClient creates a TestClient for a single scenario.
 func NewTestClient(baseURL string, db *sql.DB) *TestClient {
 	return &TestClient{
-		BaseURL:       baseURL,
-		DB:            db,
-		ExerciseUUIDs: make(map[string]string),
+		BaseURL:              baseURL,
+		DB:                   db,
+		ExerciseUUIDs:        make(map[string]string),
+		ProgramUUIDs:         make(map[string]string),
+		WorkoutUUIDs:         make(map[string]string),
+		SectionUUIDs:         make(map[string]string),
+		SectionExerciseUUIDs: make(map[string]string),
+		WorkoutProgramUUID:   make(map[string]string),
+		SectionWorkoutUUID:   make(map[string]string),
 	}
 }
 
