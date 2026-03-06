@@ -55,7 +55,16 @@ func InitializeProgramSteps(ctx *godog.ScenarioContext, client *TestClient) {
 // --- Program CRUD ---
 
 func (c *TestClient) iCreateAProgramWith(table *godog.Table) error {
-	body := tableToMap(table)
+	fields := tableToMap(table)
+	body := map[string]any{
+		"name": fields["name"],
+	}
+	if desc, ok := fields["description"]; ok && desc != "" {
+		body["description"] = desc
+	}
+	if it, ok := fields["is_template"]; ok {
+		body["is_template"] = parseBool(it, false)
+	}
 	return c.Post("/api/v1/programs", body)
 }
 

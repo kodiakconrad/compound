@@ -33,7 +33,46 @@ func (s *Server) registerRoutes() {
 			})
 		})
 
-		// Program routes (Step 3)
+		// Program routes
+		ph := handler.NewProgramHandler(s.store)
+		r.Route("/programs", func(r chi.Router) {
+			r.Get("/", ph.HandleListPrograms)
+			r.Post("/", ph.HandleCreateProgram)
+			r.Route("/{id}", func(r chi.Router) {
+				r.Get("/", ph.HandleGetProgram)
+				r.Put("/", ph.HandleUpdateProgram)
+				r.Delete("/", ph.HandleDeleteProgram)
+				r.Post("/copy", ph.HandleCopyProgram)
+
+				r.Route("/workouts", func(r chi.Router) {
+					r.Post("/", ph.HandleAddWorkout)
+					r.Put("/reorder", ph.HandleReorderWorkouts)
+					r.Route("/{wid}", func(r chi.Router) {
+						r.Put("/", ph.HandleUpdateWorkout)
+						r.Delete("/", ph.HandleDeleteWorkout)
+
+						r.Route("/sections", func(r chi.Router) {
+							r.Post("/", ph.HandleAddSection)
+							r.Put("/reorder", ph.HandleReorderSections)
+							r.Route("/{sid}", func(r chi.Router) {
+								r.Put("/", ph.HandleUpdateSection)
+								r.Delete("/", ph.HandleDeleteSection)
+
+								r.Route("/exercises", func(r chi.Router) {
+									r.Post("/", ph.HandleAddSectionExercise)
+									r.Put("/reorder", ph.HandleReorderSectionExercises)
+									r.Route("/{eid}", func(r chi.Router) {
+										r.Put("/", ph.HandleUpdateSectionExercise)
+										r.Delete("/", ph.HandleDeleteSectionExercise)
+									})
+								})
+							})
+						})
+					})
+				})
+			})
+		})
+
 		// Cycle routes (Step 4)
 		// Session routes (Step 4)
 		// Progress routes (Step 5)
