@@ -1,7 +1,6 @@
--- 001_initial.sql — Full schema for Compound workout tracker.
--- Timestamps use DATETIME type (stored as ISO 8601 text, UTC).
--- Booleans use BOOLEAN type (stored as INTEGER 0/1).
--- Integer PKs for performance, UUID columns for external/API references.
+-- Source of truth for sqlc. Keep in sync with internal/migration/*.sql files.
+-- Add new tables here whenever a new migration is added.
+-- Do NOT include the schema_migrations table — that is managed by the migration runner only.
 
 CREATE TABLE IF NOT EXISTS exercises (
     id              INTEGER  PRIMARY KEY AUTOINCREMENT,
