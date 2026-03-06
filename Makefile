@@ -1,4 +1,4 @@
-.PHONY: run build test vet seed reset-db
+.PHONY: run build test vet gen seed reset-db
 
 # Start the server
 run:
@@ -15,6 +15,10 @@ test:
 # Static analysis
 vet:
 	go vet ./...
+
+# Regenerate sqlc code from internal/db/query/*.sql
+gen:
+	sqlc generate
 
 # Seed exercises and prebuilt templates
 seed:
