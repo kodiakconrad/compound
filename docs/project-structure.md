@@ -13,8 +13,9 @@ File and package layout for the Compound Go backend.
   internal/
     domain/                  — pure domain: models, value objects, validation, errors
       exercise.go            — Exercise, TrackingType
-      program.go             — Program, ProgramWorkout
-      workout.go             — Section, SectionExercise, ProgressionRule
+      program.go             — Program (aggregate root)
+      workout.go             — ProgramWorkout, Section, SectionExercise
+      progression.go         — ProgressionStrategy, ProgressionRule
       cycle.go               — Cycle, Session, SetLog
       errors.go              — NotFoundError, ValidationError, ConflictError
 
@@ -22,7 +23,7 @@ File and package layout for the Compound Go backend.
       store.go               — Store struct, DBTX interface, WithTx helper
       exercise_store.go
       program_store.go
-      workout_store.go
+      workout_store.go       — workouts, sections, section exercises
       cycle_store.go
       session_store.go
       progress_store.go
@@ -30,15 +31,19 @@ File and package layout for the Compound Go backend.
     handler/                 — HTTP layer (depends on: domain, store)
       handler.go             — shared helpers: respond, decode, error mapping
       exercise_handler.go
-      program_handler.go
-      workout_handler.go
+      program_handler.go     — ProgramHandler struct + program CRUD
+      workout_handler.go     — workout CRUD + reorder
+      section_handler.go     — section CRUD + reorder
+      section_exercise_handler.go — section exercise CRUD + reorder
       cycle_handler.go
       session_handler.go
       progress_handler.go
       dto/                   — request/response types
-        common.go            — FieldError
+        common.go            — FieldError, Validator interface
         exercise.go
-        program.go
+        program.go           — program request/response DTOs
+        workout.go           — workout, section, section exercise DTOs
+        progression.go       — progression rule DTO
         cycle.go
         session.go
       middleware/             — chi middleware
@@ -83,6 +88,33 @@ seed       → store → domain
 ```
 
 Dependencies flow inward toward `domain`. The domain package has zero internal dependencies — it is pure business logic.
+
+### File Granularity — One File Per Domain Object
+
+Within each layer, split files by domain object — not by layer. A single file should contain one type (or one tight cluster of related types) and its associated logic.
+
+**In `domain/`**: one file per domain type or value object cluster.
+```
+program.go       — Program aggregate root
+workout.go       — ProgramWorkout, Section, SectionExercise (all workout-tree nodes)
+progression.go   — ProgressionStrategy value object + ProgressionRule entity
+```
+
+**In `store/`**: one file per aggregate or closely related store operations.
+
+**In `handler/`**: one file per handler concern. The struct and constructor live in the primary file; each sub-resource gets its own file.
+```
+program_handler.go          — ProgramHandler struct + program CRUD
+workout_handler.go          — workout endpoints
+section_handler.go          — section endpoints
+section_exercise_handler.go — section exercise endpoints
+```
+
+**In `handler/dto/`**: mirrors the domain split — one DTO file per domain object.
+
+**Test files follow the same split** — `workout_test.go` tests types from `workout.go`, `progression_test.go` tests types from `progression.go`, and so on.
+
+This keeps files focused and easy to navigate, especially coming from languages where one class = one file.
 
 ### Why Hybrid Over Package-by-Feature
 
