@@ -71,6 +71,7 @@ func TestFeatures(t *testing.T) {
 		Options: &godog.Options{
 			Format:   "pretty",
 			Paths:    []string{"features"},
+			Tags:     "~@wip",
 			TestingT: t,
 		},
 	}

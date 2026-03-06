@@ -6,44 +6,44 @@ BDD-first development with acceptance tests at the HTTP API level, supported by 
 
 When building a new feature, follow this order:
 
-### 1. Write Acceptance Tests (Cucumber)
+### 1. Write Acceptance Tests (Cucumber) — tagged `@wip`
 
-Start by defining the user-facing behavior in Gherkin:
+Start by defining the user-facing behavior in Gherkin. Tag the entire feature with `@wip` so the suite skips it while the implementation is in progress:
 
 ```gherkin
+@wip
 Feature: Exercise Management
 
   Scenario: Create a custom exercise
     When I create an exercise with:
-      | name           | Bulgarian Split Squat |
-      | muscle_group   | legs                  |
-      | equipment      | dumbbell              |
-      | tracking_type  | weight_reps           |
+      | name                  | muscle_group | equipment | tracking_type |
+      | Bulgarian Split Squat | legs         | dumbbell  | weight_reps   |
     Then the response status should be 201
     And the response should include:
-      | name           | Bulgarian Split Squat |
-      | tracking_type  | weight_reps           |
-    And the exercise should have a uuid
+      | name                  | tracking_type |
+      | Bulgarian Split Squat | weight_reps   |
+    And the response should have a uuid
 
   Scenario: Cannot create exercise without a name
     When I create an exercise with:
-      | muscle_group | chest |
+      | muscle_group |
+      | chest        |
     Then the response status should be 400
-    And the response should include error "name"
+    And the response should have error code "validation_failed"
+    And the response should have field error "name"
 
   Scenario: List exercises filtered by muscle group
     Given the following exercises exist:
-      | name         | muscle_group |
-      | Bench Press  | chest        |
-      | Squat        | legs         |
-      | Deadlift     | back         |
+      | name        | muscle_group |
+      | Bench Press | chest        |
+      | Squat       | legs         |
+      | Deadlift    | back         |
     When I list exercises with muscle_group "chest"
     Then the response status should be 200
     And the response should contain 1 exercise
-    And the response should include exercise "Bench Press"
 ```
 
-These tests will fail — no code exists yet. That's the point.
+The `@wip` tag tells the godog suite to skip these scenarios. `make test` stays green while the feature is being built.
 
 ### 2. Build the Feature
 
@@ -55,7 +55,9 @@ Work through the layers to make the acceptance tests pass:
 4. **Handler** — wire up the HTTP endpoint (decode → validate → store → respond)
 5. **Route** — register in `routes.go`
 
-Run `make test` after each layer to see progress. Acceptance tests go from failing → partially passing → fully green.
+### 3. Enable the Tests
+
+When the feature is complete, remove `@wip` from the feature file and run `make test` to confirm all scenarios pass before opening a PR.
 
 ### 3. Add Unit Tests for Complex Logic
 
@@ -129,6 +131,27 @@ func TestFeatures(t *testing.T) {
 - Step definitions are thin — they make HTTP calls and check responses
 - Use data tables for structured input/output
 - Scenarios describe user intent, not implementation details
+- Tag new feature files with `@wip` until the feature is fully implemented
+
+**Data table format — always use header rows, not header columns:**
+
+Header rows (correct):
+```gherkin
+Given the following exercises exist:
+  | name        | muscle_group | tracking_type |
+  | Bench Press | chest        | weight_reps   |
+  | Squat       | legs         | weight_reps   |
+```
+
+Header columns (do not use):
+```gherkin
+Given the following exercises exist:
+  | name          | Bench Press |
+  | muscle_group  | chest       |
+  | tracking_type | weight_reps |
+```
+
+Header rows allow multiple rows per table and keep step definitions consistent — `tableToMapSlice` always returns a slice, even for single-row tables.
 
 ### Integration Tests (Store Layer)
 
