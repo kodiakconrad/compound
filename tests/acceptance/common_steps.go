@@ -14,14 +14,22 @@ import (
 
 // TestClient holds state for a single scenario.
 type TestClient struct {
-	BaseURL  string
-	DB       *sql.DB
+	BaseURL    string
+	DB         *sql.DB
 	LastStatus int
 	LastBody   map[string]any
 	LastRawBody []byte
 
 	// UUID lookups keyed by name (set by Given steps).
-	ExerciseUUIDs map[string]string
+	ExerciseUUIDs        map[string]string
+	ProgramUUIDs         map[string]string
+	WorkoutUUIDs         map[string]string
+	SectionUUIDs         map[string]string
+	SectionExerciseUUIDs map[string]string // keyed by "exerciseName:sectionName"
+
+	// Parent relationship maps for nested URL construction.
+	WorkoutProgramUUID map[string]string // workout name → program UUID
+	SectionWorkoutUUID map[string]string // section name → workout UUID
 
 	// Stores the UUID from the previous response for idempotency assertions.
 	PreviousUUID string
@@ -30,9 +38,15 @@ type TestClient struct {
 // NewTestClient creates a TestClient for a single scenario.
 func NewTestClient(baseURL string, db *sql.DB) *TestClient {
 	return &TestClient{
-		BaseURL:       baseURL,
-		DB:            db,
-		ExerciseUUIDs: make(map[string]string),
+		BaseURL:              baseURL,
+		DB:                   db,
+		ExerciseUUIDs:        make(map[string]string),
+		ProgramUUIDs:         make(map[string]string),
+		WorkoutUUIDs:         make(map[string]string),
+		SectionUUIDs:         make(map[string]string),
+		SectionExerciseUUIDs: make(map[string]string),
+		WorkoutProgramUUID:   make(map[string]string),
+		SectionWorkoutUUID:   make(map[string]string),
 	}
 }
 
@@ -185,12 +199,8 @@ func (c *TestClient) theResponseShouldInclude(table *godog.Table) error {
 	if err != nil {
 		return err
 	}
-	for _, row := range table.Rows {
-		if len(row.Cells) != 2 {
-			continue
-		}
-		key := row.Cells[0].Value
-		expected := row.Cells[1].Value
+	fields := tableToMap(table)
+	for key, expected := range fields {
 		actual := fmt.Sprintf("%v", data[key])
 		if actual != expected {
 			return fmt.Errorf("expected %s=%q, got %q", key, expected, actual)
@@ -225,15 +235,14 @@ func (c *TestClient) dataArray() ([]any, error) {
 	return data, nil
 }
 
-// tableToMap converts a 2-column godog table to a map[string]string.
+// tableToMap converts a godog table with a header row and a single data row
+// into a map[string]string keyed by header names.
 func tableToMap(table *godog.Table) map[string]string {
-	m := make(map[string]string)
-	for _, row := range table.Rows {
-		if len(row.Cells) == 2 {
-			m[row.Cells[0].Value] = row.Cells[1].Value
-		}
+	rows := tableToMapSlice(table)
+	if len(rows) == 0 {
+		return make(map[string]string)
 	}
-	return m
+	return rows[0]
 }
 
 // tableToMapSlice converts a godog table with a header row to a slice of maps.

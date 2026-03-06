@@ -66,10 +66,12 @@ func TestFeatures(t *testing.T) {
 
 			InitializeCommonSteps(ctx, client)
 			InitializeExerciseSteps(ctx, client)
+			InitializeProgramSteps(ctx, client)
 		},
 		Options: &godog.Options{
 			Format:   "pretty",
 			Paths:    []string{"features"},
+			Tags:     "~@wip",
 			TestingT: t,
 		},
 	}
