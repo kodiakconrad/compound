@@ -1,6 +1,8 @@
 package store
 
 import (
+	"time"
+
 	dbgen "compound/internal/db"
 	"compound/internal/domain"
 )
@@ -166,6 +168,66 @@ func mapSetLog(row dbgen.SetLog) *domain.SetLog {
 		CompletedAt:       row.CompletedAt,
 		CreatedAt:         row.CreatedAt,
 	}
+}
+
+// mapHistoryEntryPage converts a GetExerciseHistoryPageRow to a domain HistoryEntry.
+func mapHistoryEntryPage(row dbgen.GetExerciseHistoryPageRow) *domain.HistoryEntry {
+	return &domain.HistoryEntry{
+		SessionID:   row.ID,
+		SessionUUID: row.Uuid,
+		CompletedAt: derefTime(row.CompletedAt),
+		Weight:      interfaceToFloat64(row.Weight),
+	}
+}
+
+// mapHistoryEntryPageAfter converts a GetExerciseHistoryPageAfterRow to a domain HistoryEntry.
+func mapHistoryEntryPageAfter(row dbgen.GetExerciseHistoryPageAfterRow) *domain.HistoryEntry {
+	return &domain.HistoryEntry{
+		SessionID:   row.ID,
+		SessionUUID: row.Uuid,
+		CompletedAt: derefTime(row.CompletedAt),
+		Weight:      interfaceToFloat64(row.Weight),
+	}
+}
+
+// mapPersonalRecord converts a GetPersonalRecordRow to a domain PersonalRecord.
+func mapPersonalRecord(row dbgen.GetPersonalRecordRow) *domain.PersonalRecord {
+	pr := &domain.PersonalRecord{
+		Weight:      derefFloat64(row.Weight),
+		SessionUUID: row.Uuid,
+		CompletedAt: derefTime(row.CompletedAt),
+	}
+	if row.ActualReps != nil {
+		v := int(*row.ActualReps)
+		pr.ActualReps = &v
+	}
+	return pr
+}
+
+// derefTime dereferences a *time.Time safely, returning zero value if nil.
+func derefTime(t *time.Time) time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return *t
+}
+
+// derefFloat64 dereferences a *float64 safely, returning 0 if nil.
+func derefFloat64(v *float64) float64 {
+	if v == nil {
+		return 0
+	}
+	return *v
+}
+
+// interfaceToFloat64 converts an interface{} from a sqlc aggregate column to float64.
+// SQLite returns REAL aggregates as float64.
+func interfaceToFloat64(v interface{}) float64 {
+	if v == nil {
+		return 0
+	}
+	f, _ := v.(float64)
+	return f
 }
 
 // ptrInt64ToInt converts *int64 to *int.
