@@ -15,7 +15,7 @@ internal/store/
   mapper.go             — dbgen → domain mapper functions
   cycle_store.go        — CreateCycle, GetCycle, ListCycles, UpdateCycle
   session_store.go      — CreateSession, GetSession, UpdateSession, LogSet
-  progress_store.go     — GetExerciseHistory, GetPersonalRecords, GetSummary
+  progress_store.go     — GetExerciseHistory, GetPersonalRecord, GetProgressSummary
 
 internal/db/
   schema.sql            — sqlc schema (kept in sync with migration files)
@@ -23,11 +23,17 @@ internal/db/
     exercises.sql       — named SQL queries for exercises
     programs.sql        — named SQL queries for programs
     workouts.sql        — named SQL queries for workouts, sections, section exercises, progression rules
+    cycles.sql          — named SQL queries for cycles
+    sessions.sql        — named SQL queries for sessions and set_logs
+    progress.sql        — named SQL queries for history, personal records, summary
   db.go                 — generated (do not edit)
   models.go             — generated (do not edit)
   exercises.sql.go      — generated (do not edit)
   programs.sql.go       — generated (do not edit)
   workouts.sql.go       — generated (do not edit)
+  cycles.sql.go         — generated (do not edit)
+  sessions.sql.go       — generated (do not edit)
+  progress.sql.go       — generated (do not edit)
 ```
 
 ```go
