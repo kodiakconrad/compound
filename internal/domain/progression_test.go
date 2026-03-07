@@ -172,10 +172,10 @@ func TestProgressionRule_NextWeight(t *testing.T) {
 			expected: 160,
 		},
 		{
-			name:     "no deload below threshold",
+			name:     "hold on failure below threshold",
 			rule:     ProgressionRule{Strategy: ProgressionLinear, Increment: &inc, DeloadThreshold: 3, DeloadPct: 10},
 			current:  100, failures: 2,
-			expected: 105,
+			expected: 100,
 		},
 	}
 	for _, tt := range tests {

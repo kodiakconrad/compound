@@ -33,6 +33,16 @@ type TestClient struct {
 
 	// Stores the UUID from the previous response for idempotency assertions.
 	PreviousUUID string
+
+	// Cycle and session tracking (Step 4).
+	CycleUUIDs            map[string]string // program name → cycle UUID (most recent)
+	SessionsByWorkoutName map[string]string // workout name → session UUID (in current cycle)
+	CurrentCycleUUID      string
+	CurrentSessionUUID    string
+
+	// Set log tracking.
+	LastSetLogUUID         string
+	LastSetLogExerciseUUID string
 }
 
 // NewTestClient creates a TestClient for a single scenario.
@@ -47,6 +57,8 @@ func NewTestClient(baseURL string, db *sql.DB) *TestClient {
 		SectionExerciseUUIDs: make(map[string]string),
 		WorkoutProgramUUID:   make(map[string]string),
 		SectionWorkoutUUID:   make(map[string]string),
+		CycleUUIDs:            make(map[string]string),
+		SessionsByWorkoutName: make(map[string]string),
 	}
 }
 

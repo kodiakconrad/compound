@@ -117,6 +117,57 @@ func mapProgressionRule(row dbgen.ProgressionRule) *domain.ProgressionRule {
 	}
 }
 
+// mapCycle converts a dbgen.Cycle to a domain Cycle (no sessions).
+func mapCycle(row dbgen.Cycle) *domain.Cycle {
+	return &domain.Cycle{
+		ID:          row.ID,
+		UUID:        row.Uuid,
+		ProgramID:   row.ProgramID,
+		Status:      domain.CycleStatus(row.Status),
+		StartedAt:   row.StartedAt,
+		CompletedAt: row.CompletedAt,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
+	}
+}
+
+// mapSession converts a dbgen.Session to a domain Session (no set_logs).
+func mapSession(row dbgen.Session) *domain.Session {
+	return &domain.Session{
+		ID:               row.ID,
+		UUID:             row.Uuid,
+		CycleID:          row.CycleID,
+		ProgramWorkoutID: row.ProgramWorkoutID,
+		SortOrder:        int(row.SortOrder),
+		Status:           domain.SessionStatus(row.Status),
+		StartedAt:        row.StartedAt,
+		CompletedAt:      row.CompletedAt,
+		Notes:            row.Notes,
+		CreatedAt:        row.CreatedAt,
+		UpdatedAt:        row.UpdatedAt,
+	}
+}
+
+// mapSetLog converts a dbgen.SetLog to a domain SetLog.
+func mapSetLog(row dbgen.SetLog) *domain.SetLog {
+	return &domain.SetLog{
+		ID:                row.ID,
+		UUID:              row.Uuid,
+		SessionID:         row.SessionID,
+		ExerciseID:        row.ExerciseID,
+		SectionExerciseID: row.SectionExerciseID,
+		SetNumber:         int(row.SetNumber),
+		TargetReps:        ptrInt64ToInt(row.TargetReps),
+		ActualReps:        ptrInt64ToInt(row.ActualReps),
+		Weight:            row.Weight,
+		Duration:          ptrInt64ToInt(row.Duration),
+		Distance:          row.Distance,
+		RPE:               row.Rpe,
+		CompletedAt:       row.CompletedAt,
+		CreatedAt:         row.CreatedAt,
+	}
+}
+
 // ptrInt64ToInt converts *int64 to *int.
 func ptrInt64ToInt(v *int64) *int {
 	if v == nil {
