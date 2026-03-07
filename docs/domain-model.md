@@ -333,13 +333,17 @@ in_progress → skipped
 **Target weight calculation:**
 When a session starts, the system calculates the target weight for each exercise:
 1. Look up the `ProgressionRule` for the `SectionExercise`
-2. Query `set_logs` from the most recent completed session in the **same cycle** for the same `section_exercise_id`
-3. Check if the user hit all target reps: every set must have `actual_reps >= target_reps`
-4. Count consecutive failures by walking back through prior sessions in the cycle
-5. Apply `ProgressionRule.NextWeight()`
+2. Query `set_logs` across **all cycles** for the same `section_exercise_id`, ordered by `completed_at DESC`
+3. The most recent completed session's set_logs provide `current` weight
+4. Check if the user hit all target reps: every set must have `actual_reps >= target_reps`
+5. Count consecutive failures by walking back through sessions (across all cycles) ordered by `completed_at DESC`
+6. Apply `ProgressionRule.NextWeight()`
+
+**Progression scope: cross-cycle**
+Progression is tracked per `section_exercise_id` across all cycles, not just the current one. This means: if a user completes a cycle with a successful last session at 135 lb, the next cycle's first session starts at 140 lb (with a +5 linear rule). Failure streaks also carry across cycle boundaries.
 
 **Consecutive failure tracking:**
-Computed from `set_logs` at session completion — no separate counter stored. Scoped to the cycle via the `session_id → cycle_id` join chain.
+Computed from `set_logs` at session completion — no separate counter stored. Sessions are ordered by `completed_at DESC` across all cycles for the same `section_exercise_id`. Skipped sessions are neutral and do not count as failures or break a streak.
 
 **`ProgressionRule.NextWeight()`:**
 ```go

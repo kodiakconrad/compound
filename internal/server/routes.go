@@ -74,7 +74,28 @@ func (s *Server) registerRoutes() {
 		})
 
 		// Cycle routes (Step 4)
-		// Session routes (Step 4)
+		ch := handler.NewCycleHandler(s.store)
+		sh := handler.NewSessionHandler(s.store)
+
+		r.Post("/programs/{id}/start", ch.HandleStartCycle)
+
+		r.Route("/cycles", func(r chi.Router) {
+			r.Get("/", ch.HandleListCycles)
+			r.Route("/{cycleID}", func(r chi.Router) {
+				r.Get("/", ch.HandleGetCycle)
+				r.Put("/", ch.HandleUpdateCycle)
+
+				// Session routes (Step 4)
+				r.Route("/sessions/{sessionID}", func(r chi.Router) {
+					r.Get("/", sh.HandleGetSession)
+					r.Post("/start", sh.HandleStartSession)
+					r.Post("/sets", sh.HandleLogSet)
+					r.Put("/complete", sh.HandleCompleteSession)
+					r.Put("/skip", sh.HandleSkipSession)
+				})
+			})
+		})
+
 		// Progress routes (Step 5)
 	})
 }
