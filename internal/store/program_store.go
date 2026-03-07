@@ -3,10 +3,12 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	dbgen "compound/internal/db"
 	"compound/internal/domain"
 
 	"github.com/google/uuid"
@@ -14,97 +16,75 @@ import (
 
 // --- Program CRUD ---
 
-// CreateProgram inserts a new program. UUID and timestamps are generated
-// automatically. The program's ID, UUID, CreatedAt, and UpdatedAt fields
-// are populated on return.
 func (s *Store) CreateProgram(ctx context.Context, db DBTX, p *domain.Program) error {
 	p.UUID = uuid.NewString()
 	now := time.Now().UTC()
 	p.CreatedAt = now
 	p.UpdatedAt = now
 
-	result, err := db.ExecContext(ctx,
-		`INSERT INTO programs (uuid, name, description, is_template, is_prebuilt, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		p.UUID, p.Name, p.Description,
-		boolToInt(p.IsTemplate), boolToInt(p.IsPrebuilt),
-		p.CreatedAt.Format(time.RFC3339), p.UpdatedAt.Format(time.RFC3339),
-	)
+	result, err := dbgen.New(db).InsertProgram(ctx, dbgen.InsertProgramParams{
+		Uuid:        p.UUID,
+		Name:        p.Name,
+		Description: p.Description,
+		IsTemplate:  p.IsTemplate,
+		IsPrebuilt:  p.IsPrebuilt,
+		CreatedAt:   p.CreatedAt,
+		UpdatedAt:   p.UpdatedAt,
+	})
 	if err != nil {
 		return err
 	}
-	id, _ := result.LastInsertId()
-	p.ID = id
+	p.ID, _ = result.LastInsertId()
 	return nil
 }
 
-// GetProgramByUUID retrieves a single non-deleted program by UUID (metadata only, no tree).
 func (s *Store) GetProgramByUUID(ctx context.Context, db DBTX, id string) (*domain.Program, error) {
-	row := db.QueryRowContext(ctx,
-		`SELECT id, uuid, name, description, is_template, is_prebuilt,
-		        created_at, updated_at
-		 FROM programs
-		 WHERE uuid = ? AND deleted_at IS NULL`, id)
-
-	p, err := scanProgram(row)
-	if err != nil {
+	row, err := dbgen.New(db).GetProgramByUUID(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, domain.NewNotFoundError("program", id)
 	}
-	return p, nil
+	if err != nil {
+		return nil, err
+	}
+	return mapProgram(row), nil
 }
 
-// GetProgramInternalID resolves a program UUID to its integer ID.
 func (s *Store) GetProgramInternalID(ctx context.Context, db DBTX, id string) (int64, error) {
-	var programID int64
-	err := db.QueryRowContext(ctx,
-		`SELECT id FROM programs WHERE uuid = ? AND deleted_at IS NULL`, id,
-	).Scan(&programID)
-	if err != nil {
+	programID, err := dbgen.New(db).GetProgramInternalID(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
 		return 0, domain.NewNotFoundError("program", id)
+	}
+	if err != nil {
+		return 0, err
 	}
 	return programID, nil
 }
 
-// GetProgramWithTree retrieves a program with its full tree (workouts → sections →
-// section_exercises → progression_rules) using sequential queries assembled in memory.
 func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*domain.Program, error) {
-	// 1. Load program.
 	p, err := s.GetProgramByUUID(ctx, db, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Load workouts.
-	wRows, err := db.QueryContext(ctx,
-		`SELECT id, uuid, program_id, name, day_number, sort_order, created_at, updated_at
-		 FROM program_workouts
-		 WHERE program_id = ?
-		 ORDER BY sort_order`, p.ID)
+	workoutRows, err := dbgen.New(db).GetWorkoutsForProgram(ctx, p.ID)
 	if err != nil {
 		return nil, err
 	}
-	defer wRows.Close()
 
 	var workoutIDs []int64
 	workoutMap := make(map[int64]*domain.ProgramWorkout)
-	for wRows.Next() {
-		w, err := scanProgramWorkoutRows(wRows)
-		if err != nil {
-			return nil, err
-		}
+	for _, wr := range workoutRows {
+		w := mapWorkout(wr)
 		p.Workouts = append(p.Workouts, w)
 		workoutIDs = append(workoutIDs, w.ID)
 		workoutMap[w.ID] = w
-	}
-	if err := wRows.Err(); err != nil {
-		return nil, err
 	}
 
 	if len(workoutIDs) == 0 {
 		return p, nil
 	}
 
-	// 3. Load sections.
+	// Sections — IN clause stays raw SQL.
 	sQuery := fmt.Sprintf(
 		`SELECT id, uuid, program_workout_id, name, sort_order, rest_seconds, created_at, updated_at
 		 FROM sections
@@ -121,9 +101,20 @@ func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*do
 	var sectionIDs []int64
 	sectionMap := make(map[int64]*domain.Section)
 	for sRows.Next() {
-		sec, err := scanSectionRows(sRows)
-		if err != nil {
+		var secID, programWorkoutID int64
+		var secUUID, name string
+		var sortOrder int64
+		var restSeconds *int64
+		var createdAt, updatedAt time.Time
+
+		if err := sRows.Scan(&secID, &secUUID, &programWorkoutID, &name,
+			&sortOrder, &restSeconds, &createdAt, &updatedAt); err != nil {
 			return nil, err
+		}
+		sec := &domain.Section{
+			ID: secID, UUID: secUUID, ProgramWorkoutID: programWorkoutID,
+			Name: name, SortOrder: int(sortOrder), RestSeconds: ptrInt64ToInt(restSeconds),
+			CreatedAt: createdAt, UpdatedAt: updatedAt,
 		}
 		if w, ok := workoutMap[sec.ProgramWorkoutID]; ok {
 			w.Sections = append(w.Sections, sec)
@@ -139,7 +130,7 @@ func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*do
 		return p, nil
 	}
 
-	// 4. Load section exercises (with exercise name/uuid via JOIN).
+	// Section exercises with JOIN — IN clause stays raw SQL.
 	seQuery := fmt.Sprintf(
 		`SELECT se.id, se.uuid, se.section_id, se.exercise_id,
 		        se.target_sets, se.target_reps, se.target_weight,
@@ -161,9 +152,30 @@ func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*do
 	var seIDs []int64
 	seMap := make(map[int64]*domain.SectionExercise)
 	for seRows.Next() {
-		se, err := scanSectionExerciseWithExerciseRows(seRows)
-		if err != nil {
+		var seID, sectionID, exerciseID int64
+		var seUUID, exerciseUUID, exerciseName string
+		var targetSets, targetReps, targetDuration *int64
+		var targetWeight, targetDistance *float64
+		var sortOrder int64
+		var notes *string
+		var createdAt, updatedAt time.Time
+
+		if err := seRows.Scan(
+			&seID, &seUUID, &sectionID, &exerciseID,
+			&targetSets, &targetReps, &targetWeight,
+			&targetDuration, &targetDistance,
+			&sortOrder, &notes, &createdAt, &updatedAt,
+			&exerciseUUID, &exerciseName,
+		); err != nil {
 			return nil, err
+		}
+		se := &domain.SectionExercise{
+			ID: seID, UUID: seUUID, SectionID: sectionID, ExerciseID: exerciseID,
+			ExerciseUUID: exerciseUUID, ExerciseName: exerciseName,
+			TargetSets: ptrInt64ToInt(targetSets), TargetReps: ptrInt64ToInt(targetReps),
+			TargetWeight: targetWeight, TargetDuration: ptrInt64ToInt(targetDuration),
+			TargetDistance: targetDistance, SortOrder: int(sortOrder), Notes: notes,
+			CreatedAt: createdAt, UpdatedAt: updatedAt,
 		}
 		if sec, ok := sectionMap[se.SectionID]; ok {
 			sec.Exercises = append(sec.Exercises, se)
@@ -179,7 +191,7 @@ func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*do
 		return p, nil
 	}
 
-	// 5. Load progression rules.
+	// Progression rules — IN clause stays raw SQL.
 	prQuery := fmt.Sprintf(
 		`SELECT id, uuid, section_exercise_id, strategy,
 		        increment, increment_pct, deload_threshold, deload_pct,
@@ -195,9 +207,26 @@ func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*do
 	defer prRows.Close()
 
 	for prRows.Next() {
-		pr, err := scanProgressionRuleRows(prRows)
-		if err != nil {
+		var prID, sectionExerciseID int64
+		var prUUID, strategy string
+		var increment, incrementPct *float64
+		var deloadThreshold int64
+		var deloadPct float64
+		var createdAt, updatedAt time.Time
+
+		if err := prRows.Scan(
+			&prID, &prUUID, &sectionExerciseID, &strategy,
+			&increment, &incrementPct, &deloadThreshold, &deloadPct,
+			&createdAt, &updatedAt,
+		); err != nil {
 			return nil, err
+		}
+		pr := &domain.ProgressionRule{
+			ID: prID, UUID: prUUID, SectionExerciseID: sectionExerciseID,
+			Strategy: domain.ProgressionStrategy(strategy),
+			Increment: increment, IncrementPct: incrementPct,
+			DeloadThreshold: int(deloadThreshold), DeloadPct: deloadPct,
+			CreatedAt: createdAt, UpdatedAt: updatedAt,
 		}
 		if se, ok := seMap[pr.SectionExerciseID]; ok {
 			se.ProgressionRule = pr
@@ -213,13 +242,12 @@ func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*do
 // ProgramListParams holds filter/sort/pagination options for listing programs.
 type ProgramListParams struct {
 	IsTemplate *bool
-	Sort       string // "name" or "updated_at" (default: "updated_at")
-	Order      string // "asc" or "desc" (default: "desc")
+	Sort       string
+	Order      string
 	Limit      int
 	Cursor     *int64
 }
 
-// ListPrograms returns paginated, filtered programs (metadata only).
 func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) ([]*domain.Program, bool, error) {
 	var conditions []string
 	var args []any
@@ -228,7 +256,7 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 
 	if p.IsTemplate != nil {
 		conditions = append(conditions, "is_template = ?")
-		args = append(args, boolToInt(*p.IsTemplate))
+		args = append(args, *p.IsTemplate)
 	}
 	if p.Cursor != nil {
 		conditions = append(conditions, "id > ?")
@@ -263,11 +291,23 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 
 	var programs []*domain.Program
 	for rows.Next() {
-		prog, err := scanProgramRows(rows)
-		if err != nil {
+		var prog domain.Program
+		var description *string
+		var isTemplate, isPrebuilt bool
+		var createdAt, updatedAt time.Time
+
+		if err := rows.Scan(
+			&prog.ID, &prog.UUID, &prog.Name, &description,
+			&isTemplate, &isPrebuilt, &createdAt, &updatedAt,
+		); err != nil {
 			return nil, false, err
 		}
-		programs = append(programs, prog)
+		prog.Description = description
+		prog.IsTemplate = isTemplate
+		prog.IsPrebuilt = isPrebuilt
+		prog.CreatedAt = createdAt
+		prog.UpdatedAt = updatedAt
+		programs = append(programs, &prog)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, false, err
@@ -280,17 +320,16 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 	return programs, hasMore, nil
 }
 
-// UpdateProgram updates a non-deleted program's metadata by UUID.
 func (s *Store) UpdateProgram(ctx context.Context, db DBTX, id string, p *domain.Program) error {
 	now := time.Now().UTC()
 	p.UpdatedAt = now
 
-	result, err := db.ExecContext(ctx,
-		`UPDATE programs
-		 SET name = ?, description = ?, updated_at = ?
-		 WHERE uuid = ? AND deleted_at IS NULL`,
-		p.Name, p.Description, p.UpdatedAt.Format(time.RFC3339), id,
-	)
+	result, err := dbgen.New(db).UpdateProgram(ctx, dbgen.UpdateProgramParams{
+		Name:        p.Name,
+		Description: p.Description,
+		UpdatedAt:   p.UpdatedAt,
+		Uuid:        id,
+	})
 	if err != nil {
 		return err
 	}
@@ -301,14 +340,13 @@ func (s *Store) UpdateProgram(ctx context.Context, db DBTX, id string, p *domain
 	return nil
 }
 
-// DeleteProgram soft-deletes a non-deleted program by UUID.
 func (s *Store) DeleteProgram(ctx context.Context, db DBTX, id string) error {
 	now := time.Now().UTC()
-	result, err := db.ExecContext(ctx,
-		`UPDATE programs SET deleted_at = ?, updated_at = ?
-		 WHERE uuid = ? AND deleted_at IS NULL`,
-		now.Format(time.RFC3339), now.Format(time.RFC3339), id,
-	)
+	result, err := dbgen.New(db).SoftDeleteProgram(ctx, dbgen.SoftDeleteProgramParams{
+		DeletedAt: &now,
+		UpdatedAt: now,
+		Uuid:      id,
+	})
 	if err != nil {
 		return err
 	}
@@ -319,58 +357,44 @@ func (s *Store) DeleteProgram(ctx context.Context, db DBTX, id string) error {
 	return nil
 }
 
-// HasActiveCycle returns true if the program has at least one active cycle.
 func (s *Store) HasActiveCycle(ctx context.Context, db DBTX, programID int64) (bool, error) {
-	var count int
-	err := db.QueryRowContext(ctx,
-		`SELECT COUNT(*) FROM cycles WHERE program_id = ? AND status = 'active'`,
-		programID,
-	).Scan(&count)
+	count, err := dbgen.New(db).HasActiveCycle(ctx, programID)
 	if err != nil {
 		return false, err
 	}
 	return count > 0, nil
 }
 
-// CopyProgram deep copies a program (or template) into a new independent program.
-// Must be called inside a transaction.
 func (s *Store) CopyProgram(ctx context.Context, db DBTX, sourceUUID string) (*domain.Program, error) {
-	// Load source with full tree.
 	source, err := s.GetProgramWithTree(ctx, db, sourceUUID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create domain-level copy.
 	cp := source.DeepCopy()
 
-	// Insert program.
 	if err := s.CreateProgram(ctx, db, cp); err != nil {
 		return nil, err
 	}
 
-	// Insert workouts.
 	for _, w := range cp.Workouts {
 		w.ProgramID = cp.ID
 		if err := s.CreateWorkout(ctx, db, w); err != nil {
 			return nil, err
 		}
 
-		// Insert sections.
 		for _, sec := range w.Sections {
 			sec.ProgramWorkoutID = w.ID
 			if err := s.CreateSection(ctx, db, sec); err != nil {
 				return nil, err
 			}
 
-			// Insert section exercises.
 			for _, se := range sec.Exercises {
 				se.SectionID = sec.ID
 				if err := s.CreateSectionExercise(ctx, db, se); err != nil {
 					return nil, err
 				}
 
-				// Insert progression rule.
 				if se.ProgressionRule != nil {
 					se.ProgressionRule.SectionExerciseID = se.ID
 					if err := s.CreateProgressionRule(ctx, db, se.ProgressionRule); err != nil {
@@ -381,61 +405,11 @@ func (s *Store) CopyProgram(ctx context.Context, db DBTX, sourceUUID string) (*d
 		}
 	}
 
-	// Re-load the full tree for the response.
 	return s.GetProgramWithTree(ctx, db, cp.UUID)
-}
-
-// --- Scan helpers ---
-
-func scanProgram(row *sql.Row) (*domain.Program, error) {
-	var p domain.Program
-	var description sql.NullString
-	var isTemplate, isPrebuilt int
-	var createdAt, updatedAt string
-
-	err := row.Scan(
-		&p.ID, &p.UUID, &p.Name, &description,
-		&isTemplate, &isPrebuilt, &createdAt, &updatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	populateProgram(&p, description, isTemplate, isPrebuilt, createdAt, updatedAt)
-	return &p, nil
-}
-
-func scanProgramRows(rows *sql.Rows) (*domain.Program, error) {
-	var p domain.Program
-	var description sql.NullString
-	var isTemplate, isPrebuilt int
-	var createdAt, updatedAt string
-
-	err := rows.Scan(
-		&p.ID, &p.UUID, &p.Name, &description,
-		&isTemplate, &isPrebuilt, &createdAt, &updatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	populateProgram(&p, description, isTemplate, isPrebuilt, createdAt, updatedAt)
-	return &p, nil
-}
-
-func populateProgram(p *domain.Program, description sql.NullString, isTemplate, isPrebuilt int, createdAt, updatedAt string) {
-	p.IsTemplate = isTemplate == 1
-	p.IsPrebuilt = isPrebuilt == 1
-	if description.Valid {
-		p.Description = &description.String
-	}
-	p.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-	p.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
 }
 
 // --- Query helpers ---
 
-// placeholders returns a comma-separated string of "?" placeholders.
 func placeholders(n int) string {
 	if n <= 0 {
 		return ""
@@ -443,7 +417,6 @@ func placeholders(n int) string {
 	return strings.Repeat("?,", n-1) + "?"
 }
 
-// int64sToAny converts a slice of int64 to []any for use with QueryContext.
 func int64sToAny(ids []int64) []any {
 	args := make([]any, len(ids))
 	for i, id := range ids {

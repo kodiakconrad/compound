@@ -23,7 +23,7 @@ var testDB *sql.DB
 
 func TestFeatures(t *testing.T) {
 	// Set up in-memory SQLite database.
-	db, err := sql.Open("sqlite", ":memory:")
+	db, err := sql.Open("sqlite", ":memory:?_loc=UTC")
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
 	}

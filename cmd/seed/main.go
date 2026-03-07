@@ -22,7 +22,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err := sql.Open("sqlite", cfg.Database.Path)
+	db, err := sql.Open("sqlite", cfg.Database.Path+"?_loc=UTC")
 	if err != nil {
 		slog.Error("failed to open database", "path", cfg.Database.Path, "error", err)
 		os.Exit(1)

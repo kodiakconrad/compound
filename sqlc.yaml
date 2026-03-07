@@ -1,0 +1,20 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    queries: "internal/db/query/"
+    schema: "internal/db/schema.sql"
+    gen:
+      go:
+        package: "dbgen"
+        out: "internal/db"
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: "boolean"
+            go_type: "bool"
+          - db_type: "datetime"
+            go_type: "time.Time"
+          - db_type: "datetime"
+            nullable: true
+            go_type:
+              type: "time.Time"
+              pointer: true

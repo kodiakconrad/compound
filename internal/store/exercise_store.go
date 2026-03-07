@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	dbgen "compound/internal/db"
 	"compound/internal/domain"
 
 	"github.com/google/uuid"
@@ -22,39 +23,35 @@ func (s *Store) CreateExercise(ctx context.Context, db DBTX, e *domain.Exercise)
 	e.CreatedAt = now
 	e.UpdatedAt = now
 
-	result, err := db.ExecContext(ctx,
-		`INSERT INTO exercises (uuid, name, muscle_group, equipment, tracking_type, notes, is_custom, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		e.UUID, e.Name, e.MuscleGroup, e.Equipment,
-		string(e.TrackingType), e.Notes, boolToInt(e.IsCustom),
-		e.CreatedAt.Format(time.RFC3339), e.UpdatedAt.Format(time.RFC3339),
-	)
+	result, err := dbgen.New(db).InsertExercise(ctx, dbgen.InsertExerciseParams{
+		Uuid:         e.UUID,
+		Name:         e.Name,
+		MuscleGroup:  e.MuscleGroup,
+		Equipment:    e.Equipment,
+		TrackingType: string(e.TrackingType),
+		Notes:        e.Notes,
+		IsCustom:     e.IsCustom,
+		CreatedAt:    e.CreatedAt,
+		UpdatedAt:    e.UpdatedAt,
+	})
 	if err != nil {
 		return err
 	}
-	id, _ := result.LastInsertId()
-	e.ID = id
+	e.ID, _ = result.LastInsertId()
 	return nil
 }
 
 // GetExerciseByUUID retrieves a single non-deleted exercise by UUID.
 // Returns NotFoundError if no matching exercise exists.
 func (s *Store) GetExerciseByUUID(ctx context.Context, db DBTX, id string) (*domain.Exercise, error) {
-	row := db.QueryRowContext(ctx,
-		`SELECT id, uuid, name, muscle_group, equipment, tracking_type, notes, is_custom,
-		        created_at, updated_at
-		 FROM exercises
-		 WHERE uuid = ? AND deleted_at IS NULL`, id)
-
-	e, err := scanExercise(row)
+	row, err := dbgen.New(db).GetExerciseByUUID(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, domain.NewNotFoundError("exercise", id)
+	}
 	if err != nil {
-		var nf *domain.NotFoundError
-		if errors.As(err, &nf) {
-			return nil, domain.NewNotFoundError("exercise", id)
-		}
 		return nil, err
 	}
-	return e, nil
+	return mapExercise(row), nil
 }
 
 // ExerciseListParams holds filter/search/sort/pagination options.
@@ -93,7 +90,6 @@ func (s *Store) ListExercises(ctx context.Context, db DBTX, p ExerciseListParams
 		args = append(args, *p.Cursor)
 	}
 
-	// Validate and default sort/order.
 	sortCol := "name"
 	if p.Sort == "created_at" {
 		sortCol = "created_at"
@@ -103,7 +99,6 @@ func (s *Store) ListExercises(ctx context.Context, db DBTX, p ExerciseListParams
 		order = "DESC"
 	}
 
-	// Fetch limit+1 to determine hasMore.
 	query := fmt.Sprintf(
 		`SELECT id, uuid, name, muscle_group, equipment, tracking_type, notes, is_custom,
 		        created_at, updated_at
@@ -123,11 +118,25 @@ func (s *Store) ListExercises(ctx context.Context, db DBTX, p ExerciseListParams
 
 	var exercises []*domain.Exercise
 	for rows.Next() {
-		e, err := scanExerciseRows(rows)
-		if err != nil {
+		var e domain.Exercise
+		var muscleGroup, equipment, notes *string
+		var isCustom bool
+		var createdAt, updatedAt time.Time
+
+		if err := rows.Scan(
+			&e.ID, &e.UUID, &e.Name,
+			&muscleGroup, &equipment, &e.TrackingType,
+			&notes, &isCustom, &createdAt, &updatedAt,
+		); err != nil {
 			return nil, false, err
 		}
-		exercises = append(exercises, e)
+		e.MuscleGroup = muscleGroup
+		e.Equipment = equipment
+		e.Notes = notes
+		e.IsCustom = isCustom
+		e.CreatedAt = createdAt
+		e.UpdatedAt = updatedAt
+		exercises = append(exercises, &e)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, false, err
@@ -146,14 +155,15 @@ func (s *Store) UpdateExercise(ctx context.Context, db DBTX, id string, e *domai
 	now := time.Now().UTC()
 	e.UpdatedAt = now
 
-	result, err := db.ExecContext(ctx,
-		`UPDATE exercises
-		 SET name = ?, muscle_group = ?, equipment = ?, tracking_type = ?,
-		     notes = ?, updated_at = ?
-		 WHERE uuid = ? AND deleted_at IS NULL`,
-		e.Name, e.MuscleGroup, e.Equipment, string(e.TrackingType),
-		e.Notes, e.UpdatedAt.Format(time.RFC3339), id,
-	)
+	result, err := dbgen.New(db).UpdateExercise(ctx, dbgen.UpdateExerciseParams{
+		Name:         e.Name,
+		MuscleGroup:  e.MuscleGroup,
+		Equipment:    e.Equipment,
+		TrackingType: string(e.TrackingType),
+		Notes:        e.Notes,
+		UpdatedAt:    e.UpdatedAt,
+		Uuid:         id,
+	})
 	if err != nil {
 		return err
 	}
@@ -168,11 +178,11 @@ func (s *Store) UpdateExercise(ctx context.Context, db DBTX, id string, e *domai
 // Returns NotFoundError if the exercise does not exist.
 func (s *Store) DeleteExercise(ctx context.Context, db DBTX, id string) error {
 	now := time.Now().UTC()
-	result, err := db.ExecContext(ctx,
-		`UPDATE exercises SET deleted_at = ?, updated_at = ?
-		 WHERE uuid = ? AND deleted_at IS NULL`,
-		now.Format(time.RFC3339), now.Format(time.RFC3339), id,
-	)
+	result, err := dbgen.New(db).SoftDeleteExercise(ctx, dbgen.SoftDeleteExerciseParams{
+		DeletedAt: &now,
+		UpdatedAt: now,
+		Uuid:      id,
+	})
 	if err != nil {
 		return err
 	}
@@ -182,77 +192,3 @@ func (s *Store) DeleteExercise(ctx context.Context, db DBTX, id string) error {
 	}
 	return nil
 }
-
-// --- Scan helpers ---
-
-// scanExercise scans a single exercise from a *sql.Row.
-func scanExercise(row *sql.Row) (*domain.Exercise, error) {
-	var e domain.Exercise
-	var muscleGroup, equipment, notes sql.NullString
-	var trackingType string
-	var isCustom int
-	var createdAt, updatedAt string
-
-	err := row.Scan(
-		&e.ID, &e.UUID, &e.Name,
-		&muscleGroup, &equipment, &trackingType,
-		&notes, &isCustom, &createdAt, &updatedAt,
-	)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, domain.NewNotFoundError("exercise", "")
-		}
-		return nil, err
-	}
-
-	populateExercise(&e, muscleGroup, equipment, notes, trackingType, isCustom, createdAt, updatedAt)
-	return &e, nil
-}
-
-// scanExerciseRows scans a single exercise from *sql.Rows.
-func scanExerciseRows(rows *sql.Rows) (*domain.Exercise, error) {
-	var e domain.Exercise
-	var muscleGroup, equipment, notes sql.NullString
-	var trackingType string
-	var isCustom int
-	var createdAt, updatedAt string
-
-	err := rows.Scan(
-		&e.ID, &e.UUID, &e.Name,
-		&muscleGroup, &equipment, &trackingType,
-		&notes, &isCustom, &createdAt, &updatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	populateExercise(&e, muscleGroup, equipment, notes, trackingType, isCustom, createdAt, updatedAt)
-	return &e, nil
-}
-
-// populateExercise maps scanned values onto a domain Exercise.
-func populateExercise(e *domain.Exercise, muscleGroup, equipment, notes sql.NullString, trackingType string, isCustom int, createdAt, updatedAt string) {
-	e.TrackingType = domain.TrackingType(trackingType)
-	e.IsCustom = isCustom == 1
-	if muscleGroup.Valid {
-		e.MuscleGroup = &muscleGroup.String
-	}
-	if equipment.Valid {
-		e.Equipment = &equipment.String
-	}
-	if notes.Valid {
-		e.Notes = &notes.String
-	}
-	e.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-	e.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
-}
-
-// --- Utility helpers ---
-
-func boolToInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
-}
-
