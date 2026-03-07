@@ -11,6 +11,21 @@ import (
 	"time"
 )
 
+const autoCompleteCycle = `-- name: AutoCompleteCycle :execresult
+UPDATE cycles SET status = 'completed', completed_at = ?, updated_at = ?
+WHERE id = ?
+`
+
+type AutoCompleteCycleParams struct {
+	CompletedAt *time.Time
+	UpdatedAt   time.Time
+	ID          int64
+}
+
+func (q *Queries) AutoCompleteCycle(ctx context.Context, arg AutoCompleteCycleParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, autoCompleteCycle, arg.CompletedAt, arg.UpdatedAt, arg.ID)
+}
+
 const getCycleByUUID = `-- name: GetCycleByUUID :one
 SELECT id, uuid, program_id, status, started_at, completed_at, created_at, updated_at
 FROM cycles

@@ -460,17 +460,14 @@ func (s *Store) CountIncompleteSessionsInCycle(ctx context.Context, db DBTX, cyc
 // ResolveSectionExercise returns the internal IDs and exercise UUID for a
 // section_exercise by its UUID. Used by the session handler for LogSet lookups.
 func (s *Store) ResolveSectionExercise(ctx context.Context, db DBTX, seUUID string) (seID, exerciseID int64, exerciseUUID string, err error) {
-	err = db.QueryRowContext(ctx,
-		`SELECT se.id, e.id, e.uuid
-		 FROM section_exercises se
-		 JOIN exercises e ON e.id = se.exercise_id
-		 WHERE se.uuid = ?`,
-		seUUID,
-	).Scan(&seID, &exerciseID, &exerciseUUID)
-	if errors.Is(err, sql.ErrNoRows) {
+	row, dbErr := dbgen.New(db).ResolveSectionExercise(ctx, seUUID)
+	if errors.Is(dbErr, sql.ErrNoRows) {
 		return 0, 0, "", domain.NewNotFoundError("section_exercise", seUUID)
 	}
-	return
+	if dbErr != nil {
+		return 0, 0, "", dbErr
+	}
+	return row.SectionExerciseID, row.ExerciseID, row.ExerciseUuid, nil
 }
 
 // GetExerciseUUIDsByIDs returns a map of exercise_id → UUID for the given IDs.
@@ -529,27 +526,19 @@ func (s *Store) LogSet(ctx context.Context, db DBTX, log *domain.SetLog) error {
 	var trackingType string
 	if log.SectionExerciseID != nil && log.ExerciseID == 0 {
 		// Regular: resolve exercise from section_exercise.
-		var resolvedExerciseID int64
-		err := db.QueryRowContext(ctx,
-			`SELECT e.tracking_type, e.id
-			 FROM section_exercises se
-			 JOIN exercises e ON e.id = se.exercise_id
-			 WHERE se.id = ?`,
-			*log.SectionExerciseID,
-		).Scan(&trackingType, &resolvedExerciseID)
+		row, err := dbgen.New(db).GetExerciseTrackingTypeBySectionExerciseID(ctx, *log.SectionExerciseID)
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.NewNotFoundError("section_exercise", fmt.Sprintf("%d", *log.SectionExerciseID))
 		}
 		if err != nil {
 			return err
 		}
-		log.ExerciseID = resolvedExerciseID
+		trackingType = row.TrackingType
+		log.ExerciseID = row.ExerciseID
 	} else {
 		// Substitution (both set) or ad-hoc (only ExerciseID): validate by ExerciseID.
-		err := db.QueryRowContext(ctx,
-			`SELECT tracking_type FROM exercises WHERE id = ?`,
-			log.ExerciseID,
-		).Scan(&trackingType)
+		var err error
+		trackingType, err = dbgen.New(db).GetExerciseTrackingTypeByID(ctx, log.ExerciseID)
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.NewNotFoundError("exercise", fmt.Sprintf("%d", log.ExerciseID))
 		}

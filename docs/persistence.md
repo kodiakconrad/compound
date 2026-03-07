@@ -16,6 +16,7 @@ internal/store/
   cycle_store.go        — CreateCycle, GetCycle, ListCycles, UpdateCycle
   session_store.go      — CreateSession, GetSession, UpdateSession, LogSet
   progress_store.go     — GetExerciseHistory, GetPersonalRecord, GetProgressSummary
+  idempotency_store.go  — CheckIdempotencyKey, SaveIdempotencyKey
 
 internal/db/
   schema.sql            — sqlc schema (kept in sync with migration files)
@@ -26,6 +27,7 @@ internal/db/
     cycles.sql          — named SQL queries for cycles
     sessions.sql        — named SQL queries for sessions and set_logs
     progress.sql        — named SQL queries for history, personal records, summary
+    idempotency.sql     — named SQL queries for idempotency key lookup and insert
   db.go                 — generated (do not edit)
   models.go             — generated (do not edit)
   exercises.sql.go      — generated (do not edit)
@@ -34,6 +36,7 @@ internal/db/
   cycles.sql.go         — generated (do not edit)
   sessions.sql.go       — generated (do not edit)
   progress.sql.go       — generated (do not edit)
+  idempotency.sql.go    — generated (do not edit)
 ```
 
 ```go

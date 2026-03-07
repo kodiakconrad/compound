@@ -23,6 +23,36 @@ func (q *Queries) CountIncompleteSessionsInCycle(ctx context.Context, cycleID in
 	return count, err
 }
 
+const getExerciseTrackingTypeByID = `-- name: GetExerciseTrackingTypeByID :one
+SELECT tracking_type FROM exercises WHERE id = ?
+`
+
+func (q *Queries) GetExerciseTrackingTypeByID(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRowContext(ctx, getExerciseTrackingTypeByID, id)
+	var tracking_type string
+	err := row.Scan(&tracking_type)
+	return tracking_type, err
+}
+
+const getExerciseTrackingTypeBySectionExerciseID = `-- name: GetExerciseTrackingTypeBySectionExerciseID :one
+SELECT e.tracking_type, e.id AS exercise_id
+FROM section_exercises se
+JOIN exercises e ON e.id = se.exercise_id
+WHERE se.id = ?
+`
+
+type GetExerciseTrackingTypeBySectionExerciseIDRow struct {
+	TrackingType string
+	ExerciseID   int64
+}
+
+func (q *Queries) GetExerciseTrackingTypeBySectionExerciseID(ctx context.Context, id int64) (GetExerciseTrackingTypeBySectionExerciseIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getExerciseTrackingTypeBySectionExerciseID, id)
+	var i GetExerciseTrackingTypeBySectionExerciseIDRow
+	err := row.Scan(&i.TrackingType, &i.ExerciseID)
+	return i, err
+}
+
 const getSessionByUUID = `-- name: GetSessionByUUID :one
 SELECT id, uuid, cycle_id, program_workout_id, sort_order, status, started_at, completed_at, notes, created_at, updated_at
 FROM sessions
@@ -168,6 +198,26 @@ func (q *Queries) InsertSetLog(ctx context.Context, arg InsertSetLogParams) (sql
 		arg.CompletedAt,
 		arg.CreatedAt,
 	)
+}
+
+const resolveSectionExercise = `-- name: ResolveSectionExercise :one
+SELECT se.id AS section_exercise_id, e.id AS exercise_id, e.uuid AS exercise_uuid
+FROM section_exercises se
+JOIN exercises e ON e.id = se.exercise_id
+WHERE se.uuid = ?
+`
+
+type ResolveSectionExerciseRow struct {
+	SectionExerciseID int64
+	ExerciseID        int64
+	ExerciseUuid      string
+}
+
+func (q *Queries) ResolveSectionExercise(ctx context.Context, uuid string) (ResolveSectionExerciseRow, error) {
+	row := q.db.QueryRowContext(ctx, resolveSectionExercise, uuid)
+	var i ResolveSectionExerciseRow
+	err := row.Scan(&i.SectionExerciseID, &i.ExerciseID, &i.ExerciseUuid)
+	return i, err
 }
 
 const updateSession = `-- name: UpdateSession :execresult

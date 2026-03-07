@@ -28,3 +28,18 @@ SELECT id, uuid, session_id, exercise_id, section_exercise_id, set_number, targe
 FROM set_logs
 WHERE session_id = ?
 ORDER BY set_number;
+
+-- name: ResolveSectionExercise :one
+SELECT se.id AS section_exercise_id, e.id AS exercise_id, e.uuid AS exercise_uuid
+FROM section_exercises se
+JOIN exercises e ON e.id = se.exercise_id
+WHERE se.uuid = ?;
+
+-- name: GetExerciseTrackingTypeBySectionExerciseID :one
+SELECT e.tracking_type, e.id AS exercise_id
+FROM section_exercises se
+JOIN exercises e ON e.id = se.exercise_id
+WHERE se.id = ?;
+
+-- name: GetExerciseTrackingTypeByID :one
+SELECT tracking_type FROM exercises WHERE id = ?;
