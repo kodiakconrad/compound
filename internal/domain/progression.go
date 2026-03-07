@@ -77,6 +77,9 @@ func (r *ProgressionRule) NextWeight(current float64, consecutiveFailures int) f
 	if consecutiveFailures >= r.DeloadThreshold {
 		return current * (1 - r.DeloadPct/100)
 	}
+	if consecutiveFailures > 0 {
+		return current // hold weight on failure below deload threshold
+	}
 	switch r.Strategy {
 	case ProgressionLinear:
 		return current + *r.Increment

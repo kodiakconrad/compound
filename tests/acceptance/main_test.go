@@ -67,6 +67,8 @@ func TestFeatures(t *testing.T) {
 			InitializeCommonSteps(ctx, client)
 			InitializeExerciseSteps(ctx, client)
 			InitializeProgramSteps(ctx, client)
+			InitializeCycleSteps(ctx, client)
+			InitializeSessionSteps(ctx, client)
 		},
 		Options: &godog.Options{
 			Format:   "pretty",
