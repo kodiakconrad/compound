@@ -220,6 +220,13 @@ Every node in the tree gets a new UUID, new integer ID, and fresh `created_at`/`
 **Edit lock:**
 A program cannot be modified while it has an active cycle. The handler checks for an active cycle before allowing any structural edits. Mid-cycle exercise substitutions are handled at the `set_log` level (the user logs a different `exercise_id`) — the program structure itself does not change.
 
+**Exercise substitution flow:**
+When a user substitutes an exercise mid-session:
+1. All existing `set_logs` for the original exercise in that session are deleted via `DELETE /api/v1/sessions/{uuid}/sets?exercise_uuid={uuid}`
+2. Subsequent sets are logged under the substitute's `exercise_id`
+3. The `section_exercise_id` on new set_logs still points to the original `SectionExercise` (preserving the placement context)
+4. Target sets/reps/weight for the substitute are pre-filled from the user's last logged performance of that exercise (from `progress/exercise/{uuid}`), falling back to the original's targets if no history exists
+
 **Validation rules per entity:**
 
 | Entity | Rules |
@@ -329,6 +336,7 @@ in_progress → skipped
 - `SectionExerciseID` is nullable — null when the user performs an ad-hoc exercise not tied to a section placement
 - `RPE` is per-set, always optional
 - `set_logs` is append-only — no `updated_at`
+- On substitution, all prior set_logs for the original exercise in that session are **deleted** (not just ignored) before new ones are logged under the substitute
 
 **Target weight calculation:**
 When a session starts, the system calculates the target weight for each exercise:

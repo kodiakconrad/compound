@@ -149,12 +149,13 @@ No BDD here — pure infrastructure. Verify by running the server.
 - `TestProgressionRule_NextWeight_Deload`
 - `TestConsecutiveFailures` — various hit/miss sequences
 
-**Open design question — session substitutions:**
-The AI exercise substitution feature (Phase 3, Feature 5) records substitutions at the session level. Two options for the data model:
-- **`session_substitutions` table** — `session_id`, `original_exercise_id`, `substitute_exercise_id`; lets the app display "planned vs. actual" per session cleanly
-- **set_log level only** — set_logs for the substituted exercise just reference the substitute's `exercise_id` directly; simpler, but "planned vs. actual" requires comparing set_logs against the session plan
+**Session substitutions — resolved:**
+Substitutions are handled at the `set_log` level only. No `session_substitutions` table. When a user substitutes exercise B for A mid-session:
+1. All existing `set_logs` for exercise A in that session are deleted
+2. New sets are logged under exercise B's `exercise_id`
+3. `section_exercise_id` on the new set_logs still references the original `SectionExercise` placement
 
-Decide before implementing `session_store.go` and the `LogSet` handler. The acceptance test "Log a set with a substituted exercise (different exercise_id than planned)" covers both approaches.
+This is enforced via `DELETE /api/v1/sessions/{uuid}/sets?exercise_uuid={uuid}` (Phase 2 backend addition). The acceptance test "Log a set with a substituted exercise" validates this path.
 
 ---
 

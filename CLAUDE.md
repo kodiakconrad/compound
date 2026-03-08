@@ -40,6 +40,8 @@ Before writing or modifying code, consult these docs. They define binding conven
 | [docs/git-strategy.md](docs/git-strategy.md) | Trunk-based dev, short-lived `type/description` branches, PRs to main, CI requirements |
 | [docs/local-development.md](docs/local-development.md) | First-run behavior, config file, Makefile targets, seeding, dev workflow |
 | [docs/phase2.md](docs/phase2.md) | React Native frontend plan: connectivity model, offline strategy, navigation, API contract considerations (Phase 2) |
+| [docs/ui-spec.md](docs/ui-spec.md) | **Approved UI designs** — visual style, all screen layouts, interaction patterns (Phase 2). Do not deviate without user sign-off. |
+| [docs/phase2-implementation-plan.md](docs/phase2-implementation-plan.md) | Phase 2 step-by-step build plan |
 | [docs/ai.md](docs/ai.md) | AI feature design: exercise suggestions, template generation, program generation, form tips (Phase 3) |
 | [docs/implementation-plan.md](docs/implementation-plan.md) | Phased build steps |
 
@@ -89,6 +91,10 @@ Before writing or modifying code, consult these docs. They define binding conven
 - BDD-first: write Cucumber acceptance tests → build feature → add unit tests for edge cases
 - When adding a new domain: domain model → SQL query file + `make gen` → store methods (call `dbgen.New(db)`) → DTOs → handler → route registration
 - Trunk-based dev: short-lived `type/description` branches, PRs to main, CI must pass
+
+### Frontend Development Flow (Phase 2+)
+- **Design before wiring** — for every frontend screen or component, generate a static design (ASCII mockup or static component with hardcoded data) first. Only after the user approves the design, wire it up to the backend API.
+- **Explain all decisions** — the user is a novice TypeScript engineer. Explain every technical decision, even ones that may seem obvious (why a hook vs a component, what a type does, why a particular pattern is used). Never assume prior TypeScript/React Native knowledge.
 
 ## Gotchas
 
