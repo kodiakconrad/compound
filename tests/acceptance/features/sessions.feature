@@ -190,6 +190,47 @@ Feature: Sessions & Set Logging
     And the exercise "Bench Press" should have computed_target_weight 135
     And the exercise "Bench Press" should have 1 logged set
 
+  # --- Delete sets ---
+
+  Scenario: Delete all sets for an exercise in a session
+    Given the following exercises exist:
+      | name        | muscle_group | tracking_type |
+      | Bench Press | chest        | weight_reps   |
+    And the following programs exist:
+      | name   |
+      | My Plan|
+    And the program "My Plan" has a workout:
+      | name  | day_number |
+      | Day 1 | 1          |
+    And the workout "Day 1" has a section:
+      | name       |
+      | Main Lifts |
+    And the section "Main Lifts" has exercise "Bench Press" with:
+      | target_sets | target_reps | target_weight |
+      | 3           | 5           | 135           |
+    And a cycle is started from program "My Plan"
+    And the session for workout "Day 1" is in progress
+    And I log a set for section exercise "Bench Press" in section "Main Lifts" with:
+      | set_number | actual_reps | weight |
+      | 1          | 5           | 135    |
+    When I delete sets for exercise "Bench Press" from session for workout "Day 1"
+    Then the response status should be 204
+
+  Scenario: Cannot delete sets when session is not in progress
+    Given the following exercises exist:
+      | name        | muscle_group | tracking_type |
+      | Bench Press | chest        | weight_reps   |
+    And the following programs exist:
+      | name   |
+      | My Plan|
+    And the program "My Plan" has a workout:
+      | name  | day_number |
+      | Day 1 | 1          |
+    And a cycle is started from program "My Plan"
+    When I delete sets for exercise "Bench Press" from session for workout "Day 1"
+    Then the response status should be 422
+    And the response should have error code "unprocessable"
+
   # --- Progression ---
 
   Scenario: Target weight increases after a successful session
