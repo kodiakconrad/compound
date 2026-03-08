@@ -66,7 +66,8 @@ func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*do
 		return nil, err
 	}
 
-	workoutRows, err := dbgen.New(db).GetWorkoutsForProgram(ctx, p.ID)
+	q := dbgen.New(db)
+	workoutRows, err := q.GetWorkoutsForProgram(ctx, p.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -84,156 +85,54 @@ func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*do
 		return p, nil
 	}
 
-	// Sections — IN clause stays raw SQL.
-	sQuery := fmt.Sprintf(
-		`SELECT id, uuid, program_workout_id, name, sort_order, rest_seconds, created_at, updated_at
-		 FROM sections
-		 WHERE program_workout_id IN (%s)
-		 ORDER BY sort_order`,
-		placeholders(len(workoutIDs)),
-	)
-	sRows, err := db.QueryContext(ctx, sQuery, int64sToAny(workoutIDs)...)
+	sectionRows, err := q.GetSectionsByWorkoutIDs(ctx, workoutIDs)
 	if err != nil {
 		return nil, err
 	}
-	defer sRows.Close()
 
 	var sectionIDs []int64
 	sectionMap := make(map[int64]*domain.Section)
-	for sRows.Next() {
-		var secID, programWorkoutID int64
-		var secUUID, name string
-		var sortOrder int64
-		var restSeconds *int64
-		var createdAt, updatedAt time.Time
-
-		if err := sRows.Scan(&secID, &secUUID, &programWorkoutID, &name,
-			&sortOrder, &restSeconds, &createdAt, &updatedAt); err != nil {
-			return nil, err
-		}
-		sec := &domain.Section{
-			ID: secID, UUID: secUUID, ProgramWorkoutID: programWorkoutID,
-			Name: name, SortOrder: int(sortOrder), RestSeconds: ptrInt64ToInt(restSeconds),
-			CreatedAt: createdAt, UpdatedAt: updatedAt,
-		}
+	for _, sr := range sectionRows {
+		sec := mapSection(sr)
 		if w, ok := workoutMap[sec.ProgramWorkoutID]; ok {
 			w.Sections = append(w.Sections, sec)
 		}
 		sectionIDs = append(sectionIDs, sec.ID)
 		sectionMap[sec.ID] = sec
 	}
-	if err := sRows.Err(); err != nil {
-		return nil, err
-	}
 
 	if len(sectionIDs) == 0 {
 		return p, nil
 	}
 
-	// Section exercises with JOIN — IN clause stays raw SQL.
-	seQuery := fmt.Sprintf(
-		`SELECT se.id, se.uuid, se.section_id, se.exercise_id,
-		        se.target_sets, se.target_reps, se.target_weight,
-		        se.target_duration, se.target_distance,
-		        se.sort_order, se.notes, se.created_at, se.updated_at,
-		        e.uuid, e.name
-		 FROM section_exercises se
-		 JOIN exercises e ON e.id = se.exercise_id
-		 WHERE se.section_id IN (%s)
-		 ORDER BY se.sort_order`,
-		placeholders(len(sectionIDs)),
-	)
-	seRows, err := db.QueryContext(ctx, seQuery, int64sToAny(sectionIDs)...)
+	seRows, err := q.GetSectionExercisesWithExerciseBySectionIDs(ctx, sectionIDs)
 	if err != nil {
 		return nil, err
 	}
-	defer seRows.Close()
 
 	var seIDs []int64
 	seMap := make(map[int64]*domain.SectionExercise)
-	for seRows.Next() {
-		var seID, sectionID, exerciseID int64
-		var seUUID, exerciseUUID, exerciseName string
-		var targetSets, targetReps, targetDuration *int64
-		var targetWeight, targetDistance *float64
-		var sortOrder int64
-		var notes *string
-		var createdAt, updatedAt time.Time
-
-		if err := seRows.Scan(
-			&seID, &seUUID, &sectionID, &exerciseID,
-			&targetSets, &targetReps, &targetWeight,
-			&targetDuration, &targetDistance,
-			&sortOrder, &notes, &createdAt, &updatedAt,
-			&exerciseUUID, &exerciseName,
-		); err != nil {
-			return nil, err
-		}
-		se := &domain.SectionExercise{
-			ID: seID, UUID: seUUID, SectionID: sectionID, ExerciseID: exerciseID,
-			ExerciseUUID: exerciseUUID, ExerciseName: exerciseName,
-			TargetSets: ptrInt64ToInt(targetSets), TargetReps: ptrInt64ToInt(targetReps),
-			TargetWeight: targetWeight, TargetDuration: ptrInt64ToInt(targetDuration),
-			TargetDistance: targetDistance, SortOrder: int(sortOrder), Notes: notes,
-			CreatedAt: createdAt, UpdatedAt: updatedAt,
-		}
+	for _, sr := range seRows {
+		se := mapSectionExerciseWithExercise(sr)
 		if sec, ok := sectionMap[se.SectionID]; ok {
 			sec.Exercises = append(sec.Exercises, se)
 		}
 		seIDs = append(seIDs, se.ID)
 		seMap[se.ID] = se
 	}
-	if err := seRows.Err(); err != nil {
-		return nil, err
-	}
 
 	if len(seIDs) == 0 {
 		return p, nil
 	}
 
-	// Progression rules — IN clause stays raw SQL.
-	prQuery := fmt.Sprintf(
-		`SELECT id, uuid, section_exercise_id, strategy,
-		        increment, increment_pct, deload_threshold, deload_pct,
-		        created_at, updated_at
-		 FROM progression_rules
-		 WHERE section_exercise_id IN (%s)`,
-		placeholders(len(seIDs)),
-	)
-	prRows, err := db.QueryContext(ctx, prQuery, int64sToAny(seIDs)...)
+	prRows, err := q.GetProgressionRulesBySectionExerciseIDs(ctx, seIDs)
 	if err != nil {
 		return nil, err
 	}
-	defer prRows.Close()
-
-	for prRows.Next() {
-		var prID, sectionExerciseID int64
-		var prUUID, strategy string
-		var increment, incrementPct *float64
-		var deloadThreshold int64
-		var deloadPct float64
-		var createdAt, updatedAt time.Time
-
-		if err := prRows.Scan(
-			&prID, &prUUID, &sectionExerciseID, &strategy,
-			&increment, &incrementPct, &deloadThreshold, &deloadPct,
-			&createdAt, &updatedAt,
-		); err != nil {
-			return nil, err
-		}
-		pr := &domain.ProgressionRule{
-			ID: prID, UUID: prUUID, SectionExerciseID: sectionExerciseID,
-			Strategy: domain.ProgressionStrategy(strategy),
-			Increment: increment, IncrementPct: incrementPct,
-			DeloadThreshold: int(deloadThreshold), DeloadPct: deloadPct,
-			CreatedAt: createdAt, UpdatedAt: updatedAt,
-		}
+	for _, pr := range prRows {
 		if se, ok := seMap[pr.SectionExerciseID]; ok {
-			se.ProgressionRule = pr
+			se.ProgressionRule = mapProgressionRule(pr)
 		}
-	}
-	if err := prRows.Err(); err != nil {
-		return nil, err
 	}
 
 	return p, nil
@@ -408,19 +307,3 @@ func (s *Store) CopyProgram(ctx context.Context, db DBTX, sourceUUID string) (*d
 	return s.GetProgramWithTree(ctx, db, cp.UUID)
 }
 
-// --- Query helpers ---
-
-func placeholders(n int) string {
-	if n <= 0 {
-		return ""
-	}
-	return strings.Repeat("?,", n-1) + "?"
-}
-
-func int64sToAny(ids []int64) []any {
-	args := make([]any, len(ids))
-	for i, id := range ids {
-		args[i] = id
-	}
-	return args
-}

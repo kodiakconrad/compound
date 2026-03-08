@@ -8,6 +8,7 @@ package dbgen
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 )
 
@@ -84,14 +85,10 @@ func (q *Queries) GetMaxSectionExerciseSortOrder(ctx context.Context, sectionID 
 }
 
 const getMaxSectionSortOrder = `-- name: GetMaxSectionSortOrder :one
-
 SELECT COALESCE(MAX(sort_order), 0) FROM sections
 WHERE program_workout_id = ?
 `
 
-// ============================================================
-// sections
-// ============================================================
 func (q *Queries) GetMaxSectionSortOrder(ctx context.Context, programWorkoutID int64) (interface{}, error) {
 	row := q.db.QueryRowContext(ctx, getMaxSectionSortOrder, programWorkoutID)
 	var coalesce interface{}
@@ -137,6 +134,58 @@ func (q *Queries) GetProgressionRuleBySectionExerciseID(ctx context.Context, sec
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getProgressionRulesBySectionExerciseIDs = `-- name: GetProgressionRulesBySectionExerciseIDs :many
+SELECT id, uuid, section_exercise_id, strategy,
+       increment, increment_pct, deload_threshold, deload_pct,
+       created_at, updated_at
+FROM progression_rules
+WHERE section_exercise_id IN (/*SLICE:section_exercise_ids*/?)
+`
+
+func (q *Queries) GetProgressionRulesBySectionExerciseIDs(ctx context.Context, sectionExerciseIds []int64) ([]ProgressionRule, error) {
+	query := getProgressionRulesBySectionExerciseIDs
+	var queryParams []interface{}
+	if len(sectionExerciseIds) > 0 {
+		for _, v := range sectionExerciseIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:section_exercise_ids*/?", strings.Repeat(",?", len(sectionExerciseIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:section_exercise_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ProgressionRule
+	for rows.Next() {
+		var i ProgressionRule
+		if err := rows.Scan(
+			&i.ID,
+			&i.Uuid,
+			&i.SectionExerciseID,
+			&i.Strategy,
+			&i.Increment,
+			&i.IncrementPct,
+			&i.DeloadThreshold,
+			&i.DeloadPct,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getSectionByUUID = `-- name: GetSectionByUUID :one
@@ -188,6 +237,85 @@ func (q *Queries) GetSectionExerciseByUUID(ctx context.Context, uuid string) (Se
 	return i, err
 }
 
+const getSectionExercisesWithExerciseBySectionIDs = `-- name: GetSectionExercisesWithExerciseBySectionIDs :many
+SELECT se.id, se.uuid, se.section_id, se.exercise_id,
+       se.target_sets, se.target_reps, se.target_weight,
+       se.target_duration, se.target_distance,
+       se.sort_order, se.notes, se.created_at, se.updated_at,
+       e.uuid AS exercise_uuid, e.name AS exercise_name
+FROM section_exercises se
+JOIN exercises e ON e.id = se.exercise_id
+WHERE se.section_id IN (/*SLICE:section_ids*/?)
+ORDER BY se.sort_order
+`
+
+type GetSectionExercisesWithExerciseBySectionIDsRow struct {
+	ID             int64
+	Uuid           string
+	SectionID      int64
+	ExerciseID     int64
+	TargetSets     *int64
+	TargetReps     *int64
+	TargetWeight   *float64
+	TargetDuration *int64
+	TargetDistance *float64
+	SortOrder      int64
+	Notes          *string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	ExerciseUuid   string
+	ExerciseName   string
+}
+
+func (q *Queries) GetSectionExercisesWithExerciseBySectionIDs(ctx context.Context, sectionIds []int64) ([]GetSectionExercisesWithExerciseBySectionIDsRow, error) {
+	query := getSectionExercisesWithExerciseBySectionIDs
+	var queryParams []interface{}
+	if len(sectionIds) > 0 {
+		for _, v := range sectionIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:section_ids*/?", strings.Repeat(",?", len(sectionIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:section_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSectionExercisesWithExerciseBySectionIDsRow
+	for rows.Next() {
+		var i GetSectionExercisesWithExerciseBySectionIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Uuid,
+			&i.SectionID,
+			&i.ExerciseID,
+			&i.TargetSets,
+			&i.TargetReps,
+			&i.TargetWeight,
+			&i.TargetDuration,
+			&i.TargetDistance,
+			&i.SortOrder,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ExerciseUuid,
+			&i.ExerciseName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getSectionInternalID = `-- name: GetSectionInternalID :one
 SELECT id FROM sections
 WHERE uuid = ?
@@ -198,6 +326,98 @@ func (q *Queries) GetSectionInternalID(ctx context.Context, uuid string) (int64,
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const getSectionsByWorkoutID = `-- name: GetSectionsByWorkoutID :many
+
+SELECT id, uuid, program_workout_id, name, sort_order, rest_seconds, created_at, updated_at
+FROM sections
+WHERE program_workout_id = ?
+ORDER BY sort_order
+`
+
+// ============================================================
+// sections
+// ============================================================
+func (q *Queries) GetSectionsByWorkoutID(ctx context.Context, programWorkoutID int64) ([]Section, error) {
+	rows, err := q.db.QueryContext(ctx, getSectionsByWorkoutID, programWorkoutID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Section
+	for rows.Next() {
+		var i Section
+		if err := rows.Scan(
+			&i.ID,
+			&i.Uuid,
+			&i.ProgramWorkoutID,
+			&i.Name,
+			&i.SortOrder,
+			&i.RestSeconds,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSectionsByWorkoutIDs = `-- name: GetSectionsByWorkoutIDs :many
+SELECT id, uuid, program_workout_id, name, sort_order, rest_seconds, created_at, updated_at
+FROM sections
+WHERE program_workout_id IN (/*SLICE:workout_ids*/?)
+ORDER BY sort_order
+`
+
+func (q *Queries) GetSectionsByWorkoutIDs(ctx context.Context, workoutIds []int64) ([]Section, error) {
+	query := getSectionsByWorkoutIDs
+	var queryParams []interface{}
+	if len(workoutIds) > 0 {
+		for _, v := range workoutIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:workout_ids*/?", strings.Repeat(",?", len(workoutIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:workout_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Section
+	for rows.Next() {
+		var i Section
+		if err := rows.Scan(
+			&i.ID,
+			&i.Uuid,
+			&i.ProgramWorkoutID,
+			&i.Name,
+			&i.SortOrder,
+			&i.RestSeconds,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getWorkoutByUUID = `-- name: GetWorkoutByUUID :one

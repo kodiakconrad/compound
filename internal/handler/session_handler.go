@@ -33,41 +33,7 @@ func (h *SessionHandler) HandleGetSession(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Collect unique exercise IDs and section_exercise IDs from set_logs.
-	exerciseIDSet := make(map[int64]struct{})
-	seIDSet := make(map[int64]struct{})
-	for _, sec := range detail.Sections {
-		for _, ex := range sec.Exercises {
-			for _, sl := range ex.SetLogs {
-				exerciseIDSet[sl.ExerciseID] = struct{}{}
-				if sl.SectionExerciseID != nil {
-					seIDSet[*sl.SectionExerciseID] = struct{}{}
-				}
-			}
-		}
-	}
-
-	exerciseIDs := make([]int64, 0, len(exerciseIDSet))
-	for id := range exerciseIDSet {
-		exerciseIDs = append(exerciseIDs, id)
-	}
-	seIDs := make([]int64, 0, len(seIDSet))
-	for id := range seIDSet {
-		seIDs = append(seIDs, id)
-	}
-
-	exerciseUUIDs, err := h.store.GetExerciseUUIDsByIDs(r.Context(), h.store.DB, exerciseIDs)
-	if err != nil {
-		respondError(w, err)
-		return
-	}
-	seUUIDs, err := h.store.GetSectionExerciseUUIDsByIDs(r.Context(), h.store.DB, seIDs)
-	if err != nil {
-		respondError(w, err)
-		return
-	}
-
-	respond(w, http.StatusOK, dto.ToSessionDetailResponse(detail, exerciseUUIDs, seUUIDs))
+	respond(w, http.StatusOK, dto.ToSessionDetailResponse(detail))
 }
 
 // HandleStartSession handles POST /api/v1/cycles/{cycleID}/sessions/{sessionID}/start.

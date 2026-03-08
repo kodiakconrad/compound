@@ -20,3 +20,7 @@ SELECT id, uuid, cycle_id, program_workout_id, sort_order, status, started_at, c
 FROM sessions
 WHERE cycle_id = ?
 ORDER BY sort_order;
+
+-- name: AutoCompleteCycle :execresult
+UPDATE cycles SET status = 'completed', completed_at = ?, updated_at = ?
+WHERE id = ?;

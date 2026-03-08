@@ -1,6 +1,8 @@
 package store
 
 import (
+	"time"
+
 	dbgen "compound/internal/db"
 	"compound/internal/domain"
 )
@@ -101,6 +103,28 @@ func mapSectionExercise(row dbgen.SectionExercise) *domain.SectionExercise {
 	}
 }
 
+// mapSectionExerciseWithExercise converts a GetSectionExercisesWithExerciseBySectionIDsRow
+// (which joins in exercise UUID and name) to a domain SectionExercise.
+func mapSectionExerciseWithExercise(row dbgen.GetSectionExercisesWithExerciseBySectionIDsRow) *domain.SectionExercise {
+	return &domain.SectionExercise{
+		ID:             row.ID,
+		UUID:           row.Uuid,
+		SectionID:      row.SectionID,
+		ExerciseID:     row.ExerciseID,
+		ExerciseUUID:   row.ExerciseUuid,
+		ExerciseName:   row.ExerciseName,
+		TargetSets:     ptrInt64ToInt(row.TargetSets),
+		TargetReps:     ptrInt64ToInt(row.TargetReps),
+		TargetWeight:   row.TargetWeight,
+		TargetDuration: ptrInt64ToInt(row.TargetDuration),
+		TargetDistance: row.TargetDistance,
+		SortOrder:      int(row.SortOrder),
+		Notes:          row.Notes,
+		CreatedAt:      row.CreatedAt,
+		UpdatedAt:      row.UpdatedAt,
+	}
+}
+
 // mapProgressionRule converts a dbgen.ProgressionRule to a domain ProgressionRule.
 func mapProgressionRule(row dbgen.ProgressionRule) *domain.ProgressionRule {
 	return &domain.ProgressionRule{
@@ -148,24 +172,86 @@ func mapSession(row dbgen.Session) *domain.Session {
 	}
 }
 
-// mapSetLog converts a dbgen.SetLog to a domain SetLog.
-func mapSetLog(row dbgen.SetLog) *domain.SetLog {
+// mapSetLog converts a dbgen.GetSetLogsBySessionIDRow to a domain SetLog.
+func mapSetLog(row dbgen.GetSetLogsBySessionIDRow) *domain.SetLog {
 	return &domain.SetLog{
-		ID:                row.ID,
-		UUID:              row.Uuid,
-		SessionID:         row.SessionID,
-		ExerciseID:        row.ExerciseID,
-		SectionExerciseID: row.SectionExerciseID,
-		SetNumber:         int(row.SetNumber),
-		TargetReps:        ptrInt64ToInt(row.TargetReps),
-		ActualReps:        ptrInt64ToInt(row.ActualReps),
-		Weight:            row.Weight,
-		Duration:          ptrInt64ToInt(row.Duration),
-		Distance:          row.Distance,
-		RPE:               row.Rpe,
-		CompletedAt:       row.CompletedAt,
-		CreatedAt:         row.CreatedAt,
+		ID:                  row.ID,
+		UUID:                row.Uuid,
+		SessionID:           row.SessionID,
+		ExerciseID:          row.ExerciseID,
+		ExerciseUUID:        row.ExerciseUuid,
+		SectionExerciseID:   row.SectionExerciseID,
+		SectionExerciseUUID: row.SectionExerciseUuid,
+		SetNumber:           int(row.SetNumber),
+		TargetReps:          ptrInt64ToInt(row.TargetReps),
+		ActualReps:          ptrInt64ToInt(row.ActualReps),
+		Weight:              row.Weight,
+		Duration:            ptrInt64ToInt(row.Duration),
+		Distance:            row.Distance,
+		RPE:                 row.Rpe,
+		CompletedAt:         row.CompletedAt,
+		CreatedAt:           row.CreatedAt,
 	}
+}
+
+// mapHistoryEntryPage converts a GetExerciseHistoryPageRow to a domain HistoryEntry.
+func mapHistoryEntryPage(row dbgen.GetExerciseHistoryPageRow) *domain.HistoryEntry {
+	return &domain.HistoryEntry{
+		SessionID:   row.ID,
+		SessionUUID: row.Uuid,
+		CompletedAt: derefTime(row.CompletedAt),
+		Weight:      interfaceToFloat64(row.Weight),
+	}
+}
+
+// mapHistoryEntryPageAfter converts a GetExerciseHistoryPageAfterRow to a domain HistoryEntry.
+func mapHistoryEntryPageAfter(row dbgen.GetExerciseHistoryPageAfterRow) *domain.HistoryEntry {
+	return &domain.HistoryEntry{
+		SessionID:   row.ID,
+		SessionUUID: row.Uuid,
+		CompletedAt: derefTime(row.CompletedAt),
+		Weight:      interfaceToFloat64(row.Weight),
+	}
+}
+
+// mapPersonalRecord converts a GetPersonalRecordRow to a domain PersonalRecord.
+func mapPersonalRecord(row dbgen.GetPersonalRecordRow) *domain.PersonalRecord {
+	pr := &domain.PersonalRecord{
+		Weight:      derefFloat64(row.Weight),
+		SessionUUID: row.Uuid,
+		CompletedAt: derefTime(row.CompletedAt),
+	}
+	if row.ActualReps != nil {
+		v := int(*row.ActualReps)
+		pr.ActualReps = &v
+	}
+	return pr
+}
+
+// derefTime dereferences a *time.Time safely, returning zero value if nil.
+func derefTime(t *time.Time) time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return *t
+}
+
+// derefFloat64 dereferences a *float64 safely, returning 0 if nil.
+func derefFloat64(v *float64) float64 {
+	if v == nil {
+		return 0
+	}
+	return *v
+}
+
+// interfaceToFloat64 converts an interface{} from a sqlc aggregate column to float64.
+// SQLite returns REAL aggregates as float64.
+func interfaceToFloat64(v interface{}) float64 {
+	if v == nil {
+		return 0
+	}
+	f, _ := v.(float64)
+	return f
 }
 
 // ptrInt64ToInt converts *int64 to *int.

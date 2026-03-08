@@ -21,8 +21,9 @@ func (s *Server) registerRoutes() {
 	s.router.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.Idempotency(s.store))
 
-		// Exercise routes
+		// Exercise routes (and per-exercise progress sub-routes from Step 5)
 		eh := handler.NewExerciseHandler(s.store)
+		prh := handler.NewProgressHandler(s.store)
 		r.Route("/exercises", func(r chi.Router) {
 			r.Get("/", eh.HandleList)
 			r.Post("/", eh.HandleCreate)
@@ -30,6 +31,9 @@ func (s *Server) registerRoutes() {
 				r.Get("/", eh.HandleGet)
 				r.Put("/", eh.HandleUpdate)
 				r.Delete("/", eh.HandleDelete)
+				// Progress sub-routes (Step 5)
+				r.Get("/history", prh.HandleGetHistory)
+				r.Get("/record", prh.HandleGetRecord)
 			})
 		})
 
@@ -96,6 +100,7 @@ func (s *Server) registerRoutes() {
 			})
 		})
 
-		// Progress routes (Step 5)
+		// Progress summary route (Step 5)
+		r.Get("/progress/summary", prh.HandleGetSummary)
 	})
 }

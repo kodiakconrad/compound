@@ -41,6 +41,18 @@ WHERE id = ? AND program_id = ?;
 -- sections
 -- ============================================================
 
+-- name: GetSectionsByWorkoutID :many
+SELECT id, uuid, program_workout_id, name, sort_order, rest_seconds, created_at, updated_at
+FROM sections
+WHERE program_workout_id = ?
+ORDER BY sort_order;
+
+-- name: GetSectionsByWorkoutIDs :many
+SELECT id, uuid, program_workout_id, name, sort_order, rest_seconds, created_at, updated_at
+FROM sections
+WHERE program_workout_id IN (sqlc.slice('workout_ids'))
+ORDER BY sort_order;
+
 -- name: GetMaxSectionSortOrder :one
 SELECT COALESCE(MAX(sort_order), 0) FROM sections
 WHERE program_workout_id = ?;
@@ -100,6 +112,24 @@ WHERE uuid = ?;
 -- name: VerifySectionExerciseBelongsToSection :one
 SELECT COUNT(*) FROM section_exercises
 WHERE id = ? AND section_id = ?;
+
+-- name: GetSectionExercisesWithExerciseBySectionIDs :many
+SELECT se.id, se.uuid, se.section_id, se.exercise_id,
+       se.target_sets, se.target_reps, se.target_weight,
+       se.target_duration, se.target_distance,
+       se.sort_order, se.notes, se.created_at, se.updated_at,
+       e.uuid AS exercise_uuid, e.name AS exercise_name
+FROM section_exercises se
+JOIN exercises e ON e.id = se.exercise_id
+WHERE se.section_id IN (sqlc.slice('section_ids'))
+ORDER BY se.sort_order;
+
+-- name: GetProgressionRulesBySectionExerciseIDs :many
+SELECT id, uuid, section_exercise_id, strategy,
+       increment, increment_pct, deload_threshold, deload_pct,
+       created_at, updated_at
+FROM progression_rules
+WHERE section_exercise_id IN (sqlc.slice('section_exercise_ids'));
 
 -- ============================================================
 -- progression_rules

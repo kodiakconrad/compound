@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `make build` — compile the binary
 - `make test` — run all tests
 - `make vet` — static analysis
+- `make gen` — regenerate sqlc query code from `internal/db/query/*.sql` (run after any SQL query change)
 - `make seed` — seed exercises and prebuilt templates
 - `make reset-db` — delete the database (re-run `make run` + `make seed` after)
 
@@ -28,7 +29,7 @@ Before writing or modifying code, consult these docs. They define binding conven
 |---|---|
 | [docs/architecture.md](docs/architecture.md) | High-level overview, data model hierarchy, links to all docs |
 | [docs/schema-design.md](docs/schema-design.md) | Database tables, columns, types, ER diagram, design rationale |
-| [docs/persistence.md](docs/persistence.md) | Store struct, DBTX interface, transactions, raw SQL, timestamps (ISO 8601 UTC), UUIDs, soft deletes, nullable fields |
+| [docs/persistence.md](docs/persistence.md) | **sqlc workflow** (`make gen`), Store struct, DBTX interface, transactions, when to use raw SQL, timestamps (ISO 8601 UTC), UUIDs, soft deletes, nullable fields |
 | [docs/implementation-patterns.md](docs/implementation-patterns.md) | DTOs, two-layer validation, logging (`log/slog`), config (YAML) |
 | [docs/domain-model.md](docs/domain-model.md) | Aggregates, entities, value objects, state machines, business rules, struct definitions |
 | [docs/error-handling.md](docs/error-handling.md) | Domain error types, HTTP mapping, error response format, multiple validation errors |
@@ -62,7 +63,9 @@ Before writing or modifying code, consult these docs. They define binding conven
 
 ### Persistence
 - Single `Store` struct, methods accept `DBTX` interface (works with both `*sql.DB` and `*sql.Tx`)
-- Raw SQL queries — no ORM, no query builder
+- **sqlc codegen** — write SQL in `internal/db/query/*.sql`, run `make gen`, call via `dbgen.New(db)` in store methods. No ORM, no query builder
+- **Dynamic `IN` clauses** — use `sqlc.slice('param')` in the query file; sqlc generates typed slice parameters. Never hand-write `IN` clause queries
+- Raw `db.QueryContext` only for two patterns sqlc cannot handle (see `persistence.md`): (1) runtime-chosen WHERE clauses where conditions are added/omitted based on input (`ListExercises`, `ListPrograms`); (2) dynamic SQL identifiers — table/column names cannot be `?` placeholders (`reindexSortOrder`, `reorderByUUIDs`)
 - All timestamps: `time.Time` in Go, ISO 8601 text in SQLite, always UTC
 - UUIDs generated Go-side (`google/uuid`), every table has integer PK + UUID column
 
@@ -84,7 +87,7 @@ Before writing or modifying code, consult these docs. They define binding conven
 
 ### Development Flow
 - BDD-first: write Cucumber acceptance tests → build feature → add unit tests for edge cases
-- When adding a new domain: domain model → store methods → DTOs → handler → route registration
+- When adding a new domain: domain model → SQL query file + `make gen` → store methods (call `dbgen.New(db)`) → DTOs → handler → route registration
 - Trunk-based dev: short-lived `type/description` branches, PRs to main, CI must pass
 
 ## Gotchas

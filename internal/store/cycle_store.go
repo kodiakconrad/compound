@@ -192,9 +192,10 @@ func (s *Store) UpdateCycleStatus(ctx context.Context, db DBTX, id string, newSt
 // Used when the last session in a cycle is completed or skipped.
 func (s *Store) AutoCompleteCycleByID(ctx context.Context, db DBTX, cycleID int64) error {
 	now := time.Now().UTC()
-	_, err := db.ExecContext(ctx,
-		`UPDATE cycles SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?`,
-		now, now, cycleID,
-	)
+	_, err := dbgen.New(db).AutoCompleteCycle(ctx, dbgen.AutoCompleteCycleParams{
+		CompletedAt: &now,
+		UpdatedAt:   now,
+		ID:          cycleID,
+	})
 	return err
 }

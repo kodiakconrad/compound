@@ -8,6 +8,7 @@ package dbgen
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 )
 
@@ -21,6 +22,36 @@ func (q *Queries) CountIncompleteSessionsInCycle(ctx context.Context, cycleID in
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const getExerciseTrackingTypeByID = `-- name: GetExerciseTrackingTypeByID :one
+SELECT tracking_type FROM exercises WHERE id = ?
+`
+
+func (q *Queries) GetExerciseTrackingTypeByID(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRowContext(ctx, getExerciseTrackingTypeByID, id)
+	var tracking_type string
+	err := row.Scan(&tracking_type)
+	return tracking_type, err
+}
+
+const getExerciseTrackingTypeBySectionExerciseID = `-- name: GetExerciseTrackingTypeBySectionExerciseID :one
+SELECT e.tracking_type, e.id AS exercise_id
+FROM section_exercises se
+JOIN exercises e ON e.id = se.exercise_id
+WHERE se.id = ?
+`
+
+type GetExerciseTrackingTypeBySectionExerciseIDRow struct {
+	TrackingType string
+	ExerciseID   int64
+}
+
+func (q *Queries) GetExerciseTrackingTypeBySectionExerciseID(ctx context.Context, id int64) (GetExerciseTrackingTypeBySectionExerciseIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getExerciseTrackingTypeBySectionExerciseID, id)
+	var i GetExerciseTrackingTypeBySectionExerciseIDRow
+	err := row.Scan(&i.TrackingType, &i.ExerciseID)
+	return i, err
 }
 
 const getSessionByUUID = `-- name: GetSessionByUUID :one
@@ -59,22 +90,109 @@ func (q *Queries) GetSessionInternalID(ctx context.Context, uuid string) (int64,
 	return id, err
 }
 
-const getSetLogsBySessionID = `-- name: GetSetLogsBySessionID :many
-SELECT id, uuid, session_id, exercise_id, section_exercise_id, set_number, target_reps, actual_reps, weight, duration, distance, rpe, completed_at, created_at
-FROM set_logs
-WHERE session_id = ?
-ORDER BY set_number
+const getSetLogProgressionHistory = `-- name: GetSetLogProgressionHistory :many
+SELECT sl.section_exercise_id, sl.set_number,
+       sl.actual_reps, sl.target_reps, sl.weight,
+       s.id AS session_id, s.completed_at
+FROM set_logs sl
+JOIN sessions s ON s.id = sl.session_id
+WHERE sl.section_exercise_id IN (/*SLICE:section_exercise_ids*/?)
+  AND s.status = 'completed'
+ORDER BY sl.section_exercise_id, s.completed_at DESC, s.id DESC, sl.set_number ASC
 `
 
-func (q *Queries) GetSetLogsBySessionID(ctx context.Context, sessionID int64) ([]SetLog, error) {
+type GetSetLogProgressionHistoryRow struct {
+	SectionExerciseID *int64
+	SetNumber         int64
+	ActualReps        *int64
+	TargetReps        *int64
+	Weight            *float64
+	SessionID         int64
+	CompletedAt       *time.Time
+}
+
+func (q *Queries) GetSetLogProgressionHistory(ctx context.Context, sectionExerciseIds []*int64) ([]GetSetLogProgressionHistoryRow, error) {
+	query := getSetLogProgressionHistory
+	var queryParams []interface{}
+	if len(sectionExerciseIds) > 0 {
+		for _, v := range sectionExerciseIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:section_exercise_ids*/?", strings.Repeat(",?", len(sectionExerciseIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:section_exercise_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetSetLogProgressionHistoryRow
+	for rows.Next() {
+		var i GetSetLogProgressionHistoryRow
+		if err := rows.Scan(
+			&i.SectionExerciseID,
+			&i.SetNumber,
+			&i.ActualReps,
+			&i.TargetReps,
+			&i.Weight,
+			&i.SessionID,
+			&i.CompletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSetLogsBySessionID = `-- name: GetSetLogsBySessionID :many
+SELECT sl.id, sl.uuid, sl.session_id, sl.exercise_id, sl.section_exercise_id,
+       sl.set_number, sl.target_reps, sl.actual_reps, sl.weight, sl.duration,
+       sl.distance, sl.rpe, sl.completed_at, sl.created_at,
+       e.uuid AS exercise_uuid,
+       se.uuid AS section_exercise_uuid
+FROM set_logs sl
+JOIN exercises e ON e.id = sl.exercise_id
+LEFT JOIN section_exercises se ON se.id = sl.section_exercise_id
+WHERE sl.session_id = ?
+ORDER BY sl.set_number
+`
+
+type GetSetLogsBySessionIDRow struct {
+	ID                  int64
+	Uuid                string
+	SessionID           int64
+	ExerciseID          int64
+	SectionExerciseID   *int64
+	SetNumber           int64
+	TargetReps          *int64
+	ActualReps          *int64
+	Weight              *float64
+	Duration            *int64
+	Distance            *float64
+	Rpe                 *float64
+	CompletedAt         time.Time
+	CreatedAt           time.Time
+	ExerciseUuid        string
+	SectionExerciseUuid *string
+}
+
+func (q *Queries) GetSetLogsBySessionID(ctx context.Context, sessionID int64) ([]GetSetLogsBySessionIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, getSetLogsBySessionID, sessionID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []SetLog
+	var items []GetSetLogsBySessionIDRow
 	for rows.Next() {
-		var i SetLog
+		var i GetSetLogsBySessionIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Uuid,
@@ -90,6 +208,8 @@ func (q *Queries) GetSetLogsBySessionID(ctx context.Context, sessionID int64) ([
 			&i.Rpe,
 			&i.CompletedAt,
 			&i.CreatedAt,
+			&i.ExerciseUuid,
+			&i.SectionExerciseUuid,
 		); err != nil {
 			return nil, err
 		}
@@ -168,6 +288,26 @@ func (q *Queries) InsertSetLog(ctx context.Context, arg InsertSetLogParams) (sql
 		arg.CompletedAt,
 		arg.CreatedAt,
 	)
+}
+
+const resolveSectionExercise = `-- name: ResolveSectionExercise :one
+SELECT se.id AS section_exercise_id, e.id AS exercise_id, e.uuid AS exercise_uuid
+FROM section_exercises se
+JOIN exercises e ON e.id = se.exercise_id
+WHERE se.uuid = ?
+`
+
+type ResolveSectionExerciseRow struct {
+	SectionExerciseID int64
+	ExerciseID        int64
+	ExerciseUuid      string
+}
+
+func (q *Queries) ResolveSectionExercise(ctx context.Context, uuid string) (ResolveSectionExerciseRow, error) {
+	row := q.db.QueryRowContext(ctx, resolveSectionExercise, uuid)
+	var i ResolveSectionExerciseRow
+	err := row.Scan(&i.SectionExerciseID, &i.ExerciseID, &i.ExerciseUuid)
+	return i, err
 }
 
 const updateSession = `-- name: UpdateSession :execresult

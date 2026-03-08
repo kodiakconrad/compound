@@ -86,20 +86,22 @@ func (s *Session) Skip(notes *string) error {
 // SetLog records an actual set performed during a session.
 // set_logs are append-only — no UpdatedAt field.
 type SetLog struct {
-	ID                int64
-	UUID              string
-	SessionID         int64
-	ExerciseID        int64
-	SectionExerciseID *int64
-	SetNumber         int
-	TargetReps        *int
-	ActualReps        *int
-	Weight            *float64
-	Duration          *int
-	Distance          *float64
-	RPE               *float64
-	CompletedAt       time.Time
-	CreatedAt         time.Time
+	ID                  int64
+	UUID                string
+	SessionID           int64
+	ExerciseID          int64
+	ExerciseUUID        string
+	SectionExerciseID   *int64
+	SectionExerciseUUID *string
+	SetNumber           int
+	TargetReps          *int
+	ActualReps          *int
+	Weight              *float64
+	Duration            *int
+	Distance            *float64
+	RPE                 *float64
+	CompletedAt         time.Time
+	CreatedAt           time.Time
 }
 
 // --- Read Models ---
