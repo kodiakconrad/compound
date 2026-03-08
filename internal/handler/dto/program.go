@@ -17,7 +17,6 @@ var (
 type CreateProgramRequest struct {
 	Name        string  `json:"name"`
 	Description *string `json:"description"`
-	IsTemplate  bool    `json:"is_template"`
 }
 
 // Validate checks request shape.
@@ -34,7 +33,6 @@ func (r *CreateProgramRequest) ToProgram() *domain.Program {
 	return &domain.Program{
 		Name:        strings.TrimSpace(r.Name),
 		Description: r.Description,
-		IsTemplate:  r.IsTemplate,
 	}
 }
 
@@ -68,7 +66,6 @@ type ProgramResponse struct {
 	UUID        string  `json:"uuid"`
 	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
-	IsTemplate  bool    `json:"is_template"`
 	IsPrebuilt  bool    `json:"is_prebuilt"`
 	CreatedAt   string  `json:"created_at"`
 	UpdatedAt   string  `json:"updated_at"`
@@ -79,7 +76,6 @@ type ProgramTreeResponse struct {
 	UUID        string                `json:"uuid"`
 	Name        string                `json:"name"`
 	Description *string               `json:"description,omitempty"`
-	IsTemplate  bool                  `json:"is_template"`
 	IsPrebuilt  bool                  `json:"is_prebuilt"`
 	Workouts    []WorkoutTreeResponse `json:"workouts"`
 	CreatedAt   string                `json:"created_at"`
@@ -92,7 +88,6 @@ func ToProgramResponse(p *domain.Program) ProgramResponse {
 		UUID:        p.UUID,
 		Name:        p.Name,
 		Description: p.Description,
-		IsTemplate:  p.IsTemplate,
 		IsPrebuilt:  p.IsPrebuilt,
 		CreatedAt:   p.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   p.UpdatedAt.Format(time.RFC3339),
@@ -143,7 +138,6 @@ func ToProgramTreeResponse(p *domain.Program) ProgramTreeResponse {
 		UUID:        p.UUID,
 		Name:        p.Name,
 		Description: p.Description,
-		IsTemplate:  p.IsTemplate,
 		IsPrebuilt:  p.IsPrebuilt,
 		Workouts:    workouts,
 		CreatedAt:   p.CreatedAt.Format(time.RFC3339),

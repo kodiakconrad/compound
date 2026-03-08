@@ -24,6 +24,21 @@ func (q *Queries) CountIncompleteSessionsInCycle(ctx context.Context, cycleID in
 	return count, err
 }
 
+const deleteSetLogsForSessionAndExercise = `-- name: DeleteSetLogsForSessionAndExercise :exec
+DELETE FROM set_logs
+WHERE session_id = ? AND exercise_id = ?
+`
+
+type DeleteSetLogsForSessionAndExerciseParams struct {
+	SessionID  int64
+	ExerciseID int64
+}
+
+func (q *Queries) DeleteSetLogsForSessionAndExercise(ctx context.Context, arg DeleteSetLogsForSessionAndExerciseParams) error {
+	_, err := q.db.ExecContext(ctx, deleteSetLogsForSessionAndExercise, arg.SessionID, arg.ExerciseID)
+	return err
+}
+
 const getExerciseTrackingTypeByID = `-- name: GetExerciseTrackingTypeByID :one
 SELECT tracking_type FROM exercises WHERE id = ?
 `

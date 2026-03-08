@@ -124,10 +124,13 @@ If the user closes the app mid-session, reopening it should land back on the in-
 ## Open Decisions for Phase 2 Start
 
 - [x] Connectivity model — **Hybrid A + C** (local for dev, Fly.io for gym use; backend cloud-ready from Phase 1)
-- [ ] OAuth2 protection — required before Fly.io deployment. The Go backend must validate OAuth2 tokens on every request. Provider TBD (Auth0, Clerk, etc.). CORS `allowed_origins` in `compound.yaml` should be tightened to the actual app origin at the same time. This is a Phase 2 backend addition, not Phase 1.
-- [ ] State management library
-- [ ] UI component library
-- [ ] Rest timer — in-app timer, or just display rest_seconds and let the user time manually?
-- [ ] `GET /api/v1/sessions/active` convenience endpoint vs. client-side resolution
-- [ ] Offline queue persistence format (in-memory, AsyncStorage, or Expo SQLite)
-- [ ] `GET /api/v1/exercises/filters` endpoint — returns allowed values for muscle_group, equipment, and tracking_type so the frontend can build filter UIs dynamically without hardcoding enums
+- [x] OAuth2 protection — **Clerk** (JWT middleware on Go backend before Fly.io deploy; `clerk-sdk-go` + JWKS validation; CORS tightened at deploy time)
+- [x] State management library — **TanStack Query** (server state) + **Zustand** (local/UI state)
+- [x] UI component library — **NativeWind v4** (Tailwind for RN; build components from primitives)
+- [x] Rest timer — **in-app countdown timer** (Zustand store + `setInterval`; vibration on completion)
+- [x] `GET /api/v1/sessions/active` — **add the endpoint** (Step 1 backend addition)
+- [x] Offline queue persistence — **Expo SQLite** (survives app kill; ordered replay with idempotency keys)
+- [x] `GET /api/v1/exercises/filters` — **add the endpoint** (Step 1 backend addition)
+- [x] Charts — **Victory Native XL** (Skia renderer) for exercise weight history
+
+See [phase2-implementation-plan.md](phase2-implementation-plan.md) for the full step-by-step build plan.

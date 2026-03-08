@@ -64,7 +64,7 @@ make seed
 This runs `go run cmd/seed/main.go`, which:
 - Reads the same `compound.yaml` config to find the database
 - Inserts ~80-100 common exercises (bench press, squat, deadlift, etc.)
-- Inserts prebuilt program templates (5/3/1, PPL, Starting Strength) with `is_template=1, is_prebuilt=1`
+- Inserts prebuilt programs (5/3/1, PPL, Starting Strength) with `is_prebuilt=1`
 - Is idempotent — safe to run multiple times (skips existing records)
 
 ## Makefile

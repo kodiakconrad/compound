@@ -72,15 +72,14 @@ No BDD here — pure infrastructure. Verify by running the server.
 
 ---
 
-## Step 3 — Programs, Templates & Workout Builder
+## Step 3 — Programs & Workout Builder
 
 **Acceptance tests first** (`tests/acceptance/features/programs.feature`):
 - Create a program — 201 with uuid
-- Create a template (`is_template=true`) — 201
 - List programs — paginated list
-- List templates only (`?is_template=true`) — filtered
+- List prebuilt programs only (`?is_prebuilt=true`) — filtered
 - Get program with full tree (workouts → sections → exercises) — 200
-- Deep copy a template into a new program — 201, independent copy
+- Deep copy a program — 201, independent copy
 - Update program metadata — 200
 - Soft delete a program — 204
 - Cannot delete a prebuilt program — 422
@@ -110,7 +109,7 @@ No BDD here — pure infrastructure. Verify by running the server.
 - `TestProgram_DeepCopy` — verify new UUIDs, independence from source
 - `TestProgressionRule_NextWeight` — linear, percentage, deload trigger
 
-**Seed:** `internal/seed/programs.go` — prebuilt templates: 5/3/1, PPL, Starting Strength.
+**Seed:** `internal/seed/programs.go` — prebuilt programs (is_prebuilt=1): 5/3/1, PPL, Starting Strength.
 
 ---
 
@@ -149,12 +148,13 @@ No BDD here — pure infrastructure. Verify by running the server.
 - `TestProgressionRule_NextWeight_Deload`
 - `TestConsecutiveFailures` — various hit/miss sequences
 
-**Open design question — session substitutions:**
-The AI exercise substitution feature (Phase 3, Feature 5) records substitutions at the session level. Two options for the data model:
-- **`session_substitutions` table** — `session_id`, `original_exercise_id`, `substitute_exercise_id`; lets the app display "planned vs. actual" per session cleanly
-- **set_log level only** — set_logs for the substituted exercise just reference the substitute's `exercise_id` directly; simpler, but "planned vs. actual" requires comparing set_logs against the session plan
+**Session substitutions — resolved:**
+Substitutions are handled at the `set_log` level only. No `session_substitutions` table. When a user substitutes exercise B for A mid-session:
+1. All existing `set_logs` for exercise A in that session are deleted
+2. New sets are logged under exercise B's `exercise_id`
+3. `section_exercise_id` on the new set_logs still references the original `SectionExercise` placement
 
-Decide before implementing `session_store.go` and the `LogSet` handler. The acceptance test "Log a set with a substituted exercise (different exercise_id than planned)" covers both approaches.
+This is enforced via `DELETE /api/v1/sessions/{uuid}/sets?exercise_uuid={uuid}` (Phase 2 backend addition). The acceptance test "Log a set with a substituted exercise" validates this path.
 
 ---
 

@@ -6,8 +6,8 @@ Feature: Cycles
 
   Scenario: Start a cycle from a program
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -20,8 +20,8 @@ Feature: Cycles
 
   Scenario: Sessions are pre-generated when a cycle starts
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -34,8 +34,8 @@ Feature: Cycles
 
   Scenario: Cannot start a cycle from a program with no workouts
     Given the following programs exist:
-      | name  | is_template |
-      | Empty | false       |
+      | name |
+      | Empty|
     When I start a cycle from program "Empty"
     Then the response status should be 422
     And the response should have error code "unprocessable"
@@ -44,9 +44,9 @@ Feature: Cycles
 
   Scenario: List cycles
     Given the following programs exist:
-      | name      | is_template |
-      | Program A | false       |
-      | Program B | false       |
+      | name     |
+      | Program A|
+      | Program B|
     And the program "Program A" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -61,9 +61,9 @@ Feature: Cycles
 
   Scenario: List cycles filtered by status
     Given the following programs exist:
-      | name      | is_template |
-      | Program A | false       |
-      | Program B | false       |
+      | name     |
+      | Program A|
+      | Program B|
     And the program "Program A" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -81,8 +81,8 @@ Feature: Cycles
 
   Scenario: Get cycle with sessions
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -96,8 +96,8 @@ Feature: Cycles
 
   Scenario: Pause a cycle
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -110,8 +110,8 @@ Feature: Cycles
 
   Scenario: Resume a paused cycle
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -125,8 +125,8 @@ Feature: Cycles
 
   Scenario: Complete a cycle manually
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -141,8 +141,8 @@ Feature: Cycles
 
   Scenario: Cycle auto-completes when last session is completed
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -156,8 +156,8 @@ Feature: Cycles
 
   Scenario: Cycle auto-completes when last session is skipped
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -170,8 +170,8 @@ Feature: Cycles
 
   Scenario: Multi-session cycle only auto-completes when all sessions are done
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |

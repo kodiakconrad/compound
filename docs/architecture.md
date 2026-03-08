@@ -5,7 +5,9 @@ High-level overview of the Compound backend. Each section links to a dedicated d
 ## Data Model
 
 ```
-Program (is_template=1 for reusable templates, deep-copied to create user programs)
+Program
+  ├── is_prebuilt=1  → seeded content (5/3/1, PPL, Starting Strength), read-only
+  ├── is_prebuilt=0  → user-created, fully editable, can be deep-copied
   └── Workouts (one per day, ordered)
         └── Sections (freeform named groups, e.g. "Heavy Compounds", "Accessories")
               └── Exercises (with target sets/reps/weight/duration/distance)
@@ -13,7 +15,7 @@ Program (is_template=1 for reusable templates, deep-copied to create user progra
 
 Program → (user starts running it) → Cycle
   └── Sessions (pre-generated, one per workout)
-        └── Set Logs (actual reps completed, weight used)
+        └── Set Logs (actual reps/weight performed — exercise_id may differ from plan on substitution)
 ```
 
 ### Weight Progression
@@ -48,5 +50,7 @@ When generating session targets, the system checks the `progression_rules` for e
 | [testing-strategy.md](testing-strategy.md) | BDD-first development, test types, conventions |
 | [naming-conventions.md](naming-conventions.md) | Go naming: receivers, constructors, files, tests, exports |
 | [phase2.md](phase2.md) | React Native frontend plan: connectivity model, offline strategy, navigation, API contract considerations (Phase 2) |
+| [phase2-implementation-plan.md](phase2-implementation-plan.md) | Phase 2 step-by-step build plan |
+| [ui-spec.md](ui-spec.md) | Approved UI designs — visual style, screen layouts, interaction patterns (Phase 2) |
 | [ai.md](ai.md) | AI feature design: exercise suggestions, template generation, program generation, form tips (Phase 3) |
-| [implementation-plan.md](implementation-plan.md) | Phased build steps |
+| [implementation-plan.md](implementation-plan.md) | Phase 1 build steps |

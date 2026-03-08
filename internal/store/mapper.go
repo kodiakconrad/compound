@@ -48,7 +48,6 @@ func mapProgram(row dbgen.Program) *domain.Program {
 		UUID:        row.Uuid,
 		Name:        row.Name,
 		Description: row.Description,
-		IsTemplate:  row.IsTemplate,
 		IsPrebuilt:  row.IsPrebuilt,
 		CreatedAt:   row.CreatedAt,
 		UpdatedAt:   row.UpdatedAt,

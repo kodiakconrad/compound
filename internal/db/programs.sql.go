@@ -12,7 +12,7 @@ import (
 )
 
 const getProgramByUUID = `-- name: GetProgramByUUID :one
-SELECT id, uuid, name, description, is_template, is_prebuilt, created_at, updated_at, deleted_at
+SELECT id, uuid, name, description, is_prebuilt, created_at, updated_at, deleted_at
 FROM programs
 WHERE uuid = ? AND deleted_at IS NULL
 `
@@ -25,7 +25,6 @@ func (q *Queries) GetProgramByUUID(ctx context.Context, uuid string) (Program, e
 		&i.Uuid,
 		&i.Name,
 		&i.Description,
-		&i.IsTemplate,
 		&i.IsPrebuilt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -98,15 +97,14 @@ func (q *Queries) HasActiveCycle(ctx context.Context, programID int64) (int64, e
 }
 
 const insertProgram = `-- name: InsertProgram :execresult
-INSERT INTO programs (uuid, name, description, is_template, is_prebuilt, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT INTO programs (uuid, name, description, is_prebuilt, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?)
 `
 
 type InsertProgramParams struct {
 	Uuid        string
 	Name        string
 	Description *string
-	IsTemplate  bool
 	IsPrebuilt  bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -117,7 +115,6 @@ func (q *Queries) InsertProgram(ctx context.Context, arg InsertProgramParams) (s
 		arg.Uuid,
 		arg.Name,
 		arg.Description,
-		arg.IsTemplate,
 		arg.IsPrebuilt,
 		arg.CreatedAt,
 		arg.UpdatedAt,

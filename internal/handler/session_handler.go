@@ -120,6 +120,22 @@ func (h *SessionHandler) HandleSkipSession(w http.ResponseWriter, r *http.Reques
 	respond(w, http.StatusOK, dto.ToSessionResponse(sess))
 }
 
+// HandleDeleteSetsForExercise handles DELETE /api/v1/sessions/{sid}/sets?exercise_uuid={uuid}.
+// Deletes all set_logs for a given exercise in a session. Session must be in_progress.
+func (h *SessionHandler) HandleDeleteSetsForExercise(w http.ResponseWriter, r *http.Request) {
+	sessionUUID := chi.URLParam(r, "sid")
+	exerciseUUID := r.URL.Query().Get("exercise_uuid")
+	if exerciseUUID == "" {
+		respondError(w, domain.NewValidationError("exercise_uuid", "is required"))
+		return
+	}
+	if err := h.store.DeleteSetLogsForExercise(r.Context(), h.store.DB, sessionUUID, exerciseUUID); err != nil {
+		respondError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // HandleLogSet handles POST /api/v1/cycles/{cycleID}/sessions/{sessionID}/sets.
 // Logs a performed set. The set can be tied to a planned section_exercise
 // (with optional exercise substitution) or be an ad-hoc set.

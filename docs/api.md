@@ -74,10 +74,12 @@ GET /api/v1/exercises?limit=10&cursor=eyJpZCI6NDJ9
 **Filtering** — query parameters match field names:
 ```
 GET /api/v1/exercises?muscle_group=chest&equipment=barbell
-GET /api/v1/programs?is_template=true
+GET /api/v1/programs?is_prebuilt=true
 GET /api/v1/cycles?status=active
 GET /api/v1/exercises?search=bench    (name search)
 ```
+
+The canonical allowed values for `muscle_group`, `equipment`, and `tracking_type` are served dynamically by `GET /api/v1/exercises/filters` — do not hardcode enum lists in frontend clients.
 
 **Sorting** — `sort` and `order` query parameters:
 ```
@@ -172,20 +174,47 @@ This endpoint is intentionally outside the `/api/v1` prefix and requires no auth
 ```
 GET    /api/v1/exercises                  — list (search, filter, paginate, sort)
 GET    /api/v1/exercises/{id}             — get one
+GET    /api/v1/exercises/filters          — return allowed enum values for filter UIs
 POST   /api/v1/exercises                  — create custom exercise
 PUT    /api/v1/exercises/{id}             — update
 DELETE /api/v1/exercises/{id}             — soft delete (custom only)
 ```
 
+**`GET /api/v1/exercises/filters` response:**
+```json
+{
+  "data": {
+    "muscle_groups": ["chest", "back", "legs", "shoulders", "biceps", "triceps", "core", "cardio", "other"],
+    "equipment": ["barbell", "dumbbell", "cable", "machine", "bodyweight", "band", "kettlebell", "other"],
+    "tracking_types": ["weight_reps", "bodyweight_reps", "duration", "distance"]
+  }
+}
+```
+
 ### Programs & Templates
 
-Templates are programs with `is_template=1`. No separate endpoints.
+Prebuilt programs (seeded content) have `is_prebuilt=1` and are read-only. All user-created programs are identical in structure — there is no separate "template" type. Any program can be deep-copied to create an independent copy.
+
+**List vs detail response shapes:**
+- `GET /api/v1/programs` — returns **summary shape** only (no tree). Use for list views.
+- `GET /api/v1/programs/{id}` — returns **full tree** (workouts → sections → exercises → progression rules).
+
+**List response item shape:**
+```json
+{
+  "uuid": "...",
+  "name": "5/3/1",
+  "is_prebuilt": false,
+  "workout_count": 4,
+  "updated_at": "2026-03-08T10:00:00Z"
+}
+```
 
 ```
-GET    /api/v1/programs                   — list (filter: ?is_template=true for templates)
+GET    /api/v1/programs                   — list (filter: ?is_prebuilt=true)
 GET    /api/v1/programs/{id}              — get with full workout/section/exercise tree
-POST   /api/v1/programs                   — create program (set is_template=true for template)
-POST   /api/v1/programs/{id}/copy         — deep copy a program/template into a new program
+POST   /api/v1/programs                   — create program
+POST   /api/v1/programs/{id}/copy         — deep copy a program into a new program
 PUT    /api/v1/programs/{id}              — update program metadata
 DELETE /api/v1/programs/{id}              — soft delete
 ```
@@ -241,17 +270,85 @@ PUT    /api/v1/cycles/{id}                 — pause/complete cycle
 ### Sessions
 
 ```
-GET    /api/v1/cycles/{cid}/sessions/{sid}          — get session detail (targets + logged sets)
-POST   /api/v1/cycles/{cid}/sessions/{sid}/start    — start a session (pending → in_progress)
-POST   /api/v1/cycles/{cid}/sessions/{sid}/sets     — log a set
+GET    /api/v1/sessions/active                       — get in-progress session (convenience for app resume)
+GET    /api/v1/cycles/{cid}/sessions/{sid}           — get session detail (targets + logged sets)
+POST   /api/v1/cycles/{cid}/sessions/{sid}/start     — start a session (pending → in_progress)
+POST   /api/v1/cycles/{cid}/sessions/{sid}/sets      — log a set
 PUT    /api/v1/cycles/{cid}/sessions/{sid}/complete  — complete session (in_progress → completed)
 PUT    /api/v1/cycles/{cid}/sessions/{sid}/skip      — skip session (pending or in_progress → skipped)
+DELETE /api/v1/sessions/{sid}/sets?exercise_uuid={}  — delete all set_logs for an exercise in a session
 ```
+
+**`GET /api/v1/sessions/active` response:**
+
+Returns the single in-progress session with targets and actuals combined — designed so the Today tab and session resume flow require a single call.
+
+```json
+{
+  "data": {
+    "uuid": "...",
+    "cycle_uuid": "...",
+    "workout_name": "Day A — Push",
+    "status": "in_progress",
+    "started_at": "2026-03-08T10:00:00Z",
+    "sections": [
+      {
+        "uuid": "...",
+        "name": "Compound",
+        "exercises": [
+          {
+            "section_exercise_uuid": "...",
+            "exercise_uuid": "...",
+            "name": "Bench Press",
+            "target_sets": 3,
+            "target_reps": 5,
+            "target_weight": 80.0,
+            "rest_seconds": 180,
+            "logged_sets": [
+              {
+                "uuid": "...",
+                "set_number": 1,
+                "actual_reps": 5,
+                "weight": 80.0,
+                "completed_at": "2026-03-08T10:05:00Z"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Returns `404` with code `no_active_session` when no session is in progress.
+
+**`DELETE /api/v1/sessions/{sid}/sets?exercise_uuid={uuid}`**
+
+Deletes all `set_logs` for the given exercise in the given session. Used when the user substitutes an exercise mid-session after having already logged some sets — those partial logs are discarded before logging begins under the substitute.
+
+- Returns `204 No Content`
+- Returns `404` if session or exercise not found
+- Returns `422` if session is not `in_progress`
 
 ### Progress
 
 ```
-GET    /api/v1/progress/exercise/{id}     — history for one exercise (weight, volume over time)
+GET    /api/v1/progress/exercise/{id}     — history for one exercise (chart-ready time series)
 GET    /api/v1/progress/prs               — personal records across exercises
 GET    /api/v1/progress/summary           — overall stats (total sessions, streak, etc.)
 ```
+
+**`GET /api/v1/progress/exercise/{id}` response** — pre-aggregated, chart-ready. Each entry represents one session:
+
+```json
+{
+  "data": [
+    { "date": "2026-01-05", "weight": 75.0, "reps": 5, "volume": 375.0 },
+    { "date": "2026-01-12", "weight": 77.5, "reps": 5, "volume": 387.5 },
+    { "date": "2026-01-19", "weight": 80.0, "reps": 5, "volume": 400.0 }
+  ]
+}
+```
+
+`volume` = `weight × reps` for the best set of that session. Ordered ascending by date. Clients pass this directly to a charting library.

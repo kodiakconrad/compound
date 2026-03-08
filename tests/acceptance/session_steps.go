@@ -24,6 +24,9 @@ func InitializeSessionSteps(ctx *godog.ScenarioContext, client *TestClient) {
 	ctx.Step(`^I log an ad-hoc set for exercise "([^"]*)" with:$`, client.iLogAnAdHocSetForExercise)
 	ctx.Step(`^the set log exercise should be "([^"]*)"$`, client.theSetLogExerciseShouldBe)
 
+	// Delete sets
+	ctx.Step(`^I delete sets for exercise "([^"]*)" from session for workout "([^"]*)"$`, client.iDeleteSetsForExerciseFromSessionForWorkout)
+
 	// Session detail assertions
 	ctx.Step(`^I get the session for workout "([^"]*)" in the current cycle$`, client.iGetTheSessionForWorkout)
 	ctx.Step(`^the session should have (\d+) sections?$`, client.theSessionShouldHaveSections)
@@ -247,6 +250,20 @@ func (c *TestClient) theSetLogExerciseShouldBe(exerciseName string) error {
 		return fmt.Errorf("expected exercise UUID %q (%s), got %q", expected, exerciseName, c.LastSetLogExerciseUUID)
 	}
 	return nil
+}
+
+// --- Delete sets ---
+
+func (c *TestClient) iDeleteSetsForExerciseFromSessionForWorkout(exerciseName, workoutName string) error {
+	sessionUUID, ok := c.SessionsByWorkoutName[workoutName]
+	if !ok {
+		return fmt.Errorf("no session UUID stored for workout %q", workoutName)
+	}
+	exerciseUUID, ok := c.ExerciseUUIDs[exerciseName]
+	if !ok {
+		return fmt.Errorf("no UUID stored for exercise %q", exerciseName)
+	}
+	return c.Delete("/api/v1/sessions/" + sessionUUID + "/sets?exercise_uuid=" + exerciseUUID)
 }
 
 // --- Session detail ---

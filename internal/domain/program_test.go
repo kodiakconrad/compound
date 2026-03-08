@@ -69,7 +69,6 @@ func TestProgram_DeepCopy(t *testing.T) {
 		UUID:        "source-uuid",
 		Name:        "Source",
 		Description: &desc,
-		IsTemplate:  true,
 		IsPrebuilt:  true,
 		Workouts: []*ProgramWorkout{
 			{
@@ -99,10 +98,7 @@ func TestProgram_DeepCopy(t *testing.T) {
 
 	cp := source.DeepCopy()
 
-	// Copy is a regular program, not a template, not prebuilt.
-	if cp.IsTemplate {
-		t.Error("copy should not be a template")
-	}
+	// Copy is a user program — never prebuilt.
 	if cp.IsPrebuilt {
 		t.Error("copy should not be prebuilt")
 	}

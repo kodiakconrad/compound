@@ -50,6 +50,10 @@ WHERE se.id = ?;
 -- name: GetExerciseTrackingTypeByID :one
 SELECT tracking_type FROM exercises WHERE id = ?;
 
+-- name: DeleteSetLogsForSessionAndExercise :exec
+DELETE FROM set_logs
+WHERE session_id = ? AND exercise_id = ?;
+
 -- name: GetSetLogProgressionHistory :many
 SELECT sl.section_exercise_id, sl.set_number,
        sl.actual_reps, sl.target_reps, sl.weight,

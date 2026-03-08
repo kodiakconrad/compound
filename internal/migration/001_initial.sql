@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS programs (
     uuid            TEXT     UNIQUE NOT NULL,
     name            TEXT     NOT NULL,
     description     TEXT,
-    is_template     BOOLEAN  NOT NULL DEFAULT FALSE,
     is_prebuilt     BOOLEAN  NOT NULL DEFAULT FALSE,
     created_at      DATETIME NOT NULL,
     updated_at      DATETIME NOT NULL,

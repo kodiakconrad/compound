@@ -100,6 +100,9 @@ func (s *Server) registerRoutes() {
 			})
 		})
 
+		// Session-scoped set deletion (substitution cleanup).
+		r.Delete("/sessions/{sid}/sets", sh.HandleDeleteSetsForExercise)
+
 		// Progress summary route (Step 5)
 		r.Get("/progress/summary", prh.HandleGetSummary)
 	})

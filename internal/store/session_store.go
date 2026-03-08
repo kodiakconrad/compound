@@ -427,6 +427,26 @@ func (s *Store) LogSet(ctx context.Context, db DBTX, log *domain.SetLog) error {
 	return nil
 }
 
+// DeleteSetLogsForExercise deletes all set_logs for the given exercise in a session.
+// Returns UnprocessableError if the session is not in_progress.
+func (s *Store) DeleteSetLogsForExercise(ctx context.Context, db DBTX, sessionUUID, exerciseUUID string) error {
+	sess, err := s.GetSessionByUUID(ctx, db, sessionUUID)
+	if err != nil {
+		return err
+	}
+	if sess.Status != domain.SessionInProgress {
+		return domain.NewUnprocessableError("session is not in progress")
+	}
+	ex, err := s.GetExerciseByUUID(ctx, db, exerciseUUID)
+	if err != nil {
+		return err
+	}
+	return dbgen.New(db).DeleteSetLogsForSessionAndExercise(ctx, dbgen.DeleteSetLogsForSessionAndExerciseParams{
+		SessionID:  sess.ID,
+		ExerciseID: ex.ID,
+	})
+}
+
 // validateSetLogTrackingType returns an error if the set_log contains fields
 // incompatible with the exercise's tracking type.
 func validateSetLogTrackingType(log *domain.SetLog, t domain.TrackingType) error {

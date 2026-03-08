@@ -26,7 +26,6 @@ func (s *Store) CreateProgram(ctx context.Context, db DBTX, p *domain.Program) e
 		Uuid:        p.UUID,
 		Name:        p.Name,
 		Description: p.Description,
-		IsTemplate:  p.IsTemplate,
 		IsPrebuilt:  p.IsPrebuilt,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,
@@ -140,7 +139,7 @@ func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*do
 
 // ProgramListParams holds filter/sort/pagination options for listing programs.
 type ProgramListParams struct {
-	IsTemplate *bool
+	IsPrebuilt *bool
 	Sort       string
 	Order      string
 	Limit      int
@@ -153,9 +152,9 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 
 	conditions = append(conditions, "deleted_at IS NULL")
 
-	if p.IsTemplate != nil {
-		conditions = append(conditions, "is_template = ?")
-		args = append(args, *p.IsTemplate)
+	if p.IsPrebuilt != nil {
+		conditions = append(conditions, "is_prebuilt = ?")
+		args = append(args, *p.IsPrebuilt)
 	}
 	if p.Cursor != nil {
 		conditions = append(conditions, "id > ?")
@@ -172,7 +171,7 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 	}
 
 	query := fmt.Sprintf(
-		`SELECT id, uuid, name, description, is_template, is_prebuilt,
+		`SELECT id, uuid, name, description, is_prebuilt,
 		        created_at, updated_at
 		 FROM programs
 		 WHERE %s
@@ -192,17 +191,16 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 	for rows.Next() {
 		var prog domain.Program
 		var description *string
-		var isTemplate, isPrebuilt bool
+		var isPrebuilt bool
 		var createdAt, updatedAt time.Time
 
 		if err := rows.Scan(
 			&prog.ID, &prog.UUID, &prog.Name, &description,
-			&isTemplate, &isPrebuilt, &createdAt, &updatedAt,
+			&isPrebuilt, &createdAt, &updatedAt,
 		); err != nil {
 			return nil, false, err
 		}
 		prog.Description = description
-		prog.IsTemplate = isTemplate
 		prog.IsPrebuilt = isPrebuilt
 		prog.CreatedAt = createdAt
 		prog.UpdatedAt = updatedAt

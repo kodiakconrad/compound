@@ -63,7 +63,7 @@ File and package layout for the Compound Go backend.
     seed/
       seed.go                — seed exercises + prebuilt programs (5/3/1, PPL, Starting Strength)
       exercises.go           — ~80-100 common exercises
-      programs.go            — prebuilt program definitions (is_template=1, is_prebuilt=1)
+      programs.go            — prebuilt program definitions (is_prebuilt=1)
 
   tests/
     acceptance/

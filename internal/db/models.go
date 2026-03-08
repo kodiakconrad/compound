@@ -49,7 +49,6 @@ type Program struct {
 	Uuid        string
 	Name        string
 	Description *string
-	IsTemplate  bool
 	IsPrebuilt  bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

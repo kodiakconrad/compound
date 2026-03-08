@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `make test` — run all tests
 - `make vet` — static analysis
 - `make gen` — regenerate sqlc query code from `internal/db/query/*.sql` (run after any SQL query change)
-- `make seed` — seed exercises and prebuilt templates
+- `make seed` — seed exercises and prebuilt programs
 - `make reset-db` — delete the database (re-run `make run` + `make seed` after)
 
 ## Project
@@ -40,16 +40,17 @@ Before writing or modifying code, consult these docs. They define binding conven
 | [docs/git-strategy.md](docs/git-strategy.md) | Trunk-based dev, short-lived `type/description` branches, PRs to main, CI requirements |
 | [docs/local-development.md](docs/local-development.md) | First-run behavior, config file, Makefile targets, seeding, dev workflow |
 | [docs/phase2.md](docs/phase2.md) | React Native frontend plan: connectivity model, offline strategy, navigation, API contract considerations (Phase 2) |
+| [docs/ui-spec.md](docs/ui-spec.md) | **Approved UI designs** — visual style, all screen layouts, interaction patterns (Phase 2). Do not deviate without user sign-off. |
+| [docs/phase2-implementation-plan.md](docs/phase2-implementation-plan.md) | Phase 2 step-by-step build plan |
 | [docs/ai.md](docs/ai.md) | AI feature design: exercise suggestions, template generation, program generation, form tips (Phase 3) |
 | [docs/implementation-plan.md](docs/implementation-plan.md) | Phased build steps |
 
 ## Terminology
 
-- **Program** — a multi-day workout plan (contains workouts)
+- **Program** — a multi-day workout plan (contains workouts). All programs are the same type; "prebuilt" programs (`is_prebuilt=1`) are seeded read-only content.
 - **Workout** — one day's exercises within a program
 - **Section** — a movement group within a workout (e.g., compound, isolation, burnout)
 - **Exercise** — a single movement with target sets/reps/weight, belongs to a section
-- **Template** — a reusable program blueprint (a program with `is_template=1`)
 - **Cycle** — an active run of a program, created when a user starts a program
 - **Session** — one workout instance within a cycle, tracks actual performance
 
@@ -90,9 +91,13 @@ Before writing or modifying code, consult these docs. They define binding conven
 - When adding a new domain: domain model → SQL query file + `make gen` → store methods (call `dbgen.New(db)`) → DTOs → handler → route registration
 - Trunk-based dev: short-lived `type/description` branches, PRs to main, CI must pass
 
+### Frontend Development Flow (Phase 2+)
+- **Design before wiring** — for every frontend screen or component, generate a static design (ASCII mockup or static component with hardcoded data) first. Only after the user approves the design, wire it up to the backend API.
+- **Explain all decisions** — the user is a novice TypeScript engineer. Explain every technical decision, even ones that may seem obvious (why a hook vs a component, what a type does, why a particular pattern is used). Never assume prior TypeScript/React Native knowledge.
+
 ## Gotchas
 
-- Programs and Templates are structurally identical — a Template is a Program with `is_template=1`
+- There is no "Template" concept — `is_template` was removed. Prebuilt programs use `is_prebuilt=1` and are seeded read-only content. All user-created programs are just programs.
 - "Sections" are workout sub-groups (compound, isolation, burnout), not page sections
 - Go backend and future RN app coexist in the same repo (Go at root, RN in `/app`)
 - Soft deletes only on `exercises` and `programs` — everything else cascades or is immutable log data
