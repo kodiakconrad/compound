@@ -1,5 +1,5 @@
-Feature: Programs, Templates & Workout Builder
-  Manage programs and templates with nested workouts, sections,
+Feature: Programs & Workout Builder
+  Manage programs with nested workouts, sections,
   and section exercises. Supports deep copy, reorder, and
   active cycle locking.
 
@@ -12,41 +12,34 @@ Feature: Programs, Templates & Workout Builder
     Then the response status should be 201
     And the response should have a uuid
     And the response should include:
-      | name             | is_template |
+      | name             | is_prebuilt |
       | My Training Plan | false       |
-
-  Scenario: Create a template
-    When I create a program with:
-      | name        | is_template |
-      | My Template | true        |
-    Then the response status should be 201
-    And the response should include:
-      | is_template |
-      | true        |
 
   Scenario: List programs
     Given the following programs exist:
-      | name      | is_template |
-      | Program A | false       |
-      | Program B | false       |
+      | name      |
+      | Program A |
+      | Program B |
     When I list programs
     Then the response status should be 200
     And the response should contain 2 programs
 
-  Scenario: List templates only
+  Scenario: List prebuilt programs only
     Given the following programs exist:
-      | name       | is_template |
-      | Program A  | false       |
-      | Template B | true        |
-      | Template C | true        |
-    When I list programs with is_template "true"
+      | name      |
+      | Program A |
+    And the following prebuilt programs exist:
+      | name       |
+      | Template B |
+      | Template C |
+    When I list programs with is_prebuilt "true"
     Then the response status should be 200
     And the response should contain 2 programs
 
   Scenario: Get program with full tree
     Given the following programs exist:
-      | name      | is_template |
-      | Full Plan | false       |
+      | name      |
+      | Full Plan |
     And the program "Full Plan" has a workout:
       | name         | day_number |
       | Day 1 - Push | 1          |
@@ -65,11 +58,11 @@ Feature: Programs, Templates & Workout Builder
     And the first workout should have 1 section
     And the first section should have 1 exercise
 
-  Scenario: Deep copy a template into a new program
+  Scenario: Deep copy a program
     Given the following programs exist:
-      | name            | is_template |
-      | Source Template | true        |
-    And the program "Source Template" has a workout:
+      | name          |
+      | Source Program |
+    And the program "Source Program" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
     And the workout "Day 1" has a section:
@@ -81,18 +74,18 @@ Feature: Programs, Templates & Workout Builder
     And the section "Main Lifts" has exercise "Bench Press" with:
       | target_sets | target_reps | target_weight |
       | 3           | 5           | 135           |
-    When I copy the program "Source Template"
+    When I copy the program "Source Program"
     Then the response status should be 201
     And the response should have a uuid
     And the response should include:
-      | is_template |
+      | is_prebuilt |
       | false       |
     And the response should have 1 workout
 
   Scenario: Update program metadata
     Given the following programs exist:
-      | name     | is_template |
-      | Old Name | false       |
+      | name     |
+      | Old Name |
     When I update the program "Old Name" with:
       | name     | description  |
       | New Name | Updated desc |
@@ -103,8 +96,8 @@ Feature: Programs, Templates & Workout Builder
 
   Scenario: Soft delete a program
     Given the following programs exist:
-      | name      | is_template |
-      | To Delete | false       |
+      | name      |
+      | To Delete |
     When I delete the program "To Delete"
     Then the response status should be 204
     When I list programs
@@ -122,8 +115,8 @@ Feature: Programs, Templates & Workout Builder
 
   Scenario: Add a workout to a program
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     When I add a workout to program "My Plan" with:
       | name         | day_number |
       | Day 1 - Push | 1          |
@@ -132,8 +125,8 @@ Feature: Programs, Templates & Workout Builder
 
   Scenario: Cannot add workout with duplicate day_number
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -145,8 +138,8 @@ Feature: Programs, Templates & Workout Builder
 
   Scenario: Update a workout
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -160,8 +153,8 @@ Feature: Programs, Templates & Workout Builder
 
   Scenario: Delete a workout
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -170,8 +163,8 @@ Feature: Programs, Templates & Workout Builder
 
   Scenario: Reorder workouts
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -185,8 +178,8 @@ Feature: Programs, Templates & Workout Builder
 
   Scenario: Add a section to a workout
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -198,8 +191,8 @@ Feature: Programs, Templates & Workout Builder
 
   Scenario: Reorder sections
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -219,8 +212,8 @@ Feature: Programs, Templates & Workout Builder
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -238,8 +231,8 @@ Feature: Programs, Templates & Workout Builder
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -259,8 +252,8 @@ Feature: Programs, Templates & Workout Builder
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -279,8 +272,8 @@ Feature: Programs, Templates & Workout Builder
       | Bench Press | chest        | weight_reps   |
       | Squat       | legs         | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -300,8 +293,8 @@ Feature: Programs, Templates & Workout Builder
 
   Scenario: Cannot modify a program with an active cycle
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name    |
+      | My Plan |
     And the program "My Plan" has an active cycle
     When I update the program "My Plan" with:
       | name         |

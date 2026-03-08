@@ -121,7 +121,7 @@ type Exercise struct {
 
 A program is a multi-day workout plan. It contains the full tree: workouts → sections → section_exercises → progression_rules.
 
-Templates are programs with `is_template=1`. Deep copying a template creates a new independent program.
+Prebuilt programs (`IsPrebuilt=true`) are seeded content (e.g., 5/3/1, PPL) and are read-only. All other programs are user-created and fully editable. Deep copying any program creates a new independent user program.
 
 ```go
 type Program struct {
@@ -129,7 +129,6 @@ type Program struct {
     UUID        string
     Name        string
     Description *string
-    IsTemplate  bool
     IsPrebuilt  bool
     Workouts    []*ProgramWorkout
     CreatedAt   time.Time

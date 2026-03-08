@@ -25,7 +25,6 @@ erDiagram
         TEXT uuid UK
         TEXT name
         TEXT description
-        INTEGER is_template
         INTEGER is_prebuilt
         TIMESTAMP created_at
         TIMESTAMP updated_at
@@ -149,15 +148,14 @@ erDiagram
     set_logs }o--o| section_exercises : "references"
 ```
 
-## 1. Templates & Programs → Single `programs` Table
+## 1. Programs → Single `programs` Table
 
-**Decision:** Merge templates and programs into one `programs` table with an `is_template` flag.
+**Decision:** All programs live in one `programs` table. There is no "template" concept. Prebuilt programs use `is_prebuilt=1`.
 
-**Rationale:** Templates and programs are structurally identical — same workouts, sections, and exercises. A separate `templates` table would duplicate the entire hierarchy. "Create from template" is simply a deep copy of a program where `is_template = true`.
+**Rationale:** Templates and programs are structurally identical. A separate templates concept or table adds complexity without benefit for the use cases we support. Any program can be deep-copied (via `POST /api/v1/programs/{id}/copy`) to create an independent copy.
 
-- `is_template = 1` — reusable blueprint, appears in template listings
-- `is_template = 0` — user's active program
-- `is_prebuilt = 1` — shipped with the app (5/3/1, PPL, Starting Strength)
+- `is_prebuilt = 1` — seeded content shipped with the app (5/3/1, PPL, Starting Strength); read-only, cannot be edited or deleted
+- `is_prebuilt = 0` — user-created program; fully editable
 
 ## 2. Rest Periods → `rest_seconds` on `sections`
 

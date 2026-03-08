@@ -83,9 +83,9 @@ func (h *ProgramHandler) HandleListPrograms(w http.ResponseWriter, r *http.Reque
 		Sort:   r.URL.Query().Get("sort"),
 		Order:  r.URL.Query().Get("order"),
 	}
-	if it := r.URL.Query().Get("is_template"); it != "" {
-		val := strings.EqualFold(it, "true")
-		params.IsTemplate = &val
+	if ip := r.URL.Query().Get("is_prebuilt"); ip != "" {
+		val := strings.EqualFold(ip, "true")
+		params.IsPrebuilt = &val
 	}
 
 	programs, hasMore, err := h.store.ListPrograms(r.Context(), h.store.DB, params)

@@ -72,15 +72,14 @@ No BDD here — pure infrastructure. Verify by running the server.
 
 ---
 
-## Step 3 — Programs, Templates & Workout Builder
+## Step 3 — Programs & Workout Builder
 
 **Acceptance tests first** (`tests/acceptance/features/programs.feature`):
 - Create a program — 201 with uuid
-- Create a template (`is_template=true`) — 201
 - List programs — paginated list
-- List templates only (`?is_template=true`) — filtered
+- List prebuilt programs only (`?is_prebuilt=true`) — filtered
 - Get program with full tree (workouts → sections → exercises) — 200
-- Deep copy a template into a new program — 201, independent copy
+- Deep copy a program — 201, independent copy
 - Update program metadata — 200
 - Soft delete a program — 204
 - Cannot delete a prebuilt program — 422
@@ -110,7 +109,7 @@ No BDD here — pure infrastructure. Verify by running the server.
 - `TestProgram_DeepCopy` — verify new UUIDs, independence from source
 - `TestProgressionRule_NextWeight` — linear, percentage, deload trigger
 
-**Seed:** `internal/seed/programs.go` — prebuilt templates: 5/3/1, PPL, Starting Strength.
+**Seed:** `internal/seed/programs.go` — prebuilt programs (is_prebuilt=1): 5/3/1, PPL, Starting Strength.
 
 ---
 

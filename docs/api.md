@@ -74,7 +74,6 @@ GET /api/v1/exercises?limit=10&cursor=eyJpZCI6NDJ9
 **Filtering** — query parameters match field names:
 ```
 GET /api/v1/exercises?muscle_group=chest&equipment=barbell
-GET /api/v1/programs?is_template=true
 GET /api/v1/programs?is_prebuilt=true
 GET /api/v1/cycles?status=active
 GET /api/v1/exercises?search=bench    (name search)
@@ -194,7 +193,7 @@ DELETE /api/v1/exercises/{id}             — soft delete (custom only)
 
 ### Programs & Templates
 
-Templates are programs with `is_template=1`. Prebuilt programs (seeded content) have `is_prebuilt=1` and are read-only. No separate endpoints.
+Prebuilt programs (seeded content) have `is_prebuilt=1` and are read-only. All user-created programs are identical in structure — there is no separate "template" type. Any program can be deep-copied to create an independent copy.
 
 **List vs detail response shapes:**
 - `GET /api/v1/programs` — returns **summary shape** only (no tree). Use for list views.
@@ -205,7 +204,6 @@ Templates are programs with `is_template=1`. Prebuilt programs (seeded content) 
 {
   "uuid": "...",
   "name": "5/3/1",
-  "is_template": false,
   "is_prebuilt": false,
   "workout_count": 4,
   "updated_at": "2026-03-08T10:00:00Z"
@@ -213,10 +211,10 @@ Templates are programs with `is_template=1`. Prebuilt programs (seeded content) 
 ```
 
 ```
-GET    /api/v1/programs                   — list (filter: ?is_template=true, ?is_prebuilt=true)
+GET    /api/v1/programs                   — list (filter: ?is_prebuilt=true)
 GET    /api/v1/programs/{id}              — get with full workout/section/exercise tree
-POST   /api/v1/programs                   — create program (set is_template=true for template)
-POST   /api/v1/programs/{id}/copy         — deep copy a program/template into a new program
+POST   /api/v1/programs                   — create program
+POST   /api/v1/programs/{id}/copy         — deep copy a program into a new program
 PUT    /api/v1/programs/{id}              — update program metadata
 DELETE /api/v1/programs/{id}              — soft delete
 ```

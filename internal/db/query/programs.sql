@@ -1,9 +1,9 @@
 -- name: InsertProgram :execresult
-INSERT INTO programs (uuid, name, description, is_template, is_prebuilt, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT INTO programs (uuid, name, description, is_prebuilt, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?);
 
 -- name: GetProgramByUUID :one
-SELECT id, uuid, name, description, is_template, is_prebuilt, created_at, updated_at, deleted_at
+SELECT id, uuid, name, description, is_prebuilt, created_at, updated_at, deleted_at
 FROM programs
 WHERE uuid = ? AND deleted_at IS NULL;
 

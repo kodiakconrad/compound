@@ -19,8 +19,8 @@ Feature: Progress Tracking
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -42,8 +42,8 @@ Feature: Progress Tracking
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -66,8 +66,8 @@ Feature: Progress Tracking
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -97,8 +97,8 @@ Feature: Progress Tracking
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -127,8 +127,8 @@ Feature: Progress Tracking
 
   Scenario: Summary counts all completed sessions and streak across cycles
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -145,8 +145,8 @@ Feature: Progress Tracking
 
   Scenario: Streak resets after a skipped session
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |

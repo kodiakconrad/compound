@@ -211,7 +211,7 @@ This feature exists because templates are first-class. Users without an existing
 
 - `POST /api/v1/ai/template` — freeform description → template structure preview
 - `POST /api/v1/ai/template/refine` — stateless refinement
-- `POST /api/v1/ai/template/apply` — saves as a real template (`is_template=1`)
+- `POST /api/v1/ai/template/apply` — saves the structure as a new program
 
 ### Initial Request
 
@@ -253,7 +253,7 @@ Examples: "make it 4 days instead of 5", "add a dedicated arm section to Push", 
 
 ### Apply
 
-Saves template to DB with `is_template=1`. User now has a first-class reusable template ready for program generation.
+Saves the AI-generated structure as a new program. User now has an empty program (no exercises yet) ready for program generation (Feature 3).
 
 ### Why Freeform
 
@@ -332,7 +332,7 @@ Examples: "the squat volume is too high", "swap RDLs for leg curls on pull day",
 
 ### Apply
 
-Deep copies the template structure, creates a real program (`is_template=0`) with AI-filled exercises. Handles `existing_uuid` the same way as suggestions apply — creates missing exercises in a transaction.
+Deep copies the source program structure, creates a new program with AI-filled exercises. Handles `existing_uuid` the same way as suggestions apply — creates missing exercises in a transaction.
 
 ### Why Template-First
 

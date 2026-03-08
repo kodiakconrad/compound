@@ -7,13 +7,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// Program is a multi-day workout plan. Templates are programs with IsTemplate=true.
+// Program is a multi-day workout plan. Prebuilt programs (IsPrebuilt=true) are
+// seeded content that is read-only. All other programs are user-created and editable.
 type Program struct {
 	ID          int64
 	UUID        string
 	Name        string
 	Description *string
-	IsTemplate  bool
 	IsPrebuilt  bool
 	Workouts    []*ProgramWorkout
 	CreatedAt   time.Time
@@ -42,7 +42,7 @@ func (p *Program) HasDayNumber(dayNumber int, existingDayNumbers []int) error {
 
 // DeepCopy creates a fully independent copy of the program and its entire tree.
 // All nodes get new UUIDs and fresh timestamps. IDs are zeroed (assigned on insert).
-// The copy is always a regular program (IsTemplate=false, IsPrebuilt=false).
+// The copy is always a user program (IsPrebuilt=false).
 func (p *Program) DeepCopy() *Program {
 	now := time.Now().UTC()
 
@@ -50,7 +50,6 @@ func (p *Program) DeepCopy() *Program {
 		UUID:        uuid.NewString(),
 		Name:        p.Name + " (Copy)",
 		Description: copyStringPtr(p.Description),
-		IsTemplate:  false,
 		IsPrebuilt:  false,
 		CreatedAt:   now,
 		UpdatedAt:   now,

@@ -6,8 +6,8 @@ High-level overview of the Compound backend. Each section links to a dedicated d
 
 ```
 Program
-  ├── is_template=1  → reusable blueprint, always editable, never run directly
   ├── is_prebuilt=1  → seeded content (5/3/1, PPL, Starting Strength), read-only
+  ├── is_prebuilt=0  → user-created, fully editable, can be deep-copied
   └── Workouts (one per day, ordered)
         └── Sections (freeform named groups, e.g. "Heavy Compounds", "Accessories")
               └── Exercises (with target sets/reps/weight/duration/distance)

@@ -221,20 +221,22 @@ Confirming locks in the targets. The substitute replaces the original for all re
 ┌─────────────────────────────┐
 │ Programs                [+] │
 ├─────────────────────────────┤
-│ [My Programs] [Templates]   │
-├─────────────────────────────┤
 │ ┌─────────────────────────┐ │
-│ │ 5/3/1                   │ │
+│ │ 5/3/1                 🔒 │ │
 │ │ 4 workouts · Active     │ │
 │ └─────────────────────────┘ │
 │ ┌─────────────────────────┐ │
-│ │ PPL                     │ │
+│ │ PPL                   🔒 │ │
 │ │ 6 workouts              │ │
+│ └─────────────────────────┘ │
+│ ┌─────────────────────────┐ │
+│ │ My Custom Plan          │ │
+│ │ 3 workouts · Active     │ │
 │ └─────────────────────────┘ │
 └─────────────────────────────┘
 ```
 
-"Active" badge on any program with a running cycle. Templates tab shows the same card layout, with "Prebuilt" badge on seeded templates.
+Flat list of all programs. "Active" badge on any program with a running cycle. 🔒 (lock) badge on prebuilt programs (seeded content — read-only, cannot be edited or deleted, but can be copied).
 
 ---
 
@@ -305,8 +307,8 @@ Tapping `[+]` on the Programs list:
 │  │  Build your own program ││
 │  └─────────────────────────┘│
 │  ┌─────────────────────────┐│
-│  │  📋 Use a template      ││
-│  │  Copy & customize       ││
+│  │  📋 Copy a program      ││
+│  │  Customize an existing  ││
 │  └─────────────────────────┘│
 └─────────────────────────────┘
 ```
@@ -315,42 +317,10 @@ Tapping `[+]` on the Programs list:
 1. Name screen → [ Create Program ]
 2. Lands on empty program detail in edit mode
 
-**From template flow:**
-1. Template picker (searchable list, same layout as Templates tab)
-2. Name screen (pre-filled with template name, editable) → [ Create Program ]
-3. Lands on pre-filled program detail in read mode
-
----
-
-### Create new template — entry sheet
-
-Tapping `[+]` on the Templates tab:
-
-```
-┌─────────────────────────────┐
-│  New Template               │
-├─────────────────────────────┤
-│  ┌─────────────────────────┐│
-│  │  📄 From scratch        ││
-│  │  Build a new blueprint  ││
-│  └─────────────────────────┘│
-│  ┌─────────────────────────┐│
-│  │  📋 Copy a template     ││
-│  │  Customize an existing  ││
-│  └─────────────────────────┘│
-│  ┌─────────────────────────┐│
-│  │  ⬆️  Save program as    ││
-│  │     template            ││
-│  └─────────────────────────┘│
-└─────────────────────────────┘
-```
-
-**Save program as template flow:**
-1. Program picker (your programs list)
-2. Name screen (pre-filled, editable) → [ Save as Template ]
-3. Lands on new template detail (copy of the program, original unchanged)
-
-Templates have no cycle lock — they are always editable.
+**Copy flow:**
+1. Program picker (searchable list of all programs, including prebuilt)
+2. Name screen (pre-filled with "[Source Name] (Copy)", editable) → [ Create Program ]
+3. Lands on pre-filled program detail in edit mode — fully independent copy
 
 ---
 

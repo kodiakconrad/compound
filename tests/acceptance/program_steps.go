@@ -17,7 +17,7 @@ func InitializeProgramSteps(ctx *godog.ScenarioContext, client *TestClient) {
 	ctx.Step(`^the following programs exist:$`, client.theFollowingProgramsExist)
 	ctx.Step(`^the following prebuilt programs exist:$`, client.theFollowingPrebuiltProgramsExist)
 	ctx.Step(`^I list programs$`, client.iListPrograms)
-	ctx.Step(`^I list programs with is_template "([^"]*)"$`, client.iListProgramsWithIsTemplate)
+	ctx.Step(`^I list programs with is_prebuilt "([^"]*)"$`, client.iListProgramsWithIsPrebuilt)
 	ctx.Step(`^I get the program "([^"]*)"$`, client.iGetTheProgram)
 	ctx.Step(`^I update the program "([^"]*)" with:$`, client.iUpdateTheProgramWith)
 	ctx.Step(`^I delete the program "([^"]*)"$`, client.iDeleteTheProgram)
@@ -62,9 +62,6 @@ func (c *TestClient) iCreateAProgramWith(table *godog.Table) error {
 	if desc, ok := fields["description"]; ok && desc != "" {
 		body["description"] = desc
 	}
-	if it, ok := fields["is_template"]; ok {
-		body["is_template"] = parseBool(it, false)
-	}
 	return c.Post("/api/v1/programs", body)
 }
 
@@ -72,8 +69,7 @@ func (c *TestClient) theFollowingProgramsExist(table *godog.Table) error {
 	rows := tableToMapSlice(table)
 	for _, row := range rows {
 		body := map[string]any{
-			"name":        row["name"],
-			"is_template": parseBool(row["is_template"], false),
+			"name": row["name"],
 		}
 		if desc, ok := row["description"]; ok && desc != "" {
 			body["description"] = desc
@@ -101,8 +97,8 @@ func (c *TestClient) theFollowingPrebuiltProgramsExist(table *godog.Table) error
 		programUUID := uuid.NewString()
 		now := time.Now().UTC().Format(time.RFC3339)
 		_, err := c.DB.Exec(
-			`INSERT INTO programs (uuid, name, is_template, is_prebuilt, created_at, updated_at)
-			 VALUES (?, ?, 0, 1, ?, ?)`,
+			`INSERT INTO programs (uuid, name, is_prebuilt, created_at, updated_at)
+			 VALUES (?, ?, 1, ?, ?)`,
 			programUUID, row["name"], now, now,
 		)
 		if err != nil {
@@ -117,8 +113,8 @@ func (c *TestClient) iListPrograms() error {
 	return c.Get("/api/v1/programs")
 }
 
-func (c *TestClient) iListProgramsWithIsTemplate(val string) error {
-	return c.Get("/api/v1/programs?is_template=" + val)
+func (c *TestClient) iListProgramsWithIsPrebuilt(val string) error {
+	return c.Get("/api/v1/programs?is_prebuilt=" + val)
 }
 
 func (c *TestClient) iGetTheProgram(name string) error {

@@ -92,7 +92,7 @@ Returns allowed enum values for filter UIs.
     {
       "uuid": "...",
       "name": "5/3/1",
-      "is_template": false,
+      "is_prebuilt": false,
       "workout_count": 4,
       "updated_at": "2026-03-08T10:00:00Z"
     }
@@ -213,14 +213,14 @@ constants/
 **Screens:**
 - `app/(tabs)/programs.tsx` — tab with Programs / Templates switcher
 - `app/programs/[uuid].tsx` — program detail (full tree, edit mode toggle)
-- `app/programs/create.tsx` — create program (from scratch or copy template)
+- `app/programs/create.tsx` — create program (from scratch or copy existing)
 - `app/programs/[uuid]/cycle/start.tsx` — start cycle confirmation
 
 **Queries:**
-- `usePrograms(isTemplate)` — `GET /api/v1/programs?is_template=false`
-- `useTemplates()` — `GET /api/v1/programs?is_template=true`
+- `usePrograms()` — `GET /api/v1/programs` (all programs, paginated)
+- `usePrebuiltPrograms()` — `GET /api/v1/programs?is_prebuilt=true`
 - `useProgramDetail(uuid)` — `GET /api/v1/programs/:uuid` (full tree)
-- `useCopyTemplate()` — `POST /api/v1/programs/:uuid/copy`
+- `useCopyProgram()` — `POST /api/v1/programs/:uuid/copy`
 - `useStartCycle()` — `POST /api/v1/cycles`
 
 **Components:**

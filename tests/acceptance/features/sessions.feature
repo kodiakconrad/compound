@@ -12,8 +12,8 @@ Feature: Sessions & Set Logging
 
   Scenario: Start a session
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -26,8 +26,8 @@ Feature: Sessions & Set Logging
 
   Scenario: Complete a session with notes
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -41,8 +41,8 @@ Feature: Sessions & Set Logging
 
   Scenario: Skip a pending session
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -55,8 +55,8 @@ Feature: Sessions & Set Logging
 
   Scenario: Skip an in-progress session
     Given the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -75,8 +75,8 @@ Feature: Sessions & Set Logging
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -100,8 +100,8 @@ Feature: Sessions & Set Logging
       | Bench Press    | chest        | weight_reps   |
       | Dumbbell Press | chest        | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -124,8 +124,8 @@ Feature: Sessions & Set Logging
       | name      | muscle_group | tracking_type |
       | Face Pull | shoulders    | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -141,8 +141,8 @@ Feature: Sessions & Set Logging
       | name  | muscle_group | tracking_type |
       | Plank | core         | duration      |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -167,8 +167,8 @@ Feature: Sessions & Set Logging
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name    | is_template |
-      | My Plan | false       |
+      | name   |
+      | My Plan|
     And the program "My Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -197,8 +197,8 @@ Feature: Sessions & Set Logging
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name      | is_template |
-      | Push Plan | false       |
+      | name     |
+      | Push Plan|
     And the program "Push Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -222,8 +222,8 @@ Feature: Sessions & Set Logging
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name      | is_template |
-      | Push Plan | false       |
+      | name     |
+      | Push Plan|
     And the program "Push Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
@@ -247,8 +247,8 @@ Feature: Sessions & Set Logging
       | name        | muscle_group | tracking_type |
       | Bench Press | chest        | weight_reps   |
     And the following programs exist:
-      | name      | is_template |
-      | Push Plan | false       |
+      | name     |
+      | Push Plan|
     And the program "Push Plan" has a workout:
       | name  | day_number |
       | Day 1 | 1          |
