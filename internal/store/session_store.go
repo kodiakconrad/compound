@@ -116,42 +116,19 @@ func (s *Store) GetSessionDetail(ctx context.Context, db DBTX, id string) (*doma
 // name/uuid) + progression rules for a given workout ID. Returns the ordered
 // section slice and a map of section_exercise_id → SectionExercise.
 func (s *Store) loadSectionsForWorkout(ctx context.Context, db DBTX, workoutID int64) ([]*domain.Section, map[int64]*domain.SectionExercise, error) {
-	sRows, err := db.QueryContext(ctx,
-		`SELECT id, uuid, program_workout_id, name, sort_order, rest_seconds, created_at, updated_at
-		 FROM sections
-		 WHERE program_workout_id = ?
-		 ORDER BY sort_order`,
-		workoutID,
-	)
+	sectionRows, err := dbgen.New(db).GetSectionsByWorkoutID(ctx, workoutID)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer sRows.Close()
 
 	var sections []*domain.Section
 	var sectionIDs []int64
 	sectionMap := make(map[int64]*domain.Section)
-	for sRows.Next() {
-		var secID, programWorkoutID int64
-		var secUUID, name string
-		var sortOrder int64
-		var restSeconds *int64
-		var createdAt, updatedAt time.Time
-		if err := sRows.Scan(&secID, &secUUID, &programWorkoutID, &name,
-			&sortOrder, &restSeconds, &createdAt, &updatedAt); err != nil {
-			return nil, nil, err
-		}
-		sec := &domain.Section{
-			ID: secID, UUID: secUUID, ProgramWorkoutID: programWorkoutID,
-			Name: name, SortOrder: int(sortOrder), RestSeconds: ptrInt64ToInt(restSeconds),
-			CreatedAt: createdAt, UpdatedAt: updatedAt,
-		}
+	for _, sr := range sectionRows {
+		sec := mapSection(sr)
 		sections = append(sections, sec)
-		sectionIDs = append(sectionIDs, secID)
-		sectionMap[secID] = sec
-	}
-	if err := sRows.Err(); err != nil {
-		return nil, nil, err
+		sectionIDs = append(sectionIDs, sec.ID)
+		sectionMap[sec.ID] = sec
 	}
 
 	if len(sectionIDs) == 0 {

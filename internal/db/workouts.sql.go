@@ -84,14 +84,10 @@ func (q *Queries) GetMaxSectionExerciseSortOrder(ctx context.Context, sectionID 
 }
 
 const getMaxSectionSortOrder = `-- name: GetMaxSectionSortOrder :one
-
 SELECT COALESCE(MAX(sort_order), 0) FROM sections
 WHERE program_workout_id = ?
 `
 
-// ============================================================
-// sections
-// ============================================================
 func (q *Queries) GetMaxSectionSortOrder(ctx context.Context, programWorkoutID int64) (interface{}, error) {
 	row := q.db.QueryRowContext(ctx, getMaxSectionSortOrder, programWorkoutID)
 	var coalesce interface{}
@@ -198,6 +194,49 @@ func (q *Queries) GetSectionInternalID(ctx context.Context, uuid string) (int64,
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const getSectionsByWorkoutID = `-- name: GetSectionsByWorkoutID :many
+
+SELECT id, uuid, program_workout_id, name, sort_order, rest_seconds, created_at, updated_at
+FROM sections
+WHERE program_workout_id = ?
+ORDER BY sort_order
+`
+
+// ============================================================
+// sections
+// ============================================================
+func (q *Queries) GetSectionsByWorkoutID(ctx context.Context, programWorkoutID int64) ([]Section, error) {
+	rows, err := q.db.QueryContext(ctx, getSectionsByWorkoutID, programWorkoutID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Section
+	for rows.Next() {
+		var i Section
+		if err := rows.Scan(
+			&i.ID,
+			&i.Uuid,
+			&i.ProgramWorkoutID,
+			&i.Name,
+			&i.SortOrder,
+			&i.RestSeconds,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getWorkoutByUUID = `-- name: GetWorkoutByUUID :one

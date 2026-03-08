@@ -41,6 +41,12 @@ WHERE id = ? AND program_id = ?;
 -- sections
 -- ============================================================
 
+-- name: GetSectionsByWorkoutID :many
+SELECT id, uuid, program_workout_id, name, sort_order, rest_seconds, created_at, updated_at
+FROM sections
+WHERE program_workout_id = ?
+ORDER BY sort_order;
+
 -- name: GetMaxSectionSortOrder :one
 SELECT COALESCE(MAX(sort_order), 0) FROM sections
 WHERE program_workout_id = ?;
