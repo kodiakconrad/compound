@@ -163,19 +163,57 @@ func (s *Store) GetExerciseByUUID(ctx context.Context, db DBTX, id string) (*dom
 
 Generated files are committed to the repository. `sqlc` does not need to be installed to build or run the project.
 
+## Dynamic IN Clauses — sqlc.slice()
+
+For queries with `IN (...)` clauses built from Go slices, use `sqlc.slice()` in the query file:
+
+```sql
+-- name: GetSectionsByWorkoutIDs :many
+SELECT id, uuid, program_workout_id, name, sort_order, rest_seconds, created_at, updated_at
+FROM sections
+WHERE program_workout_id IN (sqlc.slice('workout_ids'))
+ORDER BY sort_order;
+```
+
+sqlc generates code that builds the placeholder list at runtime. The store method receives a typed `[]int64` (or `[]*int64` when the column is nullable). **Do not hand-write `IN` clause queries** — use `sqlc.slice()` instead.
+
 ## Dynamic Queries — Raw SQL
 
-Some queries cannot be expressed as static SQL and stay as hand-written `db.QueryContext` / `db.ExecContext` calls:
+Raw `db.QueryContext` / `db.ExecContext` is reserved for two patterns that sqlc genuinely cannot handle. If you find yourself reaching for raw SQL for any other reason, use `sqlc.slice()` instead.
 
-- **`ListExercises`** — dynamic `WHERE` filters (muscle group, equipment, tracking type, search term) and configurable `ORDER BY` column/direction
-- **`ListPrograms`** — same pattern
-- **`reorderByUUIDs`** — uses `fmt.Sprintf` with dynamic table and column names
-- **`reindexSortOrder`** — same
-- **`GetProgramWithTree`** — bulk-load queries using `IN (...)` clauses built from integer slices; sqlc SQLite support for slice parameters is limited
+### Pattern 1 — Runtime-chosen WHERE clauses
+
+`ListExercises` and `ListPrograms` accept optional filter params (muscle group, equipment, search term, etc.). The WHERE clause itself changes depending on which filters are provided — not just the values, but which conditions are included at all:
+
+```go
+// If the caller passes a muscle_group filter, we append:
+conditions = append(conditions, "muscle_group = ?")
+args = append(args, *p.MuscleGroup)
+// If they don't, that condition is omitted entirely.
+```
+
+sqlc requires SQL to be fully written at code-generation time. It cannot conditionally include or exclude WHERE clauses based on runtime input, so these list queries must stay as raw SQL.
+
+The `ORDER BY` column and direction face the same constraint — sqlc cannot accept a column name as a parameter because SQL identifiers cannot be bound as `?` placeholders.
+
+### Pattern 2 — Dynamic SQL identifiers
+
+`reindexSortOrder` and `reorderByUUIDs` are shared helpers that operate across multiple tables (`sections`, `section_exercises`, `program_workouts`). They accept a table name and parent column name as arguments:
+
+```go
+func reindexSortOrder(ctx context.Context, db DBTX, table, parentCol string, parentID int64) error {
+    query := fmt.Sprintf(`UPDATE %s SET sort_order = ? WHERE id = ?`, table)
+    // ...
+}
+```
+
+SQL `?` placeholders can only bind **values** (strings, numbers, booleans). They cannot bind **identifiers** like table names or column names — the database driver treats placeholders as data, and the query planner needs to know the table at parse time. There is no sqlc workaround for this; a shared helper with dynamic identifiers must use `fmt.Sprintf`.
+
+Note: the table and column names here are always hardcoded at the call sites — they come from internal logic, never from user input — so there is no injection risk.
 
 **Convention for raw SQL:**
 - Use backtick multi-line strings for readability
-- Always use `?` placeholders (never string interpolation for values)
+- Always use `?` placeholders for values (never string interpolation for values)
 - Always pass `context.Context` through to `ExecContext`/`QueryContext`
 - Use mapper functions (see below) on results where applicable
 

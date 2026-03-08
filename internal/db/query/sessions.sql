@@ -24,10 +24,16 @@ INSERT INTO set_logs (uuid, session_id, exercise_id, section_exercise_id, set_nu
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetSetLogsBySessionID :many
-SELECT id, uuid, session_id, exercise_id, section_exercise_id, set_number, target_reps, actual_reps, weight, duration, distance, rpe, completed_at, created_at
-FROM set_logs
-WHERE session_id = ?
-ORDER BY set_number;
+SELECT sl.id, sl.uuid, sl.session_id, sl.exercise_id, sl.section_exercise_id,
+       sl.set_number, sl.target_reps, sl.actual_reps, sl.weight, sl.duration,
+       sl.distance, sl.rpe, sl.completed_at, sl.created_at,
+       e.uuid AS exercise_uuid,
+       se.uuid AS section_exercise_uuid
+FROM set_logs sl
+JOIN exercises e ON e.id = sl.exercise_id
+LEFT JOIN section_exercises se ON se.id = sl.section_exercise_id
+WHERE sl.session_id = ?
+ORDER BY sl.set_number;
 
 -- name: ResolveSectionExercise :one
 SELECT se.id AS section_exercise_id, e.id AS exercise_id, e.uuid AS exercise_uuid
@@ -43,3 +49,13 @@ WHERE se.id = ?;
 
 -- name: GetExerciseTrackingTypeByID :one
 SELECT tracking_type FROM exercises WHERE id = ?;
+
+-- name: GetSetLogProgressionHistory :many
+SELECT sl.section_exercise_id, sl.set_number,
+       sl.actual_reps, sl.target_reps, sl.weight,
+       s.id AS session_id, s.completed_at
+FROM set_logs sl
+JOIN sessions s ON s.id = sl.session_id
+WHERE sl.section_exercise_id IN (sqlc.slice('section_exercise_ids'))
+  AND s.status = 'completed'
+ORDER BY sl.section_exercise_id, s.completed_at DESC, s.id DESC, sl.set_number ASC;

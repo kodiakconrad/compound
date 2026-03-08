@@ -240,32 +240,26 @@ type SessionDetailExerciseResponse struct {
 }
 
 // ToSessionDetailResponse converts a domain SessionDetail to the response DTO.
-// exerciseUUIDByID is used to resolve ExerciseUUID for set_logs.
-// sectionExerciseUUIDByID resolves SectionExerciseUUID for set_logs.
-func ToSessionDetailResponse(d *domain.SessionDetail, exerciseUUIDByID map[int64]string, seUUIDByID map[int64]string) SessionDetailResponse {
+func ToSessionDetailResponse(d *domain.SessionDetail) SessionDetailResponse {
 	sections := make([]SessionDetailSectionResponse, len(d.Sections))
 	for i, sec := range d.Sections {
 		exercises := make([]SessionDetailExerciseResponse, len(sec.Exercises))
 		for j, ex := range sec.Exercises {
 			setLogs := make([]SetLogResponse, len(ex.SetLogs))
 			for k, sl := range ex.SetLogs {
-				slr := SetLogResponse{
-					UUID:        sl.UUID,
-					ExerciseUUID: exerciseUUIDByID[sl.ExerciseID],
-					SetNumber:   sl.SetNumber,
-					TargetReps:  sl.TargetReps,
-					ActualReps:  sl.ActualReps,
-					Weight:      sl.Weight,
-					Duration:    sl.Duration,
-					Distance:    sl.Distance,
-					RPE:         sl.RPE,
-					CompletedAt: sl.CompletedAt.Format(time.RFC3339),
+				setLogs[k] = SetLogResponse{
+					UUID:                sl.UUID,
+					ExerciseUUID:        sl.ExerciseUUID,
+					SectionExerciseUUID: sl.SectionExerciseUUID,
+					SetNumber:           sl.SetNumber,
+					TargetReps:          sl.TargetReps,
+					ActualReps:          sl.ActualReps,
+					Weight:              sl.Weight,
+					Duration:            sl.Duration,
+					Distance:            sl.Distance,
+					RPE:                 sl.RPE,
+					CompletedAt:         sl.CompletedAt.Format(time.RFC3339),
 				}
-				if sl.SectionExerciseID != nil {
-					u := seUUIDByID[*sl.SectionExerciseID]
-					slr.SectionExerciseUUID = &u
-				}
-				setLogs[k] = slr
 			}
 			exercises[j] = SessionDetailExerciseResponse{
 				SectionExerciseUUID:  ex.SectionExerciseUUID,

@@ -64,7 +64,8 @@ Before writing or modifying code, consult these docs. They define binding conven
 ### Persistence
 - Single `Store` struct, methods accept `DBTX` interface (works with both `*sql.DB` and `*sql.Tx`)
 - **sqlc codegen** — write SQL in `internal/db/query/*.sql`, run `make gen`, call via `dbgen.New(db)` in store methods. No ORM, no query builder
-- Raw `db.QueryContext` only for queries sqlc can't handle (dynamic WHERE filters, `IN` clauses built from slices)
+- **Dynamic `IN` clauses** — use `sqlc.slice('param')` in the query file; sqlc generates typed slice parameters. Never hand-write `IN` clause queries
+- Raw `db.QueryContext` only for two patterns sqlc cannot handle (see `persistence.md`): (1) runtime-chosen WHERE clauses where conditions are added/omitted based on input (`ListExercises`, `ListPrograms`); (2) dynamic SQL identifiers — table/column names cannot be `?` placeholders (`reindexSortOrder`, `reorderByUUIDs`)
 - All timestamps: `time.Time` in Go, ISO 8601 text in SQLite, always UTC
 - UUIDs generated Go-side (`google/uuid`), every table has integer PK + UUID column
 

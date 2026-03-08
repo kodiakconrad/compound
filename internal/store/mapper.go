@@ -103,6 +103,28 @@ func mapSectionExercise(row dbgen.SectionExercise) *domain.SectionExercise {
 	}
 }
 
+// mapSectionExerciseWithExercise converts a GetSectionExercisesWithExerciseBySectionIDsRow
+// (which joins in exercise UUID and name) to a domain SectionExercise.
+func mapSectionExerciseWithExercise(row dbgen.GetSectionExercisesWithExerciseBySectionIDsRow) *domain.SectionExercise {
+	return &domain.SectionExercise{
+		ID:             row.ID,
+		UUID:           row.Uuid,
+		SectionID:      row.SectionID,
+		ExerciseID:     row.ExerciseID,
+		ExerciseUUID:   row.ExerciseUuid,
+		ExerciseName:   row.ExerciseName,
+		TargetSets:     ptrInt64ToInt(row.TargetSets),
+		TargetReps:     ptrInt64ToInt(row.TargetReps),
+		TargetWeight:   row.TargetWeight,
+		TargetDuration: ptrInt64ToInt(row.TargetDuration),
+		TargetDistance: row.TargetDistance,
+		SortOrder:      int(row.SortOrder),
+		Notes:          row.Notes,
+		CreatedAt:      row.CreatedAt,
+		UpdatedAt:      row.UpdatedAt,
+	}
+}
+
 // mapProgressionRule converts a dbgen.ProgressionRule to a domain ProgressionRule.
 func mapProgressionRule(row dbgen.ProgressionRule) *domain.ProgressionRule {
 	return &domain.ProgressionRule{
@@ -150,23 +172,25 @@ func mapSession(row dbgen.Session) *domain.Session {
 	}
 }
 
-// mapSetLog converts a dbgen.SetLog to a domain SetLog.
-func mapSetLog(row dbgen.SetLog) *domain.SetLog {
+// mapSetLog converts a dbgen.GetSetLogsBySessionIDRow to a domain SetLog.
+func mapSetLog(row dbgen.GetSetLogsBySessionIDRow) *domain.SetLog {
 	return &domain.SetLog{
-		ID:                row.ID,
-		UUID:              row.Uuid,
-		SessionID:         row.SessionID,
-		ExerciseID:        row.ExerciseID,
-		SectionExerciseID: row.SectionExerciseID,
-		SetNumber:         int(row.SetNumber),
-		TargetReps:        ptrInt64ToInt(row.TargetReps),
-		ActualReps:        ptrInt64ToInt(row.ActualReps),
-		Weight:            row.Weight,
-		Duration:          ptrInt64ToInt(row.Duration),
-		Distance:          row.Distance,
-		RPE:               row.Rpe,
-		CompletedAt:       row.CompletedAt,
-		CreatedAt:         row.CreatedAt,
+		ID:                  row.ID,
+		UUID:                row.Uuid,
+		SessionID:           row.SessionID,
+		ExerciseID:          row.ExerciseID,
+		ExerciseUUID:        row.ExerciseUuid,
+		SectionExerciseID:   row.SectionExerciseID,
+		SectionExerciseUUID: row.SectionExerciseUuid,
+		SetNumber:           int(row.SetNumber),
+		TargetReps:          ptrInt64ToInt(row.TargetReps),
+		ActualReps:          ptrInt64ToInt(row.ActualReps),
+		Weight:              row.Weight,
+		Duration:            ptrInt64ToInt(row.Duration),
+		Distance:            row.Distance,
+		RPE:                 row.Rpe,
+		CompletedAt:         row.CompletedAt,
+		CreatedAt:           row.CreatedAt,
 	}
 }
 

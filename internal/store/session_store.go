@@ -116,7 +116,9 @@ func (s *Store) GetSessionDetail(ctx context.Context, db DBTX, id string) (*doma
 // name/uuid) + progression rules for a given workout ID. Returns the ordered
 // section slice and a map of section_exercise_id → SectionExercise.
 func (s *Store) loadSectionsForWorkout(ctx context.Context, db DBTX, workoutID int64) ([]*domain.Section, map[int64]*domain.SectionExercise, error) {
-	sectionRows, err := dbgen.New(db).GetSectionsByWorkoutID(ctx, workoutID)
+	q := dbgen.New(db)
+
+	sectionRows, err := q.GetSectionsByWorkoutID(ctx, workoutID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -135,106 +137,34 @@ func (s *Store) loadSectionsForWorkout(ctx context.Context, db DBTX, workoutID i
 		return sections, nil, nil
 	}
 
-	seQuery := fmt.Sprintf(
-		`SELECT se.id, se.uuid, se.section_id, se.exercise_id,
-		        se.target_sets, se.target_reps, se.target_weight,
-		        se.target_duration, se.target_distance,
-		        se.sort_order, se.notes, se.created_at, se.updated_at,
-		        e.uuid, e.name
-		 FROM section_exercises se
-		 JOIN exercises e ON e.id = se.exercise_id
-		 WHERE se.section_id IN (%s)
-		 ORDER BY se.sort_order`,
-		placeholders(len(sectionIDs)),
-	)
-	seRows, err := db.QueryContext(ctx, seQuery, int64sToAny(sectionIDs)...)
+	seRows, err := q.GetSectionExercisesWithExerciseBySectionIDs(ctx, sectionIDs)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer seRows.Close()
 
 	seMap := make(map[int64]*domain.SectionExercise)
 	var seIDs []int64
-	for seRows.Next() {
-		var seID, sectionID, exerciseID int64
-		var seUUID, exerciseUUID, exerciseName string
-		var targetSets, targetReps, targetDuration *int64
-		var targetWeight, targetDistance *float64
-		var sortOrder int64
-		var notes *string
-		var createdAt, updatedAt time.Time
-		if err := seRows.Scan(
-			&seID, &seUUID, &sectionID, &exerciseID,
-			&targetSets, &targetReps, &targetWeight,
-			&targetDuration, &targetDistance,
-			&sortOrder, &notes, &createdAt, &updatedAt,
-			&exerciseUUID, &exerciseName,
-		); err != nil {
-			return nil, nil, err
-		}
-		se := &domain.SectionExercise{
-			ID: seID, UUID: seUUID, SectionID: sectionID, ExerciseID: exerciseID,
-			ExerciseUUID: exerciseUUID, ExerciseName: exerciseName,
-			TargetSets: ptrInt64ToInt(targetSets), TargetReps: ptrInt64ToInt(targetReps),
-			TargetWeight: targetWeight, TargetDuration: ptrInt64ToInt(targetDuration),
-			TargetDistance: targetDistance, SortOrder: int(sortOrder), Notes: notes,
-			CreatedAt: createdAt, UpdatedAt: updatedAt,
-		}
-		if sec, ok := sectionMap[sectionID]; ok {
+	for _, sr := range seRows {
+		se := mapSectionExerciseWithExercise(sr)
+		if sec, ok := sectionMap[se.SectionID]; ok {
 			sec.Exercises = append(sec.Exercises, se)
 		}
-		seIDs = append(seIDs, seID)
-		seMap[seID] = se
-	}
-	if err := seRows.Err(); err != nil {
-		return nil, nil, err
+		seIDs = append(seIDs, se.ID)
+		seMap[se.ID] = se
 	}
 
 	if len(seIDs) == 0 {
 		return sections, seMap, nil
 	}
 
-	prQuery := fmt.Sprintf(
-		`SELECT id, uuid, section_exercise_id, strategy,
-		        increment, increment_pct, deload_threshold, deload_pct,
-		        created_at, updated_at
-		 FROM progression_rules
-		 WHERE section_exercise_id IN (%s)`,
-		placeholders(len(seIDs)),
-	)
-	prRows, err := db.QueryContext(ctx, prQuery, int64sToAny(seIDs)...)
+	prRows, err := q.GetProgressionRulesBySectionExerciseIDs(ctx, seIDs)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer prRows.Close()
-
-	for prRows.Next() {
-		var prID, sectionExerciseID int64
-		var prUUID, strategy string
-		var increment, incrementPct *float64
-		var deloadThreshold int64
-		var deloadPct float64
-		var createdAt, updatedAt time.Time
-		if err := prRows.Scan(
-			&prID, &prUUID, &sectionExerciseID, &strategy,
-			&increment, &incrementPct, &deloadThreshold, &deloadPct,
-			&createdAt, &updatedAt,
-		); err != nil {
-			return nil, nil, err
+	for _, pr := range prRows {
+		if se, ok := seMap[pr.SectionExerciseID]; ok {
+			se.ProgressionRule = mapProgressionRule(pr)
 		}
-		pr := &domain.ProgressionRule{
-			ID: prID, UUID: prUUID, SectionExerciseID: sectionExerciseID,
-			Strategy:        domain.ProgressionStrategy(strategy),
-			Increment:       increment, IncrementPct: incrementPct,
-			DeloadThreshold: int(deloadThreshold), DeloadPct: deloadPct,
-			CreatedAt: createdAt, UpdatedAt: updatedAt,
-		}
-		if se, ok := seMap[sectionExerciseID]; ok {
-			se.ProgressionRule = pr
-		}
-	}
-	if err := prRows.Err(); err != nil {
-		return nil, nil, err
 	}
 
 	return sections, seMap, nil
@@ -246,22 +176,16 @@ func (s *Store) loadSectionsForWorkout(ctx context.Context, db DBTX, workoutID i
 func (s *Store) computeProgressionWeights(ctx context.Context, db DBTX, seIDs []int64, seMap map[int64]*domain.SectionExercise) (map[int64]*float64, error) {
 	result := make(map[int64]*float64)
 
-	query := fmt.Sprintf(
-		`SELECT sl.section_exercise_id, sl.set_number,
-		        sl.actual_reps, sl.target_reps, sl.weight,
-		        s.id AS session_id, s.completed_at
-		 FROM set_logs sl
-		 JOIN sessions s ON s.id = sl.session_id
-		 WHERE sl.section_exercise_id IN (%s)
-		   AND s.status = 'completed'
-		 ORDER BY sl.section_exercise_id, s.completed_at DESC, s.id DESC, sl.set_number ASC`,
-		placeholders(len(seIDs)),
-	)
-	rows, err := db.QueryContext(ctx, query, int64sToAny(seIDs)...)
+	// GetSetLogProgressionHistory takes []*int64 because section_exercise_id is
+	// nullable in the schema; we know our IDs are non-null so we convert.
+	seIDPtrs := make([]*int64, len(seIDs))
+	for i := range seIDs {
+		seIDPtrs[i] = &seIDs[i]
+	}
+	histRows, err := dbgen.New(db).GetSetLogProgressionHistory(ctx, seIDPtrs)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	type setEntry struct {
 		actualReps *int64
@@ -270,23 +194,16 @@ func (s *Store) computeProgressionWeights(ctx context.Context, db DBTX, seIDs []
 		sessionID  int64
 	}
 	history := make(map[int64][]setEntry)
-	for rows.Next() {
-		var seID, sessionID, setNumber int64
-		var actualReps, targetReps *int64
-		var weight *float64
-		var completedAt time.Time
-		if err := rows.Scan(&seID, &setNumber, &actualReps, &targetReps, &weight, &sessionID, &completedAt); err != nil {
-			return nil, err
+	for _, r := range histRows {
+		if r.SectionExerciseID == nil {
+			continue
 		}
-		history[seID] = append(history[seID], setEntry{
-			actualReps: actualReps,
-			targetReps: targetReps,
-			weight:     weight,
-			sessionID:  sessionID,
+		history[*r.SectionExerciseID] = append(history[*r.SectionExerciseID], setEntry{
+			actualReps: r.ActualReps,
+			targetReps: r.TargetReps,
+			weight:     r.Weight,
+			sessionID:  r.SessionID,
 		})
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
 	}
 
 	for _, seID := range seIDs {
@@ -445,53 +362,6 @@ func (s *Store) ResolveSectionExercise(ctx context.Context, db DBTX, seUUID stri
 		return 0, 0, "", dbErr
 	}
 	return row.SectionExerciseID, row.ExerciseID, row.ExerciseUuid, nil
-}
-
-// GetExerciseUUIDsByIDs returns a map of exercise_id → UUID for the given IDs.
-// Used to resolve exercise UUIDs for set_log responses.
-func (s *Store) GetExerciseUUIDsByIDs(ctx context.Context, db DBTX, ids []int64) (map[int64]string, error) {
-	if len(ids) == 0 {
-		return nil, nil
-	}
-	query := fmt.Sprintf(`SELECT id, uuid FROM exercises WHERE id IN (%s)`, placeholders(len(ids)))
-	rows, err := db.QueryContext(ctx, query, int64sToAny(ids)...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	m := make(map[int64]string, len(ids))
-	for rows.Next() {
-		var id int64
-		var u string
-		if err := rows.Scan(&id, &u); err != nil {
-			return nil, err
-		}
-		m[id] = u
-	}
-	return m, rows.Err()
-}
-
-// GetSectionExerciseUUIDsByIDs returns a map of section_exercise_id → UUID.
-func (s *Store) GetSectionExerciseUUIDsByIDs(ctx context.Context, db DBTX, ids []int64) (map[int64]string, error) {
-	if len(ids) == 0 {
-		return nil, nil
-	}
-	query := fmt.Sprintf(`SELECT id, uuid FROM section_exercises WHERE id IN (%s)`, placeholders(len(ids)))
-	rows, err := db.QueryContext(ctx, query, int64sToAny(ids)...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	m := make(map[int64]string, len(ids))
-	for rows.Next() {
-		var id int64
-		var u string
-		if err := rows.Scan(&id, &u); err != nil {
-			return nil, err
-		}
-		m[id] = u
-	}
-	return m, rows.Err()
 }
 
 // LogSet validates the set against the exercise's tracking type and inserts it.
