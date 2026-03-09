@@ -319,6 +319,94 @@ go test ./internal/domain/...
 go test -v ./...
 ```
 
+## React Native Frontend Testing (Phase 2+)
+
+The frontend uses three layers, each targeting a different level of confidence vs. setup cost.
+
+### Unit Tests — Jest + React Native Testing Library
+
+**What:** Test pure logic (hooks, stores, lib functions) and component rendering in a Node.js environment. No device or simulator required.
+
+**When to add:** During Steps 3–6 as components and hooks are built.
+
+**Run:** `cd app && npx jest`
+
+**What to test:**
+- Zustand stores (`useTimerStore`, `useSessionStore`) — state transitions
+- `lib/api.ts` — error handling, envelope parsing, idempotency key generation
+- `lib/offlineQueue.ts` — enqueue/flush/pendingCount logic
+- Hooks (`useActiveSession`, `useOfflineQueue`) — return shapes, error cases
+- Component rendering — does the right text appear given props?
+
+**Example:**
+```ts
+// store/timer.test.ts
+import { useTimerStore } from "./timer";
+
+it("counts down to zero and stops", () => {
+  const store = useTimerStore.getState();
+  store.start(2);
+  expect(store.isRunning).toBe(true);
+  store.tick();
+  expect(store.secondsRemaining).toBe(1);
+  store.tick();
+  expect(store.secondsRemaining).toBe(0);
+  expect(store.isRunning).toBe(false);
+});
+```
+
+**What NOT to unit test:**
+- Navigation flows (test those with E2E)
+- NativeWind className rendering (no meaningful browser rendering in Node.js)
+- Anything that requires a real device/simulator
+
+### E2E Tests — Maestro (deferred to Step 7)
+
+**What:** Full end-to-end tests on a real iOS Simulator or Android Emulator. Maestro uses simple YAML scripts to tap buttons, fill inputs, and assert visible text — no JavaScript required.
+
+**When to add:** After Step 5 (Today tab) when there's a meaningful session flow to exercise. Scheduled for Step 7 (offline hardening).
+
+**Why Maestro over Detox:** Detox requires native build infrastructure and lengthy setup. Maestro is a standalone binary with YAML scripts — significantly less setup for the same coverage.
+
+**Example flow (`e2e/log_a_set.yaml`):**
+```yaml
+appId: com.kodiakconrad.compound
+---
+- launchApp
+- assertVisible: "Today"
+- tapOn: "Start Session"
+- assertVisible: "Day A — Push"
+- longPressOn: "Bench Press"   # tap-and-hold to adjust weight
+- tapOn: "Log Set"
+- assertVisible: "✓ 5"         # set is now logged
+```
+
+**Install:** `brew install maestro` (macOS)
+
+**Run:** `maestro test e2e/`
+
+### Not Applicable
+
+| Tool | Why not |
+|---|---|
+| Cypress | Browser-based — cannot automate a native iOS/Android app |
+| Playwright | Same — browser-only |
+| Detox | Valid alternative to Maestro but requires significantly more setup (native build, wda, etc.) |
+
+### What Gets Tested Where (Frontend)
+
+| Concern | Test type |
+|---|---|
+| Zustand timer counts down correctly | Jest unit |
+| `api.ts` throws `ApiError` on 4xx response | Jest unit |
+| `offlineQueue` enqueues and flushes in order | Jest unit |
+| Tab bar renders with correct labels | RNTL component test |
+| Starting a session navigates to session screen | Maestro E2E |
+| Logging a set updates the UI immediately | Maestro E2E |
+| Offline set syncs after reconnecting | Maestro E2E |
+
 ## CI
 
 All tests run in CI on every PR via `go test ./...`. See [git-strategy.md](git-strategy.md) for CI pipeline details.
+
+Frontend Jest tests will be added to CI once the first test file exists (`cd app && npx jest --passWithNoTests`). Maestro E2E is run manually (requires a simulator) — not part of CI.

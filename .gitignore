@@ -20,3 +20,9 @@ compound.yaml
 
 # Claude
 .claude/
+
+# React Native / Expo app (app/.gitignore covers details)
+app/node_modules/
+app/.expo/
+app/dist/
+app/.env.local
