@@ -6,7 +6,14 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest --passWithNoTests"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|nativewind)"
+    ]
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
@@ -25,7 +32,11 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
     "@types/react": "~19.2.2",
+    "jest": "^29.7.0",
+    "jest-expo": "^55.0.9",
     "typescript": "~5.9.2"
   },
   "private": true
