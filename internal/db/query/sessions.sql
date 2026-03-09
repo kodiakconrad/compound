@@ -54,6 +54,9 @@ SELECT tracking_type FROM exercises WHERE id = ?;
 DELETE FROM set_logs
 WHERE session_id = ? AND exercise_id = ?;
 
+-- name: GetActiveSessionUUID :one
+SELECT uuid FROM sessions WHERE status = 'in_progress' LIMIT 1;
+
 -- name: GetSetLogProgressionHistory :many
 SELECT sl.section_exercise_id, sl.set_number,
        sl.actual_reps, sl.target_reps, sl.weight,

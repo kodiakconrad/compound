@@ -10,15 +10,16 @@ import (
 // Program is a multi-day workout plan. Prebuilt programs (IsPrebuilt=true) are
 // seeded content that is read-only. All other programs are user-created and editable.
 type Program struct {
-	ID          int64
-	UUID        string
-	Name        string
-	Description *string
-	IsPrebuilt  bool
-	Workouts    []*ProgramWorkout
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   *time.Time
+	ID           int64
+	UUID         string
+	Name         string
+	Description  *string
+	IsPrebuilt   bool
+	WorkoutCount int // populated only in list context
+	Workouts     []*ProgramWorkout
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    *time.Time
 }
 
 // Validate enforces domain business rules on a Program.

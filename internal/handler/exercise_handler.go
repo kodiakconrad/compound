@@ -137,6 +137,16 @@ func (h *ExerciseHandler) HandleUpdate(w http.ResponseWriter, r *http.Request) {
 	respond(w, http.StatusOK, dto.ToExerciseResponse(existing))
 }
 
+// HandleGetFilters handles GET /api/v1/exercises/filters.
+// Returns the allowed enum values for muscle_group, equipment, and tracking_type.
+func (h *ExerciseHandler) HandleGetFilters(w http.ResponseWriter, r *http.Request) {
+	respond(w, http.StatusOK, map[string]any{
+		"muscle_groups":  domain.ValidMuscleGroups,
+		"equipment":      domain.ValidEquipment,
+		"tracking_types": domain.ValidTrackingTypes(),
+	})
+}
+
 // HandleDelete handles DELETE /api/v1/exercises/{id}.
 func (h *ExerciseHandler) HandleDelete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")

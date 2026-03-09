@@ -25,6 +25,19 @@ func (s *Store) GetSessionByUUID(ctx context.Context, db DBTX, id string) (*doma
 	return mapSession(row), nil
 }
 
+// GetActiveSession returns the full detail of the currently in-progress session,
+// or a NoActiveSessionError if no session is in progress.
+func (s *Store) GetActiveSession(ctx context.Context, db DBTX) (*domain.SessionDetail, error) {
+	uuid, err := dbgen.New(db).GetActiveSessionUUID(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, domain.NewNoActiveSessionError()
+	}
+	if err != nil {
+		return nil, err
+	}
+	return s.GetSessionDetail(ctx, db, uuid)
+}
+
 // GetSessionDetail returns a fully populated session detail including sections,
 // exercises with computed target weights, and any set_logs already recorded.
 func (s *Store) GetSessionDetail(ctx context.Context, db DBTX, id string) (*domain.SessionDetail, error) {

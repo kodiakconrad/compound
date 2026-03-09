@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cucumber/godog"
@@ -23,6 +24,12 @@ func InitializeExerciseSteps(ctx *godog.ScenarioContext, client *TestClient) {
 	ctx.Step(`^the response should contain (\d+) exercises?$`, client.theResponseShouldContainExercises)
 	ctx.Step(`^the response should include exercise "([^"]*)"$`, client.theResponseShouldIncludeExercise)
 	ctx.Step(`^the response uuid should match the previous response$`, client.theResponseUUIDShouldMatchPrevious)
+
+	// Filters
+	ctx.Step(`^I get the exercise filters$`, client.iGetTheExerciseFilters)
+	ctx.Step(`^the filters should include muscle groups (.+)$`, client.theFiltersShouldIncludeMuscleGroups)
+	ctx.Step(`^the filters should include equipment (.+)$`, client.theFiltersShouldIncludeEquipment)
+	ctx.Step(`^the filters should include tracking types (.+)$`, client.theFiltersShouldIncludeTrackingTypes)
 }
 
 func (c *TestClient) iCreateAnExerciseWith(table *godog.Table) error {
@@ -193,6 +200,54 @@ func (c *TestClient) theResponseUUIDShouldMatchPrevious() error {
 	}
 	if currentUUID != c.PreviousUUID {
 		return fmt.Errorf("expected uuid %q, got %q", c.PreviousUUID, currentUUID)
+	}
+	return nil
+}
+
+// --- Exercise filters ---
+
+func (c *TestClient) iGetTheExerciseFilters() error {
+	return c.Get("/api/v1/exercises/filters")
+}
+
+// theFiltersShouldIncludeMuscleGroups checks that the filters response contains
+// all the expected muscle group values (provided as a quoted, comma-separated string).
+func (c *TestClient) theFiltersShouldIncludeMuscleGroups(valuesStr string) error {
+	return c.assertFilterContains("muscle_groups", valuesStr)
+}
+
+func (c *TestClient) theFiltersShouldIncludeEquipment(valuesStr string) error {
+	return c.assertFilterContains("equipment", valuesStr)
+}
+
+func (c *TestClient) theFiltersShouldIncludeTrackingTypes(valuesStr string) error {
+	return c.assertFilterContains("tracking_types", valuesStr)
+}
+
+// assertFilterContains checks that a filter field contains all the expected values.
+// valuesStr is a comma-separated list of quoted values (e.g., `"chest", "back"`).
+func (c *TestClient) assertFilterContains(field, valuesStr string) error {
+	data, err := c.dataObject()
+	if err != nil {
+		return err
+	}
+	arr, ok := data[field].([]any)
+	if !ok {
+		return fmt.Errorf("filters response missing field %q", field)
+	}
+	actual := make(map[string]bool, len(arr))
+	for _, v := range arr {
+		if s, ok := v.(string); ok {
+			actual[s] = true
+		}
+	}
+	// Parse expected values: strip quotes and split by ", ".
+	parts := strings.Split(valuesStr, ", ")
+	for _, part := range parts {
+		expected := strings.Trim(strings.TrimSpace(part), `"`)
+		if !actual[expected] {
+			return fmt.Errorf("filters field %q missing value %q (got: %v)", field, expected, arr)
+		}
 	}
 	return nil
 }

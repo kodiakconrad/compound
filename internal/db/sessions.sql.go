@@ -39,6 +39,17 @@ func (q *Queries) DeleteSetLogsForSessionAndExercise(ctx context.Context, arg De
 	return err
 }
 
+const getActiveSessionUUID = `-- name: GetActiveSessionUUID :one
+SELECT uuid FROM sessions WHERE status = 'in_progress' LIMIT 1
+`
+
+func (q *Queries) GetActiveSessionUUID(ctx context.Context) (string, error) {
+	row := q.db.QueryRowContext(ctx, getActiveSessionUUID)
+	var uuid string
+	err := row.Scan(&uuid)
+	return uuid, err
+}
+
 const getExerciseTrackingTypeByID = `-- name: GetExerciseTrackingTypeByID :one
 SELECT tracking_type FROM exercises WHERE id = ?
 `

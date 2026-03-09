@@ -120,6 +120,18 @@ func (h *SessionHandler) HandleSkipSession(w http.ResponseWriter, r *http.Reques
 	respond(w, http.StatusOK, dto.ToSessionResponse(sess))
 }
 
+// HandleGetActiveSession handles GET /api/v1/sessions/active.
+// Returns the full detail of the currently in-progress session, or 404 with
+// code "no_active_session" if none exists.
+func (h *SessionHandler) HandleGetActiveSession(w http.ResponseWriter, r *http.Request) {
+	detail, err := h.store.GetActiveSession(r.Context(), h.store.DB)
+	if err != nil {
+		respondError(w, err)
+		return
+	}
+	respond(w, http.StatusOK, dto.ToSessionDetailResponse(detail))
+}
+
 // HandleDeleteSetsForExercise handles DELETE /api/v1/sessions/{sid}/sets?exercise_uuid={uuid}.
 // Deletes all set_logs for a given exercise in a session. Session must be in_progress.
 func (h *SessionHandler) HandleDeleteSetsForExercise(w http.ResponseWriter, r *http.Request) {
