@@ -26,6 +26,7 @@ func (s *Server) registerRoutes() {
 		prh := handler.NewProgressHandler(s.store)
 		r.Route("/exercises", func(r chi.Router) {
 			r.Get("/", eh.HandleList)
+			r.Get("/filters", eh.HandleGetFilters)
 			r.Post("/", eh.HandleCreate)
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", eh.HandleGet)
@@ -100,7 +101,8 @@ func (s *Server) registerRoutes() {
 			})
 		})
 
-		// Session-scoped set deletion (substitution cleanup).
+		// Session-scoped flat routes.
+		r.Get("/sessions/active", sh.HandleGetActiveSession)
 		r.Delete("/sessions/{sid}/sets", sh.HandleDeleteSetsForExercise)
 
 		// Progress summary route (Step 5)

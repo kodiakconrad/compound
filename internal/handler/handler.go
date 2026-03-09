@@ -23,11 +23,14 @@ func respond(w http.ResponseWriter, status int, data any) {
 // the error envelope. Unknown errors are logged and returned as 500.
 func respondError(w http.ResponseWriter, err error) {
 	var notFound *domain.NotFoundError
+	var noActiveSession *domain.NoActiveSessionError
 	var validation *domain.ValidationError
 	var conflict *domain.ConflictError
 	var unprocessable *domain.UnprocessableError
 
 	switch {
+	case errors.As(err, &noActiveSession):
+		respondJSON(w, http.StatusNotFound, errorResponse("no_active_session", err.Error(), nil))
 	case errors.As(err, &notFound):
 		respondJSON(w, http.StatusNotFound, errorResponse("not_found", err.Error(), nil))
 	case errors.As(err, &validation):

@@ -38,6 +38,13 @@ func InitializeSessionSteps(ctx *godog.ScenarioContext, client *TestClient) {
 	ctx.Step(`^the exercise "([^"]*)" in section "([^"]*)" has a linear progression rule:$`, client.theExerciseHasALinearProgressionRule)
 	ctx.Step(`^I successfully complete the session for workout "([^"]*)" hitting all reps at (\S+)$`, client.iSuccessfullyCompleteSessionHittingAllReps)
 	ctx.Step(`^I complete the session for workout "([^"]*)" missing reps on "([^"]*)"$`, client.iCompleteSessionMissingReps)
+
+	// Active session
+	ctx.Step(`^I get the active session$`, client.iGetTheActiveSession)
+	ctx.Step(`^the active session should have status "([^"]*)"$`, client.theActiveSessionShouldHaveStatus)
+	ctx.Step(`^the active session should have (\d+) sections?$`, client.theActiveSessionShouldHaveSections)
+	ctx.Step(`^the active session section "([^"]*)" should have (\d+) exercises?$`, client.theActiveSessionSectionShouldHaveExercises)
+	ctx.Step(`^the active session exercise "([^"]*)" in section "([^"]*)" should have (\d+) logged sets?$`, client.theActiveSessionExerciseShouldHaveLoggedSets)
 }
 
 // --- Session URL helper ---
@@ -564,4 +571,110 @@ func (c *TestClient) sectionNameForExercise(exerciseName string) string {
 		}
 	}
 	return ""
+}
+
+// --- Active session ---
+
+func (c *TestClient) iGetTheActiveSession() error {
+	return c.Get("/api/v1/sessions/active")
+}
+
+func (c *TestClient) theActiveSessionShouldHaveStatus(expected string) error {
+	data, err := c.dataObject()
+	if err != nil {
+		return err
+	}
+	got, _ := data["status"].(string)
+	if got != expected {
+		return fmt.Errorf("expected status %q, got %q", expected, got)
+	}
+	return nil
+}
+
+func (c *TestClient) theActiveSessionShouldHaveSections(count int) error {
+	data, err := c.dataObject()
+	if err != nil {
+		return err
+	}
+	sections, ok := data["sections"].([]any)
+	if !ok {
+		if count == 0 {
+			return nil
+		}
+		return fmt.Errorf("active session has no 'sections' array: %s", string(c.LastRawBody))
+	}
+	if len(sections) != count {
+		return fmt.Errorf("expected %d sections, got %d", count, len(sections))
+	}
+	return nil
+}
+
+func (c *TestClient) theActiveSessionSectionShouldHaveExercises(sectionName string, count int) error {
+	data, err := c.dataObject()
+	if err != nil {
+		return err
+	}
+	sections, ok := data["sections"].([]any)
+	if !ok {
+		return fmt.Errorf("active session has no 'sections' array")
+	}
+	for _, s := range sections {
+		sec, ok := s.(map[string]any)
+		if !ok {
+			continue
+		}
+		if sec["name"] == sectionName {
+			exercises, _ := sec["exercises"].([]any)
+			if len(exercises) != count {
+				return fmt.Errorf("section %q: expected %d exercises, got %d", sectionName, count, len(exercises))
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("section %q not found in active session", sectionName)
+}
+
+func (c *TestClient) theActiveSessionExerciseShouldHaveLoggedSets(exerciseName, sectionName string, count int) error {
+	data, err := c.dataObject()
+	if err != nil {
+		return err
+	}
+	ex, err := c.findExerciseInSectionByName(data, sectionName, exerciseName)
+	if err != nil {
+		return err
+	}
+	setLogs, _ := ex["set_logs"].([]any)
+	if len(setLogs) != count {
+		return fmt.Errorf("exercise %q in section %q: expected %d logged sets, got %d", exerciseName, sectionName, count, len(setLogs))
+	}
+	return nil
+}
+
+// findExerciseInSectionByName finds an exercise by name within a specific named section.
+func (c *TestClient) findExerciseInSectionByName(data map[string]any, sectionName, exerciseName string) (map[string]any, error) {
+	sections, ok := data["sections"].([]any)
+	if !ok {
+		return nil, fmt.Errorf("response has no 'sections' array")
+	}
+	for _, s := range sections {
+		sec, ok := s.(map[string]any)
+		if !ok {
+			continue
+		}
+		if sec["name"] != sectionName {
+			continue
+		}
+		exercises, _ := sec["exercises"].([]any)
+		for _, e := range exercises {
+			ex, ok := e.(map[string]any)
+			if !ok {
+				continue
+			}
+			if ex["exercise_name"] == exerciseName {
+				return ex, nil
+			}
+		}
+		return nil, fmt.Errorf("exercise %q not found in section %q", exerciseName, sectionName)
+	}
+	return nil, fmt.Errorf("section %q not found", sectionName)
 }

@@ -150,20 +150,20 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 	var conditions []string
 	var args []any
 
-	conditions = append(conditions, "deleted_at IS NULL")
+	conditions = append(conditions, "p.deleted_at IS NULL")
 
 	if p.IsPrebuilt != nil {
-		conditions = append(conditions, "is_prebuilt = ?")
+		conditions = append(conditions, "p.is_prebuilt = ?")
 		args = append(args, *p.IsPrebuilt)
 	}
 	if p.Cursor != nil {
-		conditions = append(conditions, "id > ?")
+		conditions = append(conditions, "p.id > ?")
 		args = append(args, *p.Cursor)
 	}
 
-	sortCol := "updated_at"
+	sortCol := "p.updated_at"
 	if p.Sort == "name" {
-		sortCol = "name"
+		sortCol = "p.name"
 	}
 	order := "DESC"
 	if strings.EqualFold(p.Order, "asc") {
@@ -171,11 +171,14 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 	}
 
 	query := fmt.Sprintf(
-		`SELECT id, uuid, name, description, is_prebuilt,
-		        created_at, updated_at
-		 FROM programs
+		`SELECT p.id, p.uuid, p.name, p.description, p.is_prebuilt,
+		        p.created_at, p.updated_at,
+		        COUNT(w.id) AS workout_count
+		 FROM programs p
+		 LEFT JOIN program_workouts w ON w.program_id = p.id
 		 WHERE %s
-		 ORDER BY %s %s, id ASC
+		 GROUP BY p.id
+		 ORDER BY %s %s, p.id ASC
 		 LIMIT ?`,
 		strings.Join(conditions, " AND "), sortCol, order,
 	)
@@ -196,7 +199,7 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 
 		if err := rows.Scan(
 			&prog.ID, &prog.UUID, &prog.Name, &description,
-			&isPrebuilt, &createdAt, &updatedAt,
+			&isPrebuilt, &createdAt, &updatedAt, &prog.WorkoutCount,
 		); err != nil {
 			return nil, false, err
 		}

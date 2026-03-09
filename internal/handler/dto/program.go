@@ -61,7 +61,7 @@ func (r *UpdateProgramRequest) ApplyTo(p *domain.Program) {
 	}
 }
 
-// ProgramResponse is the flat JSON shape for program metadata (list items, create, update).
+// ProgramResponse is the flat JSON shape for program metadata (create, update).
 type ProgramResponse struct {
 	UUID        string  `json:"uuid"`
 	Name        string  `json:"name"`
@@ -69,6 +69,16 @@ type ProgramResponse struct {
 	IsPrebuilt  bool    `json:"is_prebuilt"`
 	CreatedAt   string  `json:"created_at"`
 	UpdatedAt   string  `json:"updated_at"`
+}
+
+// ProgramListItemResponse is the summary shape for GET /api/v1/programs list items.
+// Full tree is only returned by GET /api/v1/programs/{id}.
+type ProgramListItemResponse struct {
+	UUID         string `json:"uuid"`
+	Name         string `json:"name"`
+	IsPrebuilt   bool   `json:"is_prebuilt"`
+	WorkoutCount int    `json:"workout_count"`
+	UpdatedAt    string `json:"updated_at"`
 }
 
 // ProgramTreeResponse is the full tree JSON shape for GET program and copy.
@@ -94,11 +104,22 @@ func ToProgramResponse(p *domain.Program) ProgramResponse {
 	}
 }
 
-// ToProgramListResponse converts a slice of domain Programs to flat response DTOs.
-func ToProgramListResponse(programs []*domain.Program) []ProgramResponse {
-	resp := make([]ProgramResponse, len(programs))
+// ToProgramListItemResponse converts a domain Program to the list summary DTO.
+func ToProgramListItemResponse(p *domain.Program) ProgramListItemResponse {
+	return ProgramListItemResponse{
+		UUID:         p.UUID,
+		Name:         p.Name,
+		IsPrebuilt:   p.IsPrebuilt,
+		WorkoutCount: p.WorkoutCount,
+		UpdatedAt:    p.UpdatedAt.Format(time.RFC3339),
+	}
+}
+
+// ToProgramListResponse converts a slice of domain Programs to list summary DTOs.
+func ToProgramListResponse(programs []*domain.Program) []ProgramListItemResponse {
+	resp := make([]ProgramListItemResponse, len(programs))
 	for i, p := range programs {
-		resp[i] = ToProgramResponse(p)
+		resp[i] = ToProgramListItemResponse(p)
 	}
 	return resp
 }

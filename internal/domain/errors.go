@@ -60,3 +60,16 @@ func (e *UnprocessableError) Error() string {
 func NewUnprocessableError(message string) *UnprocessableError {
 	return &UnprocessableError{Message: message}
 }
+
+// NoActiveSessionError indicates that no session is currently in progress.
+// Maps to HTTP 404 with code "no_active_session".
+type NoActiveSessionError struct{}
+
+func (e *NoActiveSessionError) Error() string {
+	return "no session is currently in progress"
+}
+
+// NewNoActiveSessionError creates a NoActiveSessionError.
+func NewNoActiveSessionError() *NoActiveSessionError {
+	return &NoActiveSessionError{}
+}
