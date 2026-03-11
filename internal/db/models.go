@@ -5,7 +5,7 @@
 package dbgen
 
 import (
-	"time"
+	dbutil "compound/internal/dbutil"
 )
 
 type Cycle struct {
@@ -13,10 +13,10 @@ type Cycle struct {
 	Uuid        string
 	ProgramID   int64
 	Status      string
-	StartedAt   *time.Time
-	CompletedAt *time.Time
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	StartedAt   dbutil.NullableTime
+	CompletedAt dbutil.NullableTime
+	CreatedAt   dbutil.Time
+	UpdatedAt   dbutil.Time
 }
 
 type Exercise struct {
@@ -28,9 +28,9 @@ type Exercise struct {
 	TrackingType string
 	Notes        *string
 	IsCustom     bool
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    *time.Time
+	CreatedAt    dbutil.Time
+	UpdatedAt    dbutil.Time
+	DeletedAt    dbutil.NullableTime
 }
 
 type IdempotencyKey struct {
@@ -40,8 +40,8 @@ type IdempotencyKey struct {
 	Path      string
 	Status    int64
 	Response  string
-	CreatedAt time.Time
-	ExpiresAt time.Time
+	CreatedAt dbutil.Time
+	ExpiresAt dbutil.Time
 }
 
 type Program struct {
@@ -50,9 +50,9 @@ type Program struct {
 	Name        string
 	Description *string
 	IsPrebuilt  bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   *time.Time
+	CreatedAt   dbutil.Time
+	UpdatedAt   dbutil.Time
+	DeletedAt   dbutil.NullableTime
 }
 
 type ProgramWorkout struct {
@@ -62,8 +62,8 @@ type ProgramWorkout struct {
 	Name      string
 	DayNumber int64
 	SortOrder int64
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt dbutil.Time
+	UpdatedAt dbutil.Time
 }
 
 type ProgressionRule struct {
@@ -75,8 +75,8 @@ type ProgressionRule struct {
 	IncrementPct      *float64
 	DeloadThreshold   int64
 	DeloadPct         float64
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	CreatedAt         dbutil.Time
+	UpdatedAt         dbutil.Time
 }
 
 type Section struct {
@@ -86,8 +86,8 @@ type Section struct {
 	Name             string
 	SortOrder        int64
 	RestSeconds      *int64
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	CreatedAt        dbutil.Time
+	UpdatedAt        dbutil.Time
 }
 
 type SectionExercise struct {
@@ -102,8 +102,8 @@ type SectionExercise struct {
 	TargetDistance *float64
 	SortOrder      int64
 	Notes          *string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	CreatedAt      dbutil.Time
+	UpdatedAt      dbutil.Time
 }
 
 type Session struct {
@@ -113,11 +113,11 @@ type Session struct {
 	ProgramWorkoutID int64
 	SortOrder        int64
 	Status           string
-	StartedAt        *time.Time
-	CompletedAt      *time.Time
+	StartedAt        dbutil.NullableTime
+	CompletedAt      dbutil.NullableTime
 	Notes            *string
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	CreatedAt        dbutil.Time
+	UpdatedAt        dbutil.Time
 }
 
 type SetLog struct {
@@ -133,6 +133,6 @@ type SetLog struct {
 	Duration          *int64
 	Distance          *float64
 	Rpe               *float64
-	CompletedAt       time.Time
-	CreatedAt         time.Time
+	CompletedAt       dbutil.Time
+	CreatedAt         dbutil.Time
 }

@@ -9,7 +9,8 @@ import (
 	"context"
 	"database/sql"
 	"strings"
-	"time"
+
+	dbutil "compound/internal/dbutil"
 )
 
 const countIncompleteSessionsInCycle = `-- name: CountIncompleteSessionsInCycle :one
@@ -134,7 +135,7 @@ type GetSetLogProgressionHistoryRow struct {
 	TargetReps        *int64
 	Weight            *float64
 	SessionID         int64
-	CompletedAt       *time.Time
+	CompletedAt       dbutil.NullableTime
 }
 
 func (q *Queries) GetSetLogProgressionHistory(ctx context.Context, sectionExerciseIds []*int64) ([]GetSetLogProgressionHistoryRow, error) {
@@ -204,8 +205,8 @@ type GetSetLogsBySessionIDRow struct {
 	Duration            *int64
 	Distance            *float64
 	Rpe                 *float64
-	CompletedAt         time.Time
-	CreatedAt           time.Time
+	CompletedAt         dbutil.Time
+	CreatedAt           dbutil.Time
 	ExerciseUuid        string
 	SectionExerciseUuid *string
 }
@@ -261,8 +262,8 @@ type InsertSessionParams struct {
 	ProgramWorkoutID int64
 	SortOrder        int64
 	Status           string
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	CreatedAt        dbutil.Time
+	UpdatedAt        dbutil.Time
 }
 
 func (q *Queries) InsertSession(ctx context.Context, arg InsertSessionParams) (sql.Result, error) {
@@ -294,8 +295,8 @@ type InsertSetLogParams struct {
 	Duration          *int64
 	Distance          *float64
 	Rpe               *float64
-	CompletedAt       time.Time
-	CreatedAt         time.Time
+	CompletedAt       dbutil.Time
+	CreatedAt         dbutil.Time
 }
 
 func (q *Queries) InsertSetLog(ctx context.Context, arg InsertSetLogParams) (sql.Result, error) {
@@ -344,10 +345,10 @@ WHERE uuid = ?
 
 type UpdateSessionParams struct {
 	Status      string
-	StartedAt   *time.Time
-	CompletedAt *time.Time
+	StartedAt   dbutil.NullableTime
+	CompletedAt dbutil.NullableTime
 	Notes       *string
-	UpdatedAt   time.Time
+	UpdatedAt   dbutil.Time
 	Uuid        string
 }
 

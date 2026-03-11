@@ -8,7 +8,8 @@ package dbgen
 import (
 	"context"
 	"database/sql"
-	"time"
+
+	dbutil "compound/internal/dbutil"
 )
 
 const getExerciseByUUID = `-- name: GetExerciseByUUID :one
@@ -26,8 +27,8 @@ type GetExerciseByUUIDRow struct {
 	TrackingType string
 	Notes        *string
 	IsCustom     bool
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	CreatedAt    dbutil.Time
+	UpdatedAt    dbutil.Time
 }
 
 func (q *Queries) GetExerciseByUUID(ctx context.Context, uuid string) (GetExerciseByUUIDRow, error) {
@@ -61,8 +62,8 @@ type InsertExerciseParams struct {
 	TrackingType string
 	Notes        *string
 	IsCustom     bool
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	CreatedAt    dbutil.Time
+	UpdatedAt    dbutil.Time
 }
 
 func (q *Queries) InsertExercise(ctx context.Context, arg InsertExerciseParams) (sql.Result, error) {
@@ -86,8 +87,8 @@ WHERE uuid = ? AND deleted_at IS NULL
 `
 
 type SoftDeleteExerciseParams struct {
-	DeletedAt *time.Time
-	UpdatedAt time.Time
+	DeletedAt dbutil.NullableTime
+	UpdatedAt dbutil.Time
 	Uuid      string
 }
 
@@ -107,7 +108,7 @@ type UpdateExerciseParams struct {
 	Equipment    *string
 	TrackingType string
 	Notes        *string
-	UpdatedAt    time.Time
+	UpdatedAt    dbutil.Time
 	Uuid         string
 }
 
