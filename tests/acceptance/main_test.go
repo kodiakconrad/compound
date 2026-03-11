@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
 
 	"github.com/cucumber/godog"
@@ -22,8 +23,11 @@ var testServer *httptest.Server
 var testDB *sql.DB
 
 func TestFeatures(t *testing.T) {
-	// Set up in-memory SQLite database.
-	db, err := sql.Open("sqlite", ":memory:?_loc=UTC")
+	// Set up a file-based SQLite database in a temp directory so that
+	// timestamps are serialized to TEXT on disk (matching production behaviour).
+	// t.TempDir() is automatically cleaned up when the test completes.
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
 	}
