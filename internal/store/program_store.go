@@ -9,6 +9,7 @@ import (
 	"time"
 
 	dbgen "compound/internal/db"
+	"compound/internal/dbutil"
 	"compound/internal/domain"
 
 	"github.com/google/uuid"
@@ -27,8 +28,8 @@ func (s *Store) CreateProgram(ctx context.Context, db DBTX, p *domain.Program) e
 		Name:        p.Name,
 		Description: p.Description,
 		IsPrebuilt:  p.IsPrebuilt,
-		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
+		CreatedAt:   dbutil.TimeFrom(p.CreatedAt),
+		UpdatedAt:   dbutil.TimeFrom(p.UpdatedAt),
 	})
 	if err != nil {
 		return err
@@ -195,7 +196,7 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 		var prog domain.Program
 		var description *string
 		var isPrebuilt bool
-		var createdAt, updatedAt time.Time
+		var createdAt, updatedAt dbutil.Time
 
 		if err := rows.Scan(
 			&prog.ID, &prog.UUID, &prog.Name, &description,
@@ -205,8 +206,8 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 		}
 		prog.Description = description
 		prog.IsPrebuilt = isPrebuilt
-		prog.CreatedAt = createdAt
-		prog.UpdatedAt = updatedAt
+		prog.CreatedAt = createdAt.Time
+		prog.UpdatedAt = updatedAt.Time
 		programs = append(programs, &prog)
 	}
 	if err := rows.Err(); err != nil {
@@ -227,7 +228,7 @@ func (s *Store) UpdateProgram(ctx context.Context, db DBTX, id string, p *domain
 	result, err := dbgen.New(db).UpdateProgram(ctx, dbgen.UpdateProgramParams{
 		Name:        p.Name,
 		Description: p.Description,
-		UpdatedAt:   p.UpdatedAt,
+		UpdatedAt:   dbutil.TimeFrom(p.UpdatedAt),
 		Uuid:        id,
 	})
 	if err != nil {
@@ -243,8 +244,8 @@ func (s *Store) UpdateProgram(ctx context.Context, db DBTX, id string, p *domain
 func (s *Store) DeleteProgram(ctx context.Context, db DBTX, id string) error {
 	now := time.Now().UTC()
 	result, err := dbgen.New(db).SoftDeleteProgram(ctx, dbgen.SoftDeleteProgramParams{
-		DeletedAt: &now,
-		UpdatedAt: now,
+		DeletedAt: dbutil.NullableTimeFromPtr(&now),
+		UpdatedAt: dbutil.TimeFrom(now),
 		Uuid:      id,
 	})
 	if err != nil {

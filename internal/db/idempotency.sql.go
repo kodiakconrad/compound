@@ -8,7 +8,8 @@ package dbgen
 import (
 	"context"
 	"database/sql"
-	"time"
+
+	dbutil "compound/internal/dbutil"
 )
 
 const getIdempotencyKey = `-- name: GetIdempotencyKey :one
@@ -19,7 +20,7 @@ WHERE key = ? AND expires_at > ?
 
 type GetIdempotencyKeyParams struct {
 	Key       string
-	ExpiresAt time.Time
+	ExpiresAt dbutil.Time
 }
 
 type GetIdempotencyKeyRow struct {
@@ -52,8 +53,8 @@ type InsertIdempotencyKeyParams struct {
 	Path      string
 	Status    int64
 	Response  string
-	CreatedAt time.Time
-	ExpiresAt time.Time
+	CreatedAt dbutil.Time
+	ExpiresAt dbutil.Time
 }
 
 func (q *Queries) InsertIdempotencyKey(ctx context.Context, arg InsertIdempotencyKeyParams) (sql.Result, error) {

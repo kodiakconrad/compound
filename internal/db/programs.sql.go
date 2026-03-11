@@ -8,7 +8,8 @@ package dbgen
 import (
 	"context"
 	"database/sql"
-	"time"
+
+	dbutil "compound/internal/dbutil"
 )
 
 const getProgramByUUID = `-- name: GetProgramByUUID :one
@@ -106,8 +107,8 @@ type InsertProgramParams struct {
 	Name        string
 	Description *string
 	IsPrebuilt  bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	CreatedAt   dbutil.Time
+	UpdatedAt   dbutil.Time
 }
 
 func (q *Queries) InsertProgram(ctx context.Context, arg InsertProgramParams) (sql.Result, error) {
@@ -128,8 +129,8 @@ WHERE uuid = ? AND deleted_at IS NULL
 `
 
 type SoftDeleteProgramParams struct {
-	DeletedAt *time.Time
-	UpdatedAt time.Time
+	DeletedAt dbutil.NullableTime
+	UpdatedAt dbutil.Time
 	Uuid      string
 }
 
@@ -146,7 +147,7 @@ WHERE uuid = ? AND deleted_at IS NULL
 type UpdateProgramParams struct {
 	Name        string
 	Description *string
-	UpdatedAt   time.Time
+	UpdatedAt   dbutil.Time
 	Uuid        string
 }
 

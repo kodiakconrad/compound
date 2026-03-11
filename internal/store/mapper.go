@@ -1,8 +1,6 @@
 package store
 
 import (
-	"time"
-
 	dbgen "compound/internal/db"
 	"compound/internal/domain"
 )
@@ -18,8 +16,8 @@ func mapExercise(row dbgen.GetExerciseByUUIDRow) *domain.Exercise {
 		TrackingType: domain.TrackingType(row.TrackingType),
 		Notes:        row.Notes,
 		IsCustom:     row.IsCustom,
-		CreatedAt:    row.CreatedAt,
-		UpdatedAt:    row.UpdatedAt,
+		CreatedAt:    row.CreatedAt.Time,
+		UpdatedAt:    row.UpdatedAt.Time,
 	}
 }
 
@@ -35,9 +33,9 @@ func mapExerciseFromModel(row dbgen.Exercise) *domain.Exercise {
 		TrackingType: domain.TrackingType(row.TrackingType),
 		Notes:        row.Notes,
 		IsCustom:     row.IsCustom,
-		CreatedAt:    row.CreatedAt,
-		UpdatedAt:    row.UpdatedAt,
-		DeletedAt:    row.DeletedAt,
+		CreatedAt:    row.CreatedAt.Time,
+		UpdatedAt:    row.UpdatedAt.Time,
+		DeletedAt:    row.DeletedAt.ToTimePtr(),
 	}
 }
 
@@ -49,9 +47,9 @@ func mapProgram(row dbgen.Program) *domain.Program {
 		Name:        row.Name,
 		Description: row.Description,
 		IsPrebuilt:  row.IsPrebuilt,
-		CreatedAt:   row.CreatedAt,
-		UpdatedAt:   row.UpdatedAt,
-		DeletedAt:   row.DeletedAt,
+		CreatedAt:   row.CreatedAt.Time,
+		UpdatedAt:   row.UpdatedAt.Time,
+		DeletedAt:   row.DeletedAt.ToTimePtr(),
 	}
 }
 
@@ -64,8 +62,8 @@ func mapWorkout(row dbgen.ProgramWorkout) *domain.ProgramWorkout {
 		Name:      row.Name,
 		DayNumber: int(row.DayNumber),
 		SortOrder: int(row.SortOrder),
-		CreatedAt: row.CreatedAt,
-		UpdatedAt: row.UpdatedAt,
+		CreatedAt: row.CreatedAt.Time,
+		UpdatedAt: row.UpdatedAt.Time,
 	}
 }
 
@@ -78,8 +76,8 @@ func mapSection(row dbgen.Section) *domain.Section {
 		Name:             row.Name,
 		SortOrder:        int(row.SortOrder),
 		RestSeconds:      ptrInt64ToInt(row.RestSeconds),
-		CreatedAt:        row.CreatedAt,
-		UpdatedAt:        row.UpdatedAt,
+		CreatedAt:        row.CreatedAt.Time,
+		UpdatedAt:        row.UpdatedAt.Time,
 	}
 }
 
@@ -97,8 +95,8 @@ func mapSectionExercise(row dbgen.SectionExercise) *domain.SectionExercise {
 		TargetDistance: row.TargetDistance,
 		SortOrder:      int(row.SortOrder),
 		Notes:          row.Notes,
-		CreatedAt:      row.CreatedAt,
-		UpdatedAt:      row.UpdatedAt,
+		CreatedAt:      row.CreatedAt.Time,
+		UpdatedAt:      row.UpdatedAt.Time,
 	}
 }
 
@@ -119,8 +117,8 @@ func mapSectionExerciseWithExercise(row dbgen.GetSectionExercisesWithExerciseByS
 		TargetDistance: row.TargetDistance,
 		SortOrder:      int(row.SortOrder),
 		Notes:          row.Notes,
-		CreatedAt:      row.CreatedAt,
-		UpdatedAt:      row.UpdatedAt,
+		CreatedAt:      row.CreatedAt.Time,
+		UpdatedAt:      row.UpdatedAt.Time,
 	}
 }
 
@@ -135,8 +133,8 @@ func mapProgressionRule(row dbgen.ProgressionRule) *domain.ProgressionRule {
 		IncrementPct:      row.IncrementPct,
 		DeloadThreshold:   int(row.DeloadThreshold),
 		DeloadPct:         row.DeloadPct,
-		CreatedAt:         row.CreatedAt,
-		UpdatedAt:         row.UpdatedAt,
+		CreatedAt:         row.CreatedAt.Time,
+		UpdatedAt:         row.UpdatedAt.Time,
 	}
 }
 
@@ -147,10 +145,10 @@ func mapCycle(row dbgen.Cycle) *domain.Cycle {
 		UUID:        row.Uuid,
 		ProgramID:   row.ProgramID,
 		Status:      domain.CycleStatus(row.Status),
-		StartedAt:   row.StartedAt,
-		CompletedAt: row.CompletedAt,
-		CreatedAt:   row.CreatedAt,
-		UpdatedAt:   row.UpdatedAt,
+		StartedAt:   row.StartedAt.ToTimePtr(),
+		CompletedAt: row.CompletedAt.ToTimePtr(),
+		CreatedAt:   row.CreatedAt.Time,
+		UpdatedAt:   row.UpdatedAt.Time,
 	}
 }
 
@@ -163,11 +161,11 @@ func mapSession(row dbgen.Session) *domain.Session {
 		ProgramWorkoutID: row.ProgramWorkoutID,
 		SortOrder:        int(row.SortOrder),
 		Status:           domain.SessionStatus(row.Status),
-		StartedAt:        row.StartedAt,
-		CompletedAt:      row.CompletedAt,
+		StartedAt:        row.StartedAt.ToTimePtr(),
+		CompletedAt:      row.CompletedAt.ToTimePtr(),
 		Notes:            row.Notes,
-		CreatedAt:        row.CreatedAt,
-		UpdatedAt:        row.UpdatedAt,
+		CreatedAt:        row.CreatedAt.Time,
+		UpdatedAt:        row.UpdatedAt.Time,
 	}
 }
 
@@ -188,8 +186,8 @@ func mapSetLog(row dbgen.GetSetLogsBySessionIDRow) *domain.SetLog {
 		Duration:            ptrInt64ToInt(row.Duration),
 		Distance:            row.Distance,
 		RPE:                 row.Rpe,
-		CompletedAt:         row.CompletedAt,
-		CreatedAt:           row.CreatedAt,
+		CompletedAt:         row.CompletedAt.Time,
+		CreatedAt:           row.CreatedAt.Time,
 	}
 }
 
@@ -198,7 +196,7 @@ func mapHistoryEntryPage(row dbgen.GetExerciseHistoryPageRow) *domain.HistoryEnt
 	return &domain.HistoryEntry{
 		SessionID:   row.ID,
 		SessionUUID: row.Uuid,
-		CompletedAt: derefTime(row.CompletedAt),
+		CompletedAt: row.CompletedAt.Time,
 		Weight:      interfaceToFloat64(row.Weight),
 	}
 }
@@ -208,7 +206,7 @@ func mapHistoryEntryPageAfter(row dbgen.GetExerciseHistoryPageAfterRow) *domain.
 	return &domain.HistoryEntry{
 		SessionID:   row.ID,
 		SessionUUID: row.Uuid,
-		CompletedAt: derefTime(row.CompletedAt),
+		CompletedAt: row.CompletedAt.Time,
 		Weight:      interfaceToFloat64(row.Weight),
 	}
 }
@@ -218,21 +216,13 @@ func mapPersonalRecord(row dbgen.GetPersonalRecordRow) *domain.PersonalRecord {
 	pr := &domain.PersonalRecord{
 		Weight:      derefFloat64(row.Weight),
 		SessionUUID: row.Uuid,
-		CompletedAt: derefTime(row.CompletedAt),
+		CompletedAt: row.CompletedAt.Time,
 	}
 	if row.ActualReps != nil {
 		v := int(*row.ActualReps)
 		pr.ActualReps = &v
 	}
 	return pr
-}
-
-// derefTime dereferences a *time.Time safely, returning zero value if nil.
-func derefTime(t *time.Time) time.Time {
-	if t == nil {
-		return time.Time{}
-	}
-	return *t
 }
 
 // derefFloat64 dereferences a *float64 safely, returning 0 if nil.
@@ -270,3 +260,4 @@ func intToInt64Ptr(v *int) *int64 {
 	i := int64(*v)
 	return &i
 }
+

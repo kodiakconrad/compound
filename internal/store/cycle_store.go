@@ -9,6 +9,7 @@ import (
 	"time"
 
 	dbgen "compound/internal/db"
+	"compound/internal/dbutil"
 	"compound/internal/domain"
 
 	"github.com/google/uuid"
@@ -29,9 +30,9 @@ func (s *Store) CreateCycle(ctx context.Context, db DBTX, programID int64, worko
 		Uuid:      cycleUUID,
 		ProgramID: programID,
 		Status:    string(domain.CycleActive),
-		StartedAt: &now,
-		CreatedAt: now,
-		UpdatedAt: now,
+		StartedAt: dbutil.NullableTimeFromPtr(&now),
+		CreatedAt: dbutil.TimeFrom(now),
+		UpdatedAt: dbutil.TimeFrom(now),
 	})
 	if err != nil {
 		return nil, err
@@ -46,8 +47,8 @@ func (s *Store) CreateCycle(ctx context.Context, db DBTX, programID int64, worko
 			ProgramWorkoutID: w.ID,
 			SortOrder:        int64(w.SortOrder),
 			Status:           string(domain.SessionPending),
-			CreatedAt:        now,
-			UpdatedAt:        now,
+			CreatedAt:        dbutil.TimeFrom(now),
+			UpdatedAt:        dbutil.TimeFrom(now),
 		})
 		if err != nil {
 			return nil, err
@@ -132,17 +133,20 @@ func (s *Store) ListCycles(ctx context.Context, db DBTX, p CycleListParams) ([]*
 	for rows.Next() {
 		var c domain.Cycle
 		var statusStr string
-		var startedAt, completedAt *time.Time
+		var startedAt, completedAt dbutil.NullableTime
+		var createdAt, updatedAt dbutil.Time
 		if err := rows.Scan(
 			&c.ID, &c.UUID, &c.ProgramID, &statusStr,
 			&startedAt, &completedAt,
-			&c.CreatedAt, &c.UpdatedAt,
+			&createdAt, &updatedAt,
 		); err != nil {
 			return nil, false, err
 		}
 		c.Status = domain.CycleStatus(statusStr)
-		c.StartedAt = startedAt
-		c.CompletedAt = completedAt
+		c.StartedAt = startedAt.ToTimePtr()
+		c.CompletedAt = completedAt.ToTimePtr()
+		c.CreatedAt = createdAt.Time
+		c.UpdatedAt = updatedAt.Time
 		cycles = append(cycles, &c)
 	}
 	if err := rows.Err(); err != nil {
@@ -176,8 +180,8 @@ func (s *Store) UpdateCycleStatus(ctx context.Context, db DBTX, id string, newSt
 
 	_, err = dbgen.New(db).UpdateCycle(ctx, dbgen.UpdateCycleParams{
 		Status:      string(c.Status),
-		CompletedAt: completedAt,
-		UpdatedAt:   now,
+		CompletedAt: dbutil.NullableTimeFromPtr(completedAt),
+		UpdatedAt:   dbutil.TimeFrom(now),
 		Uuid:        id,
 	})
 	if err != nil {
@@ -193,8 +197,8 @@ func (s *Store) UpdateCycleStatus(ctx context.Context, db DBTX, id string, newSt
 func (s *Store) AutoCompleteCycleByID(ctx context.Context, db DBTX, cycleID int64) error {
 	now := time.Now().UTC()
 	_, err := dbgen.New(db).AutoCompleteCycle(ctx, dbgen.AutoCompleteCycleParams{
-		CompletedAt: &now,
-		UpdatedAt:   now,
+		CompletedAt: dbutil.NullableTimeFromPtr(&now),
+		UpdatedAt:   dbutil.TimeFrom(now),
 		ID:          cycleID,
 	})
 	return err

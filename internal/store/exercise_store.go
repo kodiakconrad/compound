@@ -9,6 +9,7 @@ import (
 	"time"
 
 	dbgen "compound/internal/db"
+	"compound/internal/dbutil"
 	"compound/internal/domain"
 
 	"github.com/google/uuid"
@@ -31,8 +32,8 @@ func (s *Store) CreateExercise(ctx context.Context, db DBTX, e *domain.Exercise)
 		TrackingType: string(e.TrackingType),
 		Notes:        e.Notes,
 		IsCustom:     e.IsCustom,
-		CreatedAt:    e.CreatedAt,
-		UpdatedAt:    e.UpdatedAt,
+		CreatedAt:    dbutil.TimeFrom(e.CreatedAt),
+		UpdatedAt:    dbutil.TimeFrom(e.UpdatedAt),
 	})
 	if err != nil {
 		return err
@@ -121,7 +122,7 @@ func (s *Store) ListExercises(ctx context.Context, db DBTX, p ExerciseListParams
 		var e domain.Exercise
 		var muscleGroup, equipment, notes *string
 		var isCustom bool
-		var createdAt, updatedAt time.Time
+		var createdAt, updatedAt dbutil.Time
 
 		if err := rows.Scan(
 			&e.ID, &e.UUID, &e.Name,
@@ -134,8 +135,8 @@ func (s *Store) ListExercises(ctx context.Context, db DBTX, p ExerciseListParams
 		e.Equipment = equipment
 		e.Notes = notes
 		e.IsCustom = isCustom
-		e.CreatedAt = createdAt
-		e.UpdatedAt = updatedAt
+		e.CreatedAt = createdAt.Time
+		e.UpdatedAt = updatedAt.Time
 		exercises = append(exercises, &e)
 	}
 	if err := rows.Err(); err != nil {
@@ -161,7 +162,7 @@ func (s *Store) UpdateExercise(ctx context.Context, db DBTX, id string, e *domai
 		Equipment:    e.Equipment,
 		TrackingType: string(e.TrackingType),
 		Notes:        e.Notes,
-		UpdatedAt:    e.UpdatedAt,
+		UpdatedAt:    dbutil.TimeFrom(e.UpdatedAt),
 		Uuid:         id,
 	})
 	if err != nil {
@@ -179,8 +180,8 @@ func (s *Store) UpdateExercise(ctx context.Context, db DBTX, id string, e *domai
 func (s *Store) DeleteExercise(ctx context.Context, db DBTX, id string) error {
 	now := time.Now().UTC()
 	result, err := dbgen.New(db).SoftDeleteExercise(ctx, dbgen.SoftDeleteExerciseParams{
-		DeletedAt: &now,
-		UpdatedAt: now,
+		DeletedAt: dbutil.NullableTimeFromPtr(&now),
+		UpdatedAt: dbutil.TimeFrom(now),
 		Uuid:      id,
 	})
 	if err != nil {
