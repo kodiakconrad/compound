@@ -8,6 +8,7 @@ import (
 	"time"
 
 	dbgen "compound/internal/db"
+	"compound/internal/dbutil"
 	"compound/internal/domain"
 
 	"github.com/google/uuid"
@@ -295,10 +296,10 @@ func (s *Store) StartSession(ctx context.Context, db DBTX, id string) (*domain.S
 	now := time.Now().UTC()
 	_, err = dbgen.New(db).UpdateSession(ctx, dbgen.UpdateSessionParams{
 		Status:      string(sess.Status),
-		StartedAt:   sess.StartedAt,
-		CompletedAt: sess.CompletedAt,
+		StartedAt:   dbutil.NullableTimeFromPtr(sess.StartedAt),
+		CompletedAt: dbutil.NullableTimeFromPtr(sess.CompletedAt),
 		Notes:       sess.Notes,
-		UpdatedAt:   now,
+		UpdatedAt:   dbutil.TimeFrom(now),
 		Uuid:        id,
 	})
 	if err != nil {
@@ -320,10 +321,10 @@ func (s *Store) CompleteSession(ctx context.Context, db DBTX, id string, notes *
 	now := time.Now().UTC()
 	_, err = dbgen.New(db).UpdateSession(ctx, dbgen.UpdateSessionParams{
 		Status:      string(sess.Status),
-		StartedAt:   sess.StartedAt,
-		CompletedAt: sess.CompletedAt,
+		StartedAt:   dbutil.NullableTimeFromPtr(sess.StartedAt),
+		CompletedAt: dbutil.NullableTimeFromPtr(sess.CompletedAt),
 		Notes:       sess.Notes,
-		UpdatedAt:   now,
+		UpdatedAt:   dbutil.TimeFrom(now),
 		Uuid:        id,
 	})
 	if err != nil {
@@ -345,10 +346,10 @@ func (s *Store) SkipSession(ctx context.Context, db DBTX, id string, notes *stri
 	now := time.Now().UTC()
 	_, err = dbgen.New(db).UpdateSession(ctx, dbgen.UpdateSessionParams{
 		Status:      string(sess.Status),
-		StartedAt:   sess.StartedAt,
-		CompletedAt: sess.CompletedAt,
+		StartedAt:   dbutil.NullableTimeFromPtr(sess.StartedAt),
+		CompletedAt: dbutil.NullableTimeFromPtr(sess.CompletedAt),
 		Notes:       sess.Notes,
-		UpdatedAt:   now,
+		UpdatedAt:   dbutil.TimeFrom(now),
 		Uuid:        id,
 	})
 	if err != nil {
@@ -430,8 +431,8 @@ func (s *Store) LogSet(ctx context.Context, db DBTX, log *domain.SetLog) error {
 		Duration:          intToInt64Ptr(log.Duration),
 		Distance:          log.Distance,
 		Rpe:               log.RPE,
-		CompletedAt:       log.CompletedAt,
-		CreatedAt:         log.CreatedAt,
+		CompletedAt:       dbutil.TimeFrom(log.CompletedAt),
+		CreatedAt:         dbutil.TimeFrom(log.CreatedAt),
 	})
 	if err != nil {
 		return err

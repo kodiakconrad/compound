@@ -10,10 +10,10 @@ CREATE TABLE IF NOT EXISTS exercises (
     equipment       TEXT,
     tracking_type   TEXT     NOT NULL DEFAULT 'weight_reps',
     notes           TEXT,
-    is_custom       BOOLEAN  NOT NULL DEFAULT TRUE,
-    created_at      DATETIME NOT NULL,
-    updated_at      DATETIME NOT NULL,
-    deleted_at      DATETIME
+    is_custom       BOOLEAN          NOT NULL DEFAULT TRUE,
+    created_at      datetime_TEMP    NOT NULL,
+    updated_at      datetime_TEMP    NOT NULL,
+    deleted_at      datetime_TEMP
 );
 
 CREATE TABLE IF NOT EXISTS programs (
@@ -21,10 +21,10 @@ CREATE TABLE IF NOT EXISTS programs (
     uuid            TEXT     UNIQUE NOT NULL,
     name            TEXT     NOT NULL,
     description     TEXT,
-    is_prebuilt     BOOLEAN  NOT NULL DEFAULT FALSE,
-    created_at      DATETIME NOT NULL,
-    updated_at      DATETIME NOT NULL,
-    deleted_at      DATETIME
+    is_prebuilt     BOOLEAN          NOT NULL DEFAULT FALSE,
+    created_at      datetime_TEMP    NOT NULL,
+    updated_at      datetime_TEMP    NOT NULL,
+    deleted_at      datetime_TEMP
 );
 
 CREATE TABLE IF NOT EXISTS program_workouts (
@@ -33,9 +33,9 @@ CREATE TABLE IF NOT EXISTS program_workouts (
     program_id      INTEGER  NOT NULL REFERENCES programs(id) ON DELETE CASCADE,
     name            TEXT     NOT NULL,
     day_number      INTEGER  NOT NULL,
-    sort_order      INTEGER  NOT NULL,
-    created_at      DATETIME NOT NULL,
-    updated_at      DATETIME NOT NULL
+    sort_order      INTEGER        NOT NULL,
+    created_at      datetime_TEMP  NOT NULL,
+    updated_at      datetime_TEMP  NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS sections (
@@ -45,8 +45,8 @@ CREATE TABLE IF NOT EXISTS sections (
     name                TEXT     NOT NULL,
     sort_order          INTEGER  NOT NULL,
     rest_seconds        INTEGER,
-    created_at          DATETIME NOT NULL,
-    updated_at          DATETIME NOT NULL
+    created_at          datetime_TEMP  NOT NULL,
+    updated_at          datetime_TEMP  NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS section_exercises (
@@ -59,10 +59,10 @@ CREATE TABLE IF NOT EXISTS section_exercises (
     target_weight   REAL,
     target_duration INTEGER,
     target_distance REAL,
-    sort_order      INTEGER  NOT NULL,
+    sort_order      INTEGER        NOT NULL,
     notes           TEXT,
-    created_at      DATETIME NOT NULL,
-    updated_at      DATETIME NOT NULL
+    created_at      datetime_TEMP  NOT NULL,
+    updated_at      datetime_TEMP  NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS progression_rules (
@@ -72,21 +72,21 @@ CREATE TABLE IF NOT EXISTS progression_rules (
     strategy            TEXT     NOT NULL,
     increment           REAL,
     increment_pct       REAL,
-    deload_threshold    INTEGER  NOT NULL DEFAULT 3,
-    deload_pct          REAL     NOT NULL DEFAULT 10,
-    created_at          DATETIME NOT NULL,
-    updated_at          DATETIME NOT NULL
+    deload_threshold    INTEGER        NOT NULL DEFAULT 3,
+    deload_pct          REAL           NOT NULL DEFAULT 10,
+    created_at          datetime_TEMP  NOT NULL,
+    updated_at          datetime_TEMP  NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS cycles (
     id              INTEGER  PRIMARY KEY AUTOINCREMENT,
     uuid            TEXT     UNIQUE NOT NULL,
     program_id      INTEGER  NOT NULL REFERENCES programs(id),
-    status          TEXT     NOT NULL DEFAULT 'active',
-    started_at      DATETIME,
-    completed_at    DATETIME,
-    created_at      DATETIME NOT NULL,
-    updated_at      DATETIME NOT NULL
+    status          TEXT           NOT NULL DEFAULT 'active',
+    started_at      datetime_TEMP,
+    completed_at    datetime_TEMP,
+    created_at      datetime_TEMP  NOT NULL,
+    updated_at      datetime_TEMP  NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -95,12 +95,12 @@ CREATE TABLE IF NOT EXISTS sessions (
     cycle_id            INTEGER  NOT NULL REFERENCES cycles(id) ON DELETE CASCADE,
     program_workout_id  INTEGER  NOT NULL REFERENCES program_workouts(id),
     sort_order          INTEGER  NOT NULL,
-    status              TEXT     NOT NULL DEFAULT 'pending',
-    started_at          DATETIME,
-    completed_at        DATETIME,
+    status              TEXT           NOT NULL DEFAULT 'pending',
+    started_at          datetime_TEMP,
+    completed_at        datetime_TEMP,
     notes               TEXT,
-    created_at          DATETIME NOT NULL,
-    updated_at          DATETIME NOT NULL
+    created_at          datetime_TEMP  NOT NULL,
+    updated_at          datetime_TEMP  NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS set_logs (
@@ -116,8 +116,8 @@ CREATE TABLE IF NOT EXISTS set_logs (
     duration            INTEGER,
     distance            REAL,
     rpe                 REAL,
-    completed_at        DATETIME NOT NULL,
-    created_at          DATETIME NOT NULL
+    completed_at        datetime_TEMP  NOT NULL,
+    created_at          datetime_TEMP  NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS idempotency_keys (
@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS idempotency_keys (
     method          TEXT     NOT NULL,
     path            TEXT     NOT NULL,
     status          INTEGER  NOT NULL,
-    response        TEXT     NOT NULL,
-    created_at      DATETIME NOT NULL,
-    expires_at      DATETIME NOT NULL
+    response        TEXT           NOT NULL,
+    created_at      datetime_TEMP  NOT NULL,
+    expires_at      datetime_TEMP  NOT NULL
 );
