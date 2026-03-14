@@ -18,6 +18,10 @@ compound.yaml
 # OS
 .DS_Store
 
+# Temp / backup
+tmp/
+*.bak
+
 # Claude
 .claude/
 
