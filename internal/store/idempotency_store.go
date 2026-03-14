@@ -7,6 +7,7 @@ import (
 	"time"
 
 	dbgen "compound/internal/db"
+	"compound/internal/dbutil"
 	"compound/internal/domain"
 )
 
@@ -24,7 +25,7 @@ func (s *Store) CheckIdempotencyKey(ctx context.Context, db DBTX, key, method, p
 
 	row, err := dbgen.New(db).GetIdempotencyKey(ctx, dbgen.GetIdempotencyKeyParams{
 		Key:       key,
-		ExpiresAt: now,
+		ExpiresAt: dbutil.TimeFrom(now),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil // Key not found — proceed normally.
@@ -55,8 +56,8 @@ func (s *Store) SaveIdempotencyKey(ctx context.Context, db DBTX, key, method, pa
 		Path:      path,
 		Status:    int64(status),
 		Response:  string(response),
-		CreatedAt: now,
-		ExpiresAt: expiresAt,
+		CreatedAt: dbutil.TimeFrom(now),
+		ExpiresAt: dbutil.TimeFrom(expiresAt),
 	})
 	return err
 }

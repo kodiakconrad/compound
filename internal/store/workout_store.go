@@ -8,6 +8,7 @@ import (
 	"time"
 
 	dbgen "compound/internal/db"
+	"compound/internal/dbutil"
 	"compound/internal/domain"
 
 	"github.com/google/uuid"
@@ -38,8 +39,8 @@ func (s *Store) CreateWorkout(ctx context.Context, db DBTX, w *domain.ProgramWor
 		Name:      w.Name,
 		DayNumber: int64(w.DayNumber),
 		SortOrder: int64(w.SortOrder),
-		CreatedAt: w.CreatedAt,
-		UpdatedAt: w.UpdatedAt,
+		CreatedAt: dbutil.TimeFrom(w.CreatedAt),
+		UpdatedAt: dbutil.TimeFrom(w.UpdatedAt),
 	})
 	if err != nil {
 		return err
@@ -93,7 +94,7 @@ func (s *Store) UpdateWorkout(ctx context.Context, db DBTX, id string, w *domain
 	result, err := dbgen.New(db).UpdateWorkout(ctx, dbgen.UpdateWorkoutParams{
 		Name:      w.Name,
 		DayNumber: int64(w.DayNumber),
-		UpdatedAt: w.UpdatedAt,
+		UpdatedAt: dbutil.TimeFrom(w.UpdatedAt),
 		Uuid:      id,
 	})
 	if err != nil {
@@ -159,8 +160,8 @@ func (s *Store) CreateSection(ctx context.Context, db DBTX, sec *domain.Section)
 		Name:             sec.Name,
 		SortOrder:        int64(sec.SortOrder),
 		RestSeconds:      intToInt64Ptr(sec.RestSeconds),
-		CreatedAt:        sec.CreatedAt,
-		UpdatedAt:        sec.UpdatedAt,
+		CreatedAt:        dbutil.TimeFrom(sec.CreatedAt),
+		UpdatedAt:        dbutil.TimeFrom(sec.UpdatedAt),
 	})
 	if err != nil {
 		return err
@@ -201,7 +202,7 @@ func (s *Store) UpdateSection(ctx context.Context, db DBTX, id string, sec *doma
 	result, err := dbgen.New(db).UpdateSection(ctx, dbgen.UpdateSectionParams{
 		Name:        sec.Name,
 		RestSeconds: intToInt64Ptr(sec.RestSeconds),
-		UpdatedAt:   sec.UpdatedAt,
+		UpdatedAt:   dbutil.TimeFrom(sec.UpdatedAt),
 		Uuid:        id,
 	})
 	if err != nil {
@@ -272,8 +273,8 @@ func (s *Store) CreateSectionExercise(ctx context.Context, db DBTX, se *domain.S
 		TargetDistance: se.TargetDistance,
 		SortOrder:      int64(se.SortOrder),
 		Notes:          se.Notes,
-		CreatedAt:      se.CreatedAt,
-		UpdatedAt:      se.UpdatedAt,
+		CreatedAt:      dbutil.TimeFrom(se.CreatedAt),
+		UpdatedAt:      dbutil.TimeFrom(se.UpdatedAt),
 	})
 	if err != nil {
 		return err
@@ -306,7 +307,7 @@ func (s *Store) UpdateSectionExercise(ctx context.Context, db DBTX, id string, s
 		TargetDuration: intToInt64Ptr(se.TargetDuration),
 		TargetDistance: se.TargetDistance,
 		Notes:          se.Notes,
-		UpdatedAt:      se.UpdatedAt,
+		UpdatedAt:      dbutil.TimeFrom(se.UpdatedAt),
 		Uuid:           id,
 	})
 	if err != nil {
@@ -364,8 +365,8 @@ func (s *Store) CreateProgressionRule(ctx context.Context, db DBTX, pr *domain.P
 		IncrementPct:      pr.IncrementPct,
 		DeloadThreshold:   int64(pr.DeloadThreshold),
 		DeloadPct:         pr.DeloadPct,
-		CreatedAt:         pr.CreatedAt,
-		UpdatedAt:         pr.UpdatedAt,
+		CreatedAt:         dbutil.TimeFrom(pr.CreatedAt),
+		UpdatedAt:         dbutil.TimeFrom(pr.UpdatedAt),
 	})
 	if err != nil {
 		return err
@@ -385,7 +386,7 @@ func (s *Store) UpdateProgressionRule(ctx context.Context, db DBTX, id string, p
 		IncrementPct:      pr.IncrementPct,
 		DeloadThreshold:   int64(pr.DeloadThreshold),
 		DeloadPct:         pr.DeloadPct,
-		UpdatedAt:         pr.UpdatedAt,
+		UpdatedAt:         dbutil.TimeFrom(pr.UpdatedAt),
 		SectionExerciseID: pr.SectionExerciseID,
 	})
 	if err != nil {

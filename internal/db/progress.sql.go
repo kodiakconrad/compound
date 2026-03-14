@@ -7,7 +7,8 @@ package dbgen
 
 import (
 	"context"
-	"time"
+
+	dbutil "compound/internal/dbutil"
 )
 
 const countCompletedSessions = `-- name: CountCompletedSessions :one
@@ -43,7 +44,7 @@ type GetExerciseHistoryPageParams struct {
 type GetExerciseHistoryPageRow struct {
 	ID          int64
 	Uuid        string
-	CompletedAt *time.Time
+	CompletedAt dbutil.NullableTime
 	Weight      interface{}
 }
 
@@ -99,7 +100,7 @@ type GetExerciseHistoryPageAfterParams struct {
 type GetExerciseHistoryPageAfterRow struct {
 	ID          int64
 	Uuid        string
-	CompletedAt *time.Time
+	CompletedAt dbutil.NullableTime
 	Weight      interface{}
 }
 
@@ -148,7 +149,7 @@ type GetPersonalRecordRow struct {
 	Weight      *float64
 	ActualReps  *int64
 	Uuid        string
-	CompletedAt *time.Time
+	CompletedAt dbutil.NullableTime
 }
 
 func (q *Queries) GetPersonalRecord(ctx context.Context, uuid string) (GetPersonalRecordRow, error) {

@@ -11,10 +11,14 @@ sql:
         overrides:
           - db_type: "boolean"
             go_type: "bool"
-          - db_type: "datetime"
-            go_type: "time.Time"
-          - db_type: "datetime"
+          - db_type: "datetime_TEMP"
+            go_type:
+              import: "compound/internal/dbutil"
+              package: "dbutil"
+              type: "Time"
+          - db_type: "datetime_TEMP"
             nullable: true
             go_type:
-              type: "time.Time"
-              pointer: true
+              import: "compound/internal/dbutil"
+              package: "dbutil"
+              type: "NullableTime"

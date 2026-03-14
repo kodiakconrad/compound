@@ -8,7 +8,8 @@ package dbgen
 import (
 	"context"
 	"database/sql"
-	"time"
+
+	dbutil "compound/internal/dbutil"
 )
 
 const autoCompleteCycle = `-- name: AutoCompleteCycle :execresult
@@ -17,8 +18,8 @@ WHERE id = ?
 `
 
 type AutoCompleteCycleParams struct {
-	CompletedAt *time.Time
-	UpdatedAt   time.Time
+	CompletedAt dbutil.NullableTime
+	UpdatedAt   dbutil.Time
 	ID          int64
 }
 
@@ -110,9 +111,9 @@ type InsertCycleParams struct {
 	Uuid      string
 	ProgramID int64
 	Status    string
-	StartedAt *time.Time
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	StartedAt dbutil.NullableTime
+	CreatedAt dbutil.Time
+	UpdatedAt dbutil.Time
 }
 
 func (q *Queries) InsertCycle(ctx context.Context, arg InsertCycleParams) (sql.Result, error) {
@@ -134,8 +135,8 @@ WHERE uuid = ?
 
 type UpdateCycleParams struct {
 	Status      string
-	CompletedAt *time.Time
-	UpdatedAt   time.Time
+	CompletedAt dbutil.NullableTime
+	UpdatedAt   dbutil.Time
 	Uuid        string
 }
 

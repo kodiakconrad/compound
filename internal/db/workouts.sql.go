@@ -9,7 +9,8 @@ import (
 	"context"
 	"database/sql"
 	"strings"
-	"time"
+
+	dbutil "compound/internal/dbutil"
 )
 
 const deleteSection = `-- name: DeleteSection :execresult
@@ -261,8 +262,8 @@ type GetSectionExercisesWithExerciseBySectionIDsRow struct {
 	TargetDistance *float64
 	SortOrder      int64
 	Notes          *string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	CreatedAt      dbutil.Time
+	UpdatedAt      dbutil.Time
 	ExerciseUuid   string
 	ExerciseName   string
 }
@@ -468,8 +469,8 @@ type InsertProgressionRuleParams struct {
 	IncrementPct      *float64
 	DeloadThreshold   int64
 	DeloadPct         float64
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	CreatedAt         dbutil.Time
+	UpdatedAt         dbutil.Time
 }
 
 // ============================================================
@@ -500,8 +501,8 @@ type InsertSectionParams struct {
 	Name             string
 	SortOrder        int64
 	RestSeconds      *int64
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	CreatedAt        dbutil.Time
+	UpdatedAt        dbutil.Time
 }
 
 func (q *Queries) InsertSection(ctx context.Context, arg InsertSectionParams) (sql.Result, error) {
@@ -532,8 +533,8 @@ type InsertSectionExerciseParams struct {
 	TargetDistance *float64
 	SortOrder      int64
 	Notes          *string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	CreatedAt      dbutil.Time
+	UpdatedAt      dbutil.Time
 }
 
 func (q *Queries) InsertSectionExercise(ctx context.Context, arg InsertSectionExerciseParams) (sql.Result, error) {
@@ -564,8 +565,8 @@ type InsertWorkoutParams struct {
 	Name      string
 	DayNumber int64
 	SortOrder int64
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt dbutil.Time
+	UpdatedAt dbutil.Time
 }
 
 func (q *Queries) InsertWorkout(ctx context.Context, arg InsertWorkoutParams) (sql.Result, error) {
@@ -592,7 +593,7 @@ type UpdateProgressionRuleParams struct {
 	IncrementPct      *float64
 	DeloadThreshold   int64
 	DeloadPct         float64
-	UpdatedAt         time.Time
+	UpdatedAt         dbutil.Time
 	SectionExerciseID int64
 }
 
@@ -617,7 +618,7 @@ WHERE uuid = ?
 type UpdateSectionParams struct {
 	Name        string
 	RestSeconds *int64
-	UpdatedAt   time.Time
+	UpdatedAt   dbutil.Time
 	Uuid        string
 }
 
@@ -643,7 +644,7 @@ type UpdateSectionExerciseParams struct {
 	TargetDuration *int64
 	TargetDistance *float64
 	Notes          *string
-	UpdatedAt      time.Time
+	UpdatedAt      dbutil.Time
 	Uuid           string
 }
 
@@ -669,7 +670,7 @@ WHERE uuid = ?
 type UpdateWorkoutParams struct {
 	Name      string
 	DayNumber int64
-	UpdatedAt time.Time
+	UpdatedAt dbutil.Time
 	Uuid      string
 }
 
