@@ -52,5 +52,6 @@ When generating session targets, the system checks the `progression_rules` for e
 | [phase2.md](phase2.md) | React Native frontend plan: connectivity model, offline strategy, navigation, API contract considerations (Phase 2) |
 | [phase2-implementation-plan.md](phase2-implementation-plan.md) | Phase 2 step-by-step build plan |
 | [ui-spec.md](ui-spec.md) | Approved UI designs — visual style, screen layouts, interaction patterns (Phase 2) |
+| [frontend-patterns.md](frontend-patterns.md) | RN layout patterns — SafeAreaView + scroll view structure, FlatList sizing, chip rows, modal pickers (Phase 2) |
 | [ai.md](ai.md) | AI feature design: exercise suggestions, template generation, program generation, form tips (Phase 3) |
 | [implementation-plan.md](implementation-plan.md) | Phase 1 build steps |

@@ -41,6 +41,7 @@ Before writing or modifying code, consult these docs. They define binding conven
 | [docs/local-development.md](docs/local-development.md) | First-run behavior, config file, Makefile targets, seeding, dev workflow |
 | [docs/phase2.md](docs/phase2.md) | React Native frontend plan: connectivity model, offline strategy, navigation, API contract considerations (Phase 2) |
 | [docs/ui-spec.md](docs/ui-spec.md) | **Approved UI designs** — visual style, all screen layouts, interaction patterns (Phase 2). Do not deviate without user sign-off. |
+| [docs/frontend-patterns.md](docs/frontend-patterns.md) | **RN layout patterns** — SafeAreaView + scroll view structure, FlatList sizing, chip rows, modal pickers, NativeWind vs inline styles (Phase 2) |
 | [docs/phase2-implementation-plan.md](docs/phase2-implementation-plan.md) | Phase 2 step-by-step build plan |
 | [docs/ai.md](docs/ai.md) | AI feature design: exercise suggestions, template generation, program generation, form tips (Phase 3) |
 | [docs/implementation-plan.md](docs/implementation-plan.md) | Phased build steps |
@@ -94,6 +95,7 @@ Before writing or modifying code, consult these docs. They define binding conven
 ### Frontend Development Flow (Phase 2+)
 - **Design before wiring** — for every frontend screen or component, generate a static design (ASCII mockup or static component with hardcoded data) first. Only after the user approves the design, wire it up to the backend API.
 - **Explain all decisions** — the user is a novice TypeScript engineer. Explain every technical decision, even ones that may seem obvious (why a hook vs a component, what a type does, why a particular pattern is used). Never assume prior TypeScript/React Native knowledge.
+- **Layout patterns** — consult `docs/frontend-patterns.md` before building any screen. Key rule: `SafeAreaView` wraps only static header content; scroll views (`FlatList`, `ScrollView`) are siblings outside it.
 
 ## Gotchas
 
