@@ -11,12 +11,12 @@ sql:
         overrides:
           - db_type: "boolean"
             go_type: "bool"
-          - db_type: "datetime_TEMP"
+          - db_type: "TIMESTAMP"
             go_type:
               import: "compound/internal/dbutil"
               package: "dbutil"
               type: "Time"
-          - db_type: "datetime_TEMP"
+          - db_type: "TIMESTAMP"
             nullable: true
             go_type:
               import: "compound/internal/dbutil"

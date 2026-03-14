@@ -1,5 +1,5 @@
 -- 001_initial.sql — Full schema for Compound workout tracker.
--- Timestamps use DATETIME type (stored as ISO 8601 text, UTC).
+-- Timestamps use TIMESTAMP type (stored as ISO 8601 text, UTC; mapped to dbutil.Time by sqlc).
 -- Booleans use BOOLEAN type (stored as INTEGER 0/1).
 -- Integer PKs for performance, UUID columns for external/API references.
 
@@ -12,9 +12,9 @@ CREATE TABLE IF NOT EXISTS exercises (
     tracking_type   TEXT     NOT NULL DEFAULT 'weight_reps',
     notes           TEXT,
     is_custom       BOOLEAN  NOT NULL DEFAULT TRUE,
-    created_at      DATETIME NOT NULL,
-    updated_at      DATETIME NOT NULL,
-    deleted_at      DATETIME
+    created_at      TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMP NOT NULL,
+    deleted_at      TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS programs (
@@ -23,9 +23,9 @@ CREATE TABLE IF NOT EXISTS programs (
     name            TEXT     NOT NULL,
     description     TEXT,
     is_prebuilt     BOOLEAN  NOT NULL DEFAULT FALSE,
-    created_at      DATETIME NOT NULL,
-    updated_at      DATETIME NOT NULL,
-    deleted_at      DATETIME
+    created_at      TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMP NOT NULL,
+    deleted_at      TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS program_workouts (
@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS program_workouts (
     name            TEXT     NOT NULL,
     day_number      INTEGER  NOT NULL,
     sort_order      INTEGER  NOT NULL,
-    created_at      DATETIME NOT NULL,
-    updated_at      DATETIME NOT NULL
+    created_at      TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS sections (
@@ -46,8 +46,8 @@ CREATE TABLE IF NOT EXISTS sections (
     name                TEXT     NOT NULL,
     sort_order          INTEGER  NOT NULL,
     rest_seconds        INTEGER,
-    created_at          DATETIME NOT NULL,
-    updated_at          DATETIME NOT NULL
+    created_at          TIMESTAMP NOT NULL,
+    updated_at          TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS section_exercises (
@@ -62,8 +62,8 @@ CREATE TABLE IF NOT EXISTS section_exercises (
     target_distance REAL,
     sort_order      INTEGER  NOT NULL,
     notes           TEXT,
-    created_at      DATETIME NOT NULL,
-    updated_at      DATETIME NOT NULL
+    created_at      TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS progression_rules (
@@ -75,8 +75,8 @@ CREATE TABLE IF NOT EXISTS progression_rules (
     increment_pct       REAL,
     deload_threshold    INTEGER  NOT NULL DEFAULT 3,
     deload_pct          REAL     NOT NULL DEFAULT 10,
-    created_at          DATETIME NOT NULL,
-    updated_at          DATETIME NOT NULL
+    created_at          TIMESTAMP NOT NULL,
+    updated_at          TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS cycles (
@@ -84,10 +84,10 @@ CREATE TABLE IF NOT EXISTS cycles (
     uuid            TEXT     UNIQUE NOT NULL,
     program_id      INTEGER  NOT NULL REFERENCES programs(id),
     status          TEXT     NOT NULL DEFAULT 'active',
-    started_at      DATETIME,
-    completed_at    DATETIME,
-    created_at      DATETIME NOT NULL,
-    updated_at      DATETIME NOT NULL
+    started_at      TIMESTAMP,
+    completed_at    TIMESTAMP,
+    created_at      TIMESTAMP NOT NULL,
+    updated_at      TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -97,11 +97,11 @@ CREATE TABLE IF NOT EXISTS sessions (
     program_workout_id  INTEGER  NOT NULL REFERENCES program_workouts(id),
     sort_order          INTEGER  NOT NULL,
     status              TEXT     NOT NULL DEFAULT 'pending',
-    started_at          DATETIME,
-    completed_at        DATETIME,
+    started_at          TIMESTAMP,
+    completed_at        TIMESTAMP,
     notes               TEXT,
-    created_at          DATETIME NOT NULL,
-    updated_at          DATETIME NOT NULL
+    created_at          TIMESTAMP NOT NULL,
+    updated_at          TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS set_logs (
@@ -117,8 +117,8 @@ CREATE TABLE IF NOT EXISTS set_logs (
     duration            INTEGER,
     distance            REAL,
     rpe                 REAL,
-    completed_at        DATETIME NOT NULL,
-    created_at          DATETIME NOT NULL
+    completed_at        TIMESTAMP NOT NULL,
+    created_at          TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS idempotency_keys (
@@ -128,6 +128,6 @@ CREATE TABLE IF NOT EXISTS idempotency_keys (
     path            TEXT     NOT NULL,
     status          INTEGER  NOT NULL,
     response        TEXT     NOT NULL,
-    created_at      DATETIME NOT NULL,
-    expires_at      DATETIME NOT NULL
+    created_at      TIMESTAMP NOT NULL,
+    expires_at      TIMESTAMP NOT NULL
 );
