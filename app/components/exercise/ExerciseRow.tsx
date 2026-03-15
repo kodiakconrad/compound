@@ -1,6 +1,7 @@
 import { Text, TouchableOpacity, View } from "react-native";
 
 import type { TrackingType } from "../../lib/staticData";
+import { ExerciseAnimation } from "./ExerciseAnimation";
 
 // Short inline labels for tracking types — used in the metadata line of the row.
 // (TrackingTypeBadge uses the full labels; these are abbreviated for tight rows.)
@@ -29,13 +30,17 @@ export function ExerciseRow({ name, muscleGroup, equipment, trackingType, onPres
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="px-4 py-3 border-b border-border"
+      className="px-4 py-3 border-b border-border flex-row items-center"
       activeOpacity={0.7}
     >
-      <Text className="text-white font-medium text-base">{name}</Text>
-      <Text className="text-muted text-sm mt-0.5">
-        {[muscleGroup, equipment].filter(Boolean).map((s) => capitalize(s as string)).join(" · ")} · {TRACKING_LABELS[trackingType]}
-      </Text>
+      {/* Lottie animation thumbnail — tappable independently to expand */}
+      <ExerciseAnimation exerciseName={name} size={40} />
+      <View className="flex-1 ml-3">
+        <Text className="text-white font-medium text-base">{name}</Text>
+        <Text className="text-muted text-sm mt-0.5">
+          {[muscleGroup, equipment].filter(Boolean).map((s) => capitalize(s as string)).join(" · ")} · {TRACKING_LABELS[trackingType]}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 }

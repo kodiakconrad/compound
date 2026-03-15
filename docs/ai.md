@@ -447,6 +447,78 @@ Substitution is session-only — the program and template are never touched.
 
 ---
 
+## Feature 6: Exercise Animation Generation
+
+AI-generated visual animations for exercises. Each exercise gets an illustrated animation showing proper form — displayed as an inline thumbnail in lists and as an expanded view on tap.
+
+### Overview
+
+- Every exercise (seeded and custom) can have an associated animation asset
+- Animations are displayed in two contexts:
+  - **Inline thumbnail** (~40×40) — in the Library list (ExerciseRow) and program WorkoutTree (ExerciseItem)
+  - **Expanded detail** (~200×200) — shown in a bottom sheet when the user taps the thumbnail
+- Assets are Lottie JSON files (vector-based, small file size, resolution-independent)
+- Bundled locally for seeded exercises; custom exercises get animations generated on-demand via AI
+
+### Generation Pipeline
+
+1. **Input**: Exercise name, muscle group, equipment, tracking type
+2. **Prompt**: System prompt describes the desired animation style (minimalist line-art, dark background, accent color highlights, looping 2-second cycle showing the movement)
+3. **Output**: Lottie JSON file (or SVG frames that are converted to Lottie)
+4. **Storage**: Generated assets cached server-side; served via `GET /api/v1/exercises/:uuid/animation`
+
+### Endpoints
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/v1/ai/exercise-animation` | Generate animation for an exercise |
+| `GET /api/v1/exercises/:uuid/animation` | Fetch cached animation asset (Lottie JSON) |
+
+### Generation Request
+
+```json
+{
+  "exercise_uuid": "abc-123"
+}
+```
+
+The server looks up the exercise's name, muscle group, and equipment to build the generation prompt. No user input needed beyond the exercise reference.
+
+### Generation Response
+
+```json
+{
+  "exercise_uuid": "abc-123",
+  "animation_url": "/api/v1/exercises/abc-123/animation",
+  "status": "ready"
+}
+```
+
+Status can be `ready` (cached, available immediately) or `generating` (async, client polls or receives push notification).
+
+### Frontend Integration
+
+- `ExerciseAnimation` component wraps `lottie-react-native`
+- Accepts `exerciseName` prop to resolve the bundled asset (for seeded exercises) or fetch from the API (for custom exercises)
+- Renders as a small looping animation; tap opens a `BottomSheet` with the larger view
+- Falls back to a static icon (dumbbell) when no animation is available
+
+### Asset Strategy
+
+| Phase | Strategy |
+|---|---|
+| Phase 2 (now) | Bundle a small set of hand-picked Lottie files for common exercises; fallback icon for the rest |
+| Phase 3 | AI generates animations for all seeded exercises at build time; on-demand generation for custom exercises |
+
+### Style Guide
+
+- Minimalist line-art style, white strokes on transparent background
+- Accent color (#E8FF47) for highlighted muscle groups
+- 2-second loop, smooth easing
+- Consistent figure proportions across all exercises
+
+---
+
 ## Testing
 
 - `MockProvider` lives in `internal/ai/testutil/mock.go` — accessible to both `ai` package unit tests and acceptance tests
