@@ -1,26 +1,27 @@
 import { useCallback, useRef, useState } from "react";
-import { Alert, ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { TargetInputModal } from "../../components/ui/TargetInputModal";
+import { ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { TargetInputModal } from "../../../components/ui/TargetInputModal";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, useNavigation } from "expo-router";
 import { usePreventRemove } from "@react-navigation/core";
 import { Ionicons } from "@expo/vector-icons";
 
-import { WorkoutTree } from "../../components/program/WorkoutTree";
-import { useProgramDetail } from "../../hooks/useProgramDetail";
-import { useCopyProgram } from "../../hooks/useCopyProgram";
-import { useStartCycle } from "../../hooks/useStartCycle";
-import { useAddWorkout } from "../../hooks/useAddWorkout";
-import { useAddSection } from "../../hooks/useAddSection";
-import { useAddSectionExercise } from "../../hooks/useAddSectionExercise";
-import { useDeleteWorkout } from "../../hooks/useDeleteWorkout";
-import { useDeleteSection } from "../../hooks/useDeleteSection";
-import { useDeleteSectionExercise } from "../../hooks/useDeleteSectionExercise";
-import { useUpdateWorkout } from "../../hooks/useUpdateWorkout";
-import { useUpdateSection } from "../../hooks/useUpdateSection";
-import { useExercises } from "../../hooks/useExercises";
-import { ApiError } from "../../lib/api";
-import type { Exercise } from "../../lib/types";
+import { WorkoutTree } from "../../../components/program/WorkoutTree";
+import { useProgramDetail } from "../../../hooks/useProgramDetail";
+import { useCopyProgram } from "../../../hooks/useCopyProgram";
+import { useStartCycle } from "../../../hooks/useStartCycle";
+import { useAddWorkout } from "../../../hooks/useAddWorkout";
+import { useAddSection } from "../../../hooks/useAddSection";
+import { useAddSectionExercise } from "../../../hooks/useAddSectionExercise";
+import { useDeleteWorkout } from "../../../hooks/useDeleteWorkout";
+import { useDeleteSection } from "../../../hooks/useDeleteSection";
+import { useDeleteSectionExercise } from "../../../hooks/useDeleteSectionExercise";
+import { useUpdateWorkout } from "../../../hooks/useUpdateWorkout";
+import { useUpdateSection } from "../../../hooks/useUpdateSection";
+import { useExercises } from "../../../hooks/useExercises";
+import { ApiError } from "../../../lib/api";
+import type { Exercise } from "../../../lib/types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -248,6 +249,18 @@ export default function ProgramDetailScreen() {
     sectionUuid: string;
   }>({ visible: false, exerciseUuid: "", exerciseName: "", workoutUuid: "", sectionUuid: "" });
 
+  // Confirmation dialog states
+  const [startCycleDialog, setStartCycleDialog] = useState(false);
+  const [errorDialog, setErrorDialog] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false, title: "", message: "",
+  });
+  const [deleteWorkoutDialog, setDeleteWorkoutDialog] = useState<{
+    visible: boolean; workoutUuid: string;
+  }>({ visible: false, workoutUuid: "" });
+  const [deleteSectionDialog, setDeleteSectionDialog] = useState<{
+    visible: boolean; workoutUuid: string; sectionUuid: string;
+  }>({ visible: false, workoutUuid: "", sectionUuid: "" });
+
   // -- Actions ----------------------------------------------------------------
 
   function handleCopy() {
@@ -258,37 +271,31 @@ export default function ProgramDetailScreen() {
         router.replace(`/programs/${copied.uuid}?edit=true`);
       },
       onError: () => {
-        Alert.alert("Error", "Failed to copy program. Please try again.");
+        setErrorDialog({ visible: true, title: "Error", message: "Failed to copy program. Please try again." });
       },
     });
   }
 
   function handleStartCycle() {
     if (!program) return;
-    Alert.alert(
-      "Start Cycle",
-      `This will create sessions for all ${program.workouts.length} workouts. Ready to begin?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Start",
-          onPress: () => {
-            startCycleMutation.mutate(program.uuid, {
-              onSuccess: () => {
-                router.replace("/(tabs)/");
-              },
-              onError: (err) => {
-                if (err instanceof ApiError && err.code === "conflict") {
-                  Alert.alert("Already Active", "This program already has an active cycle.");
-                } else {
-                  Alert.alert("Error", "Failed to start cycle. Please try again.");
-                }
-              },
-            });
-          },
-        },
-      ]
-    );
+    setStartCycleDialog(true);
+  }
+
+  function handleConfirmStartCycle() {
+    if (!program) return;
+    setStartCycleDialog(false);
+    startCycleMutation.mutate(program.uuid, {
+      onSuccess: () => {
+        router.replace("/(tabs)/");
+      },
+      onError: (err) => {
+        if (err instanceof ApiError && err.code === "conflict") {
+          setErrorDialog({ visible: true, title: "Already Active", message: "This program already has an active cycle." });
+        } else {
+          setErrorDialog({ visible: true, title: "Error", message: "Failed to start cycle. Please try again." });
+        }
+      },
+    });
   }
 
   // -- Edit mode callbacks ----------------------------------------------------
@@ -363,25 +370,23 @@ export default function ProgramDetailScreen() {
   }
 
   function handleDeleteWorkout(workoutUuid: string) {
-    Alert.alert("Delete Workout", "Are you sure? This will delete all sections and exercises in this workout.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => deleteWorkoutMutation.mutate({ programUuid, workoutUuid }),
-      },
-    ]);
+    setDeleteWorkoutDialog({ visible: true, workoutUuid });
+  }
+
+  function handleConfirmDeleteWorkout() {
+    const { workoutUuid } = deleteWorkoutDialog;
+    setDeleteWorkoutDialog({ visible: false, workoutUuid: "" });
+    deleteWorkoutMutation.mutate({ programUuid, workoutUuid });
   }
 
   function handleDeleteSection(workoutUuid: string, sectionUuid: string) {
-    Alert.alert("Delete Section", "This will also delete all exercises in this section.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => deleteSectionMutation.mutate({ programUuid, workoutUuid, sectionUuid }),
-      },
-    ]);
+    setDeleteSectionDialog({ visible: true, workoutUuid, sectionUuid });
+  }
+
+  function handleConfirmDeleteSection() {
+    const { workoutUuid, sectionUuid } = deleteSectionDialog;
+    setDeleteSectionDialog({ visible: false, workoutUuid: "", sectionUuid: "" });
+    deleteSectionMutation.mutate({ programUuid, workoutUuid, sectionUuid });
   }
 
   function handleDeleteExercise(workoutUuid: string, sectionUuid: string, exerciseUuid: string) {
@@ -573,6 +578,46 @@ export default function ProgramDetailScreen() {
         exerciseName={targetInput.exerciseName}
         onSubmit={handleTargetSubmit}
         onCancel={() => setTargetInput({ visible: false, exerciseUuid: "", exerciseName: "", workoutUuid: "", sectionUuid: "" })}
+      />
+
+      {/* Start cycle confirmation */}
+      <ConfirmDialog
+        visible={startCycleDialog}
+        title="Start Cycle"
+        message={`This will create sessions for all ${program?.workouts.length ?? 0} workouts. Ready to begin?`}
+        confirmLabel="Start"
+        onConfirm={handleConfirmStartCycle}
+        onCancel={() => setStartCycleDialog(false)}
+      />
+
+      {/* Delete workout confirmation */}
+      <ConfirmDialog
+        visible={deleteWorkoutDialog.visible}
+        title="Delete Workout"
+        message="Are you sure? This will delete all sections and exercises in this workout."
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDeleteWorkout}
+        onCancel={() => setDeleteWorkoutDialog({ visible: false, workoutUuid: "" })}
+      />
+
+      {/* Delete section confirmation */}
+      <ConfirmDialog
+        visible={deleteSectionDialog.visible}
+        title="Delete Section"
+        message="This will also delete all exercises in this section."
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDeleteSection}
+        onCancel={() => setDeleteSectionDialog({ visible: false, workoutUuid: "", sectionUuid: "" })}
+      />
+
+      {/* Error dialog (single OK button) */}
+      <ConfirmDialog
+        visible={errorDialog.visible}
+        title={errorDialog.title}
+        message={errorDialog.message}
+        confirmLabel="OK"
+        onConfirm={() => setErrorDialog({ visible: false, title: "", message: "" })}
+        onCancel={() => setErrorDialog({ visible: false, title: "", message: "" })}
       />
     </View>
   );

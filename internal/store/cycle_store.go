@@ -100,11 +100,11 @@ func (s *Store) ListCycles(ctx context.Context, db DBTX, p CycleListParams) ([]*
 	var args []any
 
 	if p.Status != nil {
-		conditions = append(conditions, "status = ?")
+		conditions = append(conditions, "c.status = ?")
 		args = append(args, string(*p.Status))
 	}
 	if p.Cursor != nil {
-		conditions = append(conditions, "id < ?")
+		conditions = append(conditions, "c.id < ?")
 		args = append(args, *p.Cursor)
 	}
 
@@ -114,10 +114,12 @@ func (s *Store) ListCycles(ctx context.Context, db DBTX, p CycleListParams) ([]*
 	}
 
 	query := fmt.Sprintf(
-		`SELECT id, uuid, program_id, status, started_at, completed_at, created_at, updated_at
-		 FROM cycles
+		`SELECT c.id, c.uuid, c.program_id, c.status, c.started_at, c.completed_at,
+		        c.created_at, c.updated_at, p.name AS program_name
+		 FROM cycles c
+		 JOIN programs p ON p.id = c.program_id
 		 WHERE %s
-		 ORDER BY id DESC
+		 ORDER BY c.id DESC
 		 LIMIT ?`,
 		where,
 	)
@@ -139,6 +141,7 @@ func (s *Store) ListCycles(ctx context.Context, db DBTX, p CycleListParams) ([]*
 			&c.ID, &c.UUID, &c.ProgramID, &statusStr,
 			&startedAt, &completedAt,
 			&createdAt, &updatedAt,
+			&c.ProgramName,
 		); err != nil {
 			return nil, false, err
 		}

@@ -1,9 +1,17 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { CommonActions } from "@react-navigation/native";
 
 // (tabs) is a "route group" in expo-router — the parentheses mean it doesn't
 // appear in the URL. This _layout.tsx renders the bottom tab bar that's visible
-// on all 4 main screens.
+// on all screens.
+//
+// Each tab with sub-screens uses a directory with its own _layout.tsx (Stack),
+// so push/back navigation works within the tab and state is preserved when
+// switching between tabs.
+//
+// Tapping the already-active tab resets its Stack to the root screen (e.g.,
+// tapping "Programs" while on a program detail screen goes back to the list).
 export default function TabLayout() {
   return (
     <Tabs
@@ -23,13 +31,25 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="today"
         options={{
           title: "Today",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="today-outline" color={color} size={size} />
           ),
         }}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            const state = navigation.getState();
+            const isActive = state.routes[state.index]?.name === route.name;
+            if (isActive) {
+              e.preventDefault();
+              navigation.dispatch(
+                CommonActions.navigate({ name: route.name, params: { screen: "index" } })
+              );
+            }
+          },
+        })}
       />
       <Tabs.Screen
         name="programs"
@@ -39,6 +59,18 @@ export default function TabLayout() {
             <Ionicons name="list-outline" color={color} size={size} />
           ),
         }}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            const state = navigation.getState();
+            const isActive = state.routes[state.index]?.name === route.name;
+            if (isActive) {
+              e.preventDefault();
+              navigation.dispatch(
+                CommonActions.navigate({ name: route.name, params: { screen: "index" } })
+              );
+            }
+          },
+        })}
       />
       <Tabs.Screen
         name="library"
@@ -48,6 +80,18 @@ export default function TabLayout() {
             <Ionicons name="barbell-outline" color={color} size={size} />
           ),
         }}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            const state = navigation.getState();
+            const isActive = state.routes[state.index]?.name === route.name;
+            if (isActive) {
+              e.preventDefault();
+              navigation.dispatch(
+                CommonActions.navigate({ name: route.name, params: { screen: "index" } })
+              );
+            }
+          },
+        })}
       />
       <Tabs.Screen
         name="progress"

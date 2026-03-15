@@ -17,19 +17,19 @@ import { usePreventRemove } from "@react-navigation/core";
 import { useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-import { SelectField } from "../../components/ui/SelectField";
-import { TargetInputModal } from "../../components/ui/TargetInputModal";
-import { SchemePicker, type SchemeChoice } from "../../components/program/SchemePicker";
-import { PyramidInputModal } from "../../components/program/PyramidInputModal";
-import { FiveThreeOneInputModal } from "../../components/program/FiveThreeOneInputModal";
-import { DropSetInputModal } from "../../components/program/DropSetInputModal";
-import { usePrograms } from "../../hooks/usePrograms";
-import { useCopyProgram } from "../../hooks/useCopyProgram";
-import { useUpdateProgram } from "../../hooks/useUpdateProgram";
-import { useScaffoldProgram } from "../../hooks/useScaffoldProgram";
-import { useExercises } from "../../hooks/useExercises";
-import { schemeLabel, formatSchemeSummary } from "../../lib/schemes";
-import type { Exercise, SetScheme } from "../../lib/types";
+import { SelectField } from "../../../components/ui/SelectField";
+import { TargetInputModal } from "../../../components/ui/TargetInputModal";
+import { SchemePicker, type SchemeChoice } from "../../../components/program/SchemePicker";
+import { PyramidInputModal } from "../../../components/program/PyramidInputModal";
+import { FiveThreeOneInputModal } from "../../../components/program/FiveThreeOneInputModal";
+import { DropSetInputModal } from "../../../components/program/DropSetInputModal";
+import { usePrograms } from "../../../hooks/usePrograms";
+import { useCopyProgram } from "../../../hooks/useCopyProgram";
+import { useUpdateProgram } from "../../../hooks/useUpdateProgram";
+import { useScaffoldProgram } from "../../../hooks/useScaffoldProgram";
+import { useExercises } from "../../../hooks/useExercises";
+import { schemeLabel, formatSchemeSummary } from "../../../lib/schemes";
+import type { Exercise, SetScheme } from "../../../lib/types";
 
 // ---------------------------------------------------------------------------
 // Constants

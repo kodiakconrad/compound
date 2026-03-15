@@ -3,44 +3,60 @@ import { useQuery } from "@tanstack/react-query";
 import { api, ApiError } from "../lib/api";
 
 // Shape returned by GET /api/v1/sessions/active
-// (matches the backend SessionDetailResponse DTO)
-export interface LoggedSet {
+// (matches the backend SessionDetailResponse DTO exactly)
+
+export interface SetLogResponse {
   uuid: string;
+  exercise_uuid: string;
+  section_exercise_uuid?: string;
   set_number: number;
-  actual_reps: number | null;
-  weight: number | null;
-  duration: number | null;
-  distance: number | null;
-  logged_at: string;
+  target_reps?: number;
+  actual_reps?: number;
+  weight?: number;
+  duration?: number;
+  distance?: number;
+  rpe?: number;
+  completed_at: string;
 }
 
 export interface SessionExercise {
   section_exercise_uuid: string;
   exercise_uuid: string;
-  name: string;
+  exercise_name: string;
   tracking_type: string;
-  target_sets: number;
-  target_reps: number | null;
-  target_weight: number | null;
-  rest_seconds: number | null;
-  logged_sets: LoggedSet[];
+  target_sets?: number;
+  target_reps?: number;
+  static_target_weight?: number;
+  computed_target_weight?: number;
+  target_duration?: number;
+  target_distance?: number;
+  sort_order: number;
+  notes?: string;
+  set_logs: SetLogResponse[];
 }
 
 export interface SessionSection {
   uuid: string;
   name: string;
   sort_order: number;
+  rest_seconds?: number;
   exercises: SessionExercise[];
 }
 
 export interface ActiveSession {
   uuid: string;
+  cycle_id: number;
   cycle_uuid: string;
+  program_workout_id: number;
   workout_name: string;
+  sort_order: number;
   status: string;
-  started_at: string | null;
-  completed_at: string | null;
+  started_at?: string;
+  completed_at?: string;
+  notes?: string;
   sections: SessionSection[];
+  created_at: string;
+  updated_at: string;
 }
 
 // useActiveSession fetches the currently in-progress session.

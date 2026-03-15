@@ -112,7 +112,9 @@ type SetLog struct {
 type SessionDetail struct {
 	UUID             string
 	CycleID          int64
+	CycleUUID        string // denormalized from cycles table
 	ProgramWorkoutID int64
+	WorkoutName      string // denormalized from program_workouts table
 	SortOrder        int
 	Status           SessionStatus
 	StartedAt        *time.Time
@@ -139,6 +141,7 @@ type SessionDetailExercise struct {
 	SectionExerciseUUID  string
 	ExerciseUUID         string
 	ExerciseName         string
+	TrackingType         TrackingType
 	TargetSets           *int
 	TargetReps           *int
 	StaticTargetWeight   *float64 // from section_exercises.target_weight

@@ -96,6 +96,7 @@ func (s *Server) registerRoutes() {
 					r.Get("/", sh.HandleGetSession)
 					r.Post("/start", sh.HandleStartSession)
 					r.Post("/sets", sh.HandleLogSet)
+					r.Delete("/sets/{setLogID}", sh.HandleDeleteSetLog)
 					r.Put("/complete", sh.HandleCompleteSession)
 					r.Put("/skip", sh.HandleSkipSession)
 				})

@@ -152,9 +152,10 @@ type SectionExercise struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 
-	// Denormalized read-only fields, populated by GetProgramWithTree.
-	ExerciseUUID string
-	ExerciseName string
+	// Denormalized read-only fields, populated by GetProgramWithTree / loadSectionsForWorkout.
+	ExerciseUUID         string
+	ExerciseName         string
+	ExerciseTrackingType TrackingType
 }
 
 // Validate enforces domain business rules on a SectionExercise.

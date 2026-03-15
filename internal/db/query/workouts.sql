@@ -118,7 +118,7 @@ SELECT se.id, se.uuid, se.section_id, se.exercise_id,
        se.target_sets, se.target_reps, se.target_weight,
        se.target_duration, se.target_distance,
        se.sort_order, se.notes, se.set_scheme, se.created_at, se.updated_at,
-       e.uuid AS exercise_uuid, e.name AS exercise_name
+       e.uuid AS exercise_uuid, e.name AS exercise_name, e.tracking_type AS exercise_tracking_type
 FROM section_exercises se
 JOIN exercises e ON e.id = se.exercise_id
 WHERE se.section_id IN (sqlc.slice('section_ids'))

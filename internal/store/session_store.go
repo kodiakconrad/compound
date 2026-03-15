@@ -79,10 +79,21 @@ func (s *Store) GetSessionDetail(ctx context.Context, db DBTX, id string) (*doma
 		}
 	}
 
+	// Fetch denormalized workout name and cycle UUID.
+	sessCtx, err := dbgen.New(db).GetSessionContext(ctx, dbgen.GetSessionContextParams{
+		CycleID:          sess.CycleID,
+		ProgramWorkoutID: sess.ProgramWorkoutID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	detail := &domain.SessionDetail{
 		UUID:             sess.UUID,
 		CycleID:          sess.CycleID,
+		CycleUUID:        sessCtx.CycleUuid,
 		ProgramWorkoutID: sess.ProgramWorkoutID,
+		WorkoutName:      sessCtx.WorkoutName,
 		SortOrder:        sess.SortOrder,
 		Status:           sess.Status,
 		StartedAt:        sess.StartedAt,
@@ -109,6 +120,7 @@ func (s *Store) GetSessionDetail(ctx context.Context, db DBTX, id string) (*doma
 				SectionExerciseUUID:  se.UUID,
 				ExerciseUUID:         se.ExerciseUUID,
 				ExerciseName:         se.ExerciseName,
+				TrackingType:         se.ExerciseTrackingType,
 				TargetSets:           se.TargetSets,
 				TargetReps:           se.TargetReps,
 				StaticTargetWeight:   se.TargetWeight,
@@ -462,6 +474,36 @@ func (s *Store) DeleteSetLogsForExercise(ctx context.Context, db DBTX, sessionUU
 		SessionID:  sess.ID,
 		ExerciseID: ex.ID,
 	})
+}
+
+// DeleteSetLog deletes a single set_log by UUID. The parent session must be
+// in_progress. Returns NotFoundError if the set_log does not exist.
+func (s *Store) DeleteSetLog(ctx context.Context, db DBTX, setLogUUID string) error {
+	q := dbgen.New(db)
+
+	row, err := q.GetSetLogByUUID(ctx, setLogUUID)
+	if err != nil {
+		return domain.NewNotFoundError("set_log", setLogUUID)
+	}
+
+	// Verify the parent session is still in progress.
+	status, err := q.GetSessionStatusByID(ctx, row.SessionID)
+	if err != nil {
+		return fmt.Errorf("get session status: %w", err)
+	}
+	if domain.SessionStatus(status) != domain.SessionInProgress {
+		return domain.NewUnprocessableError("session is not in progress")
+	}
+
+	result, err := q.DeleteSetLogByUUID(ctx, setLogUUID)
+	if err != nil {
+		return err
+	}
+	n, _ := result.RowsAffected()
+	if n == 0 {
+		return domain.NewNotFoundError("set_log", setLogUUID)
+	}
+	return nil
 }
 
 // validateSetLogTrackingType returns an error if the set_log contains fields

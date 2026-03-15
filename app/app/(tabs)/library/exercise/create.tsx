@@ -12,10 +12,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-import { SelectField } from "../../components/ui/SelectField";
-import { useExerciseFilters } from "../../hooks/useExerciseFilters";
-import { useCreateExercise } from "../../hooks/useCreateExercise";
-import type { TrackingType } from "../../lib/staticData";
+import { SelectField } from "../../../../components/ui/SelectField";
+import { useExerciseFilters } from "../../../../hooks/useExerciseFilters";
+import { useCreateExercise } from "../../../../hooks/useCreateExercise";
+import type { TrackingType } from "../../../../lib/staticData";
 
 // The 4 tracking types with labels and example descriptions shown next to each radio button.
 const TRACKING_OPTIONS: { type: TrackingType; label: string; description: string }[] = [

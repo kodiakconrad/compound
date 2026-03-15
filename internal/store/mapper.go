@@ -142,22 +142,23 @@ func mapSectionExerciseWithExercise(row dbgen.GetSectionExercisesWithExerciseByS
 		return nil, err
 	}
 	return &domain.SectionExercise{
-		ID:             row.ID,
-		UUID:           row.Uuid,
-		SectionID:      row.SectionID,
-		ExerciseID:     row.ExerciseID,
-		ExerciseUUID:   row.ExerciseUuid,
-		ExerciseName:   row.ExerciseName,
-		TargetSets:     ptrInt64ToInt(row.TargetSets),
-		TargetReps:     ptrInt64ToInt(row.TargetReps),
-		TargetWeight:   row.TargetWeight,
-		TargetDuration: ptrInt64ToInt(row.TargetDuration),
-		TargetDistance: row.TargetDistance,
-		SortOrder:      int(row.SortOrder),
-		Notes:          row.Notes,
-		SetScheme:      ss,
-		CreatedAt:      row.CreatedAt.Time,
-		UpdatedAt:      row.UpdatedAt.Time,
+		ID:                   row.ID,
+		UUID:                 row.Uuid,
+		SectionID:            row.SectionID,
+		ExerciseID:           row.ExerciseID,
+		ExerciseUUID:         row.ExerciseUuid,
+		ExerciseName:         row.ExerciseName,
+		ExerciseTrackingType: domain.TrackingType(row.ExerciseTrackingType),
+		TargetSets:           ptrInt64ToInt(row.TargetSets),
+		TargetReps:           ptrInt64ToInt(row.TargetReps),
+		TargetWeight:         row.TargetWeight,
+		TargetDuration:       ptrInt64ToInt(row.TargetDuration),
+		TargetDistance:       row.TargetDistance,
+		SortOrder:            int(row.SortOrder),
+		Notes:                row.Notes,
+		SetScheme:            ss,
+		CreatedAt:            row.CreatedAt.Time,
+		UpdatedAt:            row.UpdatedAt.Time,
 	}, nil
 }
 
@@ -177,12 +178,14 @@ func mapProgressionRule(row dbgen.ProgressionRule) *domain.ProgressionRule {
 	}
 }
 
-// mapCycle converts a dbgen.Cycle to a domain Cycle (no sessions).
-func mapCycle(row dbgen.Cycle) *domain.Cycle {
+// mapCycle converts a dbgen.GetCycleByUUIDRow to a domain Cycle (no sessions).
+// The query JOINs programs to include ProgramName.
+func mapCycle(row dbgen.GetCycleByUUIDRow) *domain.Cycle {
 	return &domain.Cycle{
 		ID:          row.ID,
 		UUID:        row.Uuid,
 		ProgramID:   row.ProgramID,
+		ProgramName: row.ProgramName,
 		Status:      domain.CycleStatus(row.Status),
 		StartedAt:   row.StartedAt.ToTimePtr(),
 		CompletedAt: row.CompletedAt.ToTimePtr(),
