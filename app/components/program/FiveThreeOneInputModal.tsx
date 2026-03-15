@@ -81,7 +81,7 @@ export function FiveThreeOneInputModal({
         <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24 }}>
           <TouchableOpacity activeOpacity={1}>
             <View className="bg-surface border border-border rounded-2xl p-5">
-              <Text className="text-white font-semibold text-lg mb-1">5/3/1 Setup</Text>
+              <Text className="text-foreground font-semibold text-lg mb-1">5/3/1 Setup</Text>
               <Text className="text-muted text-sm mb-4">{exerciseName}</Text>
 
               <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
@@ -101,7 +101,7 @@ export function FiveThreeOneInputModal({
                   >
                     <Text
                       className={`text-center text-sm font-semibold ${
-                        inputMethod === "1rm" ? "text-background" : "text-white"
+                        inputMethod === "1rm" ? "text-background" : "text-foreground"
                       }`}
                     >
                       1RM
@@ -118,7 +118,7 @@ export function FiveThreeOneInputModal({
                   >
                     <Text
                       className={`text-center text-sm font-semibold ${
-                        inputMethod === "working" ? "text-background" : "text-white"
+                        inputMethod === "working" ? "text-background" : "text-foreground"
                       }`}
                     >
                       Working Weight
@@ -185,7 +185,7 @@ export function FiveThreeOneInputModal({
                     >
                       <Text
                         className={`text-center text-xs font-semibold ${
-                          week === w.week ? "text-background" : "text-white"
+                          week === w.week ? "text-background" : "text-foreground"
                         }`}
                       >
                         {w.label}
@@ -202,7 +202,7 @@ export function FiveThreeOneInputModal({
                   {scheme.sets.map((s, i) => {
                     const isLast = i === scheme.sets.length - 1;
                     return (
-                      <Text key={i} className="text-white text-sm mb-0.5">
+                      <Text key={i} className="text-foreground text-sm mb-0.5">
                         Set {i + 1}: {s.reps}{isLast ? "+" : ""} x {s.weight} kg
                       </Text>
                     );

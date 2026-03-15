@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
+
 // ---------------------------------------------------------------------------
 // TargetInputModal — set sets, reps, and weight with +/− stepper buttons.
 //
@@ -34,6 +36,7 @@ export function TargetInputModal({
   initialReps = 5,
   initialWeight = 0,
 }: TargetInputModalProps) {
+  const { colors } = useTheme();
   const [sets, setSets] = useState(initialSets);
   const [reps, setReps] = useState(initialReps);
   const [weight, setWeight] = useState(initialWeight);
@@ -66,7 +69,7 @@ export function TargetInputModal({
         <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24 }}>
           <TouchableOpacity activeOpacity={1}>
             <View className="bg-surface border border-border rounded-2xl p-5">
-              <Text className="text-white font-semibold text-lg mb-1">Set Targets</Text>
+              <Text className="text-foreground font-semibold text-lg mb-1">Set Targets</Text>
               <Text className="text-muted text-sm mb-5">{exerciseName}</Text>
 
               {/* Sets */}
@@ -79,10 +82,10 @@ export function TargetInputModal({
                     style={{ width: 48, height: 48 }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="remove" size={20} color="#FFFFFF" />
+                    <Ionicons name="remove" size={20} color={colors.foreground} />
                   </TouchableOpacity>
                   <TextInput
-                    className="flex-1 mx-3 bg-background border border-border rounded-lg text-white text-center"
+                    className="flex-1 mx-3 bg-background border border-border rounded-lg text-foreground text-center"
                     style={{ height: 48, fontSize: 16, paddingVertical: 0, textAlignVertical: "center" }}
                     value={String(sets)}
                     onChangeText={(t) => setSets(parseInt(t, 10) || 0)}
@@ -95,7 +98,7 @@ export function TargetInputModal({
                     style={{ width: 48, height: 48 }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="add" size={20} color="#FFFFFF" />
+                    <Ionicons name="add" size={20} color={colors.foreground} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -110,10 +113,10 @@ export function TargetInputModal({
                     style={{ width: 48, height: 48 }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="remove" size={20} color="#FFFFFF" />
+                    <Ionicons name="remove" size={20} color={colors.foreground} />
                   </TouchableOpacity>
                   <TextInput
-                    className="flex-1 mx-3 bg-background border border-border rounded-lg text-white text-center"
+                    className="flex-1 mx-3 bg-background border border-border rounded-lg text-foreground text-center"
                     style={{ height: 48, fontSize: 16, paddingVertical: 0, textAlignVertical: "center" }}
                     value={String(reps)}
                     onChangeText={(t) => setReps(parseInt(t, 10) || 0)}
@@ -126,7 +129,7 @@ export function TargetInputModal({
                     style={{ width: 48, height: 48 }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="add" size={20} color="#FFFFFF" />
+                    <Ionicons name="add" size={20} color={colors.foreground} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -141,16 +144,16 @@ export function TargetInputModal({
                     style={{ width: 48, height: 48 }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="remove" size={20} color="#FFFFFF" />
+                    <Ionicons name="remove" size={20} color={colors.foreground} />
                   </TouchableOpacity>
                   <TextInput
-                    className="flex-1 mx-3 bg-background border border-border rounded-lg text-white text-center"
+                    className="flex-1 mx-3 bg-background border border-border rounded-lg text-foreground text-center"
                     style={{ height: 48, fontSize: 16, paddingVertical: 0, textAlignVertical: "center" }}
                     value={weight > 0 ? String(weight) : ""}
                     onChangeText={(t) => setWeight(parseFloat(t) || 0)}
                     keyboardType="decimal-pad"
                     placeholder="0"
-                    placeholderTextColor="#6B7280"
+                    placeholderTextColor={colors.muted}
                     selectTextOnFocus
                   />
                   <TouchableOpacity
@@ -159,7 +162,7 @@ export function TargetInputModal({
                     style={{ width: 48, height: 48 }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="add" size={20} color="#FFFFFF" />
+                    <Ionicons name="add" size={20} color={colors.foreground} />
                   </TouchableOpacity>
                 </View>
               </View>

@@ -20,6 +20,7 @@ import { useDeleteSectionExercise } from "../../../hooks/useDeleteSectionExercis
 import { useUpdateWorkout } from "../../../hooks/useUpdateWorkout";
 import { useUpdateSection } from "../../../hooks/useUpdateSection";
 import { useExercises } from "../../../hooks/useExercises";
+import { useTheme } from "../../../hooks/useTheme";
 import { ApiError } from "../../../lib/api";
 import type { Exercise } from "../../../lib/types";
 
@@ -54,6 +55,7 @@ function NamePromptModal({
   onCancel: () => void;
 }) {
   const [value, setValue] = useState(initialValue);
+  const { colors } = useTheme();
 
   // Reset the local value when the modal opens with a new initialValue.
   // We use a key on the modal content to force a fresh mount.
@@ -67,11 +69,11 @@ function NamePromptModal({
         <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24 }}>
           <TouchableOpacity activeOpacity={1}>
             <View className="bg-surface border border-border rounded-2xl p-4">
-              <Text className="text-white font-semibold text-base mb-3">{title}</Text>
+              <Text className="text-foreground font-semibold text-base mb-3">{title}</Text>
               <TextInput
-                className="bg-background border border-border rounded-xl px-4 h-12 text-white text-base mb-4"
+                className="bg-background border border-border rounded-xl px-4 h-12 text-foreground text-base mb-4"
                 placeholder={placeholder}
-                placeholderTextColor="#6B7280"
+                placeholderTextColor={colors.muted}
                 defaultValue={initialValue}
                 onChangeText={setValue}
                 autoFocus
@@ -119,6 +121,7 @@ function ExercisePickerModal({
   onCancel: () => void;
 }) {
   const { data: exercises = [] } = useExercises();
+  const { colors } = useTheme();
   const [search, setSearch] = useState("");
 
   const filtered = exercises.filter((ex) =>
@@ -127,23 +130,23 @@ function ExercisePickerModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={{ flex: 1, backgroundColor: "#0F0F0F", marginTop: 60 }}>
+      <View style={{ flex: 1, backgroundColor: colors.background, marginTop: 60 }}>
         <SafeAreaView edges={[]} style={{ flex: 1 }}>
           {/* Header */}
           <View className="flex-row items-center px-4 py-3 border-b border-border">
             <TouchableOpacity onPress={onCancel} activeOpacity={0.7} className="mr-3">
-              <Ionicons name="close" size={24} color="#FFFFFF" />
+              <Ionicons name="close" size={24} color={colors.foreground} />
             </TouchableOpacity>
-            <Text className="text-white text-lg font-bold flex-1">Pick Exercise</Text>
+            <Text className="text-foreground text-lg font-bold flex-1">Pick Exercise</Text>
           </View>
 
           {/* Search */}
           <View className="mx-4 my-3 flex-row items-center bg-surface border border-border rounded-xl px-3 h-10">
-            <Ionicons name="search-outline" size={16} color="#6B7280" />
+            <Ionicons name="search-outline" size={16} color={colors.muted} />
             <TextInput
-              className="flex-1 ml-2 text-white text-sm"
+              className="flex-1 ml-2 text-foreground text-sm"
               placeholder="Search exercises..."
-              placeholderTextColor="#6B7280"
+              placeholderTextColor={colors.muted}
               value={search}
               onChangeText={setSearch}
               autoCorrect={false}
@@ -160,7 +163,7 @@ function ExercisePickerModal({
                 className="px-4 py-3 border-b border-border"
                 activeOpacity={0.7}
               >
-                <Text className="text-white text-base">{ex.name}</Text>
+                <Text className="text-foreground text-base">{ex.name}</Text>
                 <Text className="text-muted text-sm mt-0.5">
                   {[ex.muscle_group, ex.equipment].filter(Boolean).join(" · ")}
                 </Text>
@@ -180,6 +183,7 @@ function ExercisePickerModal({
 export default function ProgramDetailScreen() {
   const { uuid, edit } = useLocalSearchParams<{ uuid: string; edit?: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
   const navigation = useNavigation();
   const programUuid = uuid ?? "";
 
@@ -436,7 +440,7 @@ export default function ProgramDetailScreen() {
     return (
       <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#E8FF47" />
+          <ActivityIndicator color={colors.accent} />
         </View>
       </SafeAreaView>
     );
@@ -447,9 +451,9 @@ export default function ProgramDetailScreen() {
       <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
         <View className="flex-row items-center px-4 py-3">
           <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} className="mr-3">
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={24} color={colors.foreground} />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold flex-1">Program not found</Text>
+          <Text className="text-foreground text-xl font-bold flex-1">Program not found</Text>
         </View>
       </SafeAreaView>
     );
@@ -459,18 +463,18 @@ export default function ProgramDetailScreen() {
   const isBusy = copyMutation.isPending || startCycleMutation.isPending;
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#0F0F0F" }}>
-      <SafeAreaView edges={["top"]} style={{ backgroundColor: "#0F0F0F" }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: colors.background }}>
         {/* Header */}
         <View className="flex-row items-center px-4 py-3">
           <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} className="mr-3">
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={24} color={colors.foreground} />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold flex-1" numberOfLines={1}>
+          <Text className="text-foreground text-xl font-bold flex-1" numberOfLines={1}>
             {program.name}
           </Text>
           {program.is_prebuilt && (
-            <Ionicons name="lock-closed-outline" size={18} color="#6B7280" />
+            <Ionicons name="lock-closed-outline" size={18} color={colors.muted} />
           )}
         </View>
 
@@ -482,7 +486,7 @@ export default function ProgramDetailScreen() {
 
           {program.has_active_cycle ? (
             <View className="flex-row items-center bg-surface border border-border rounded-lg px-4 py-2">
-              <Ionicons name="lock-closed" size={14} color="#6B7280" />
+              <Ionicons name="lock-closed" size={14} color={colors.muted} />
               <Text className="text-muted text-sm ml-2">Locked — active cycle in progress</Text>
             </View>
           ) : (
@@ -494,7 +498,7 @@ export default function ProgramDetailScreen() {
                   className="flex-row items-center bg-surface border border-border rounded-lg px-4 py-2 mr-2"
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="copy-outline" size={16} color="#E8FF47" />
+                  <Ionicons name="copy-outline" size={16} color={colors.accent} />
                   <Text className="text-accent text-sm font-medium ml-2">
                     {copyMutation.isPending ? "Copying..." : "Copy to My Programs"}
                   </Text>
@@ -508,7 +512,7 @@ export default function ProgramDetailScreen() {
                   <Ionicons
                     name={isEditMode ? "checkmark" : "pencil-outline"}
                     size={16}
-                    color="#E8FF47"
+                    color={colors.accent}
                   />
                   <Text className="text-accent text-sm font-medium ml-2">
                     {isEditMode ? "Done" : "Edit"}

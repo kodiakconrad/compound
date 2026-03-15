@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 
 import { SessionView } from "../../../components/session/SessionView";
 import { useActiveSession } from "../../../hooks/useActiveSession";
+import { useTheme } from "../../../hooks/useTheme";
 
 /**
  * SessionScreen is a pushed Stack screen within the Today tab.
@@ -14,14 +15,15 @@ import { useActiveSession } from "../../../hooks/useActiveSession";
  */
 export default function SessionScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { data: activeSession } = useActiveSession();
 
   if (!activeSession) {
     // Session was completed or doesn't exist — go back to Today homepage.
     // This can happen if the session is completed while on this screen.
     return (
-      <View style={{ flex: 1, backgroundColor: "#0F0F0F", alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ color: "#6B7280", fontSize: 14 }}>No active session</Text>
+      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
+        <Text style={{ color: colors.muted, fontSize: 14 }}>No active session</Text>
       </View>
     );
   }

@@ -36,7 +36,7 @@ export function ExerciseRow({ name, muscleGroup, equipment, trackingType, onPres
       {/* Lottie animation thumbnail — tappable independently to expand */}
       <ExerciseAnimation exerciseName={name} size={40} />
       <View className="flex-1 ml-3">
-        <Text className="text-white font-medium text-base">{name}</Text>
+        <Text className="text-foreground font-medium text-base">{name}</Text>
         <Text className="text-muted text-sm mt-0.5">
           {[muscleGroup, equipment].filter(Boolean).map((s) => capitalize(s as string)).join(" · ")} · {TRACKING_LABELS[trackingType]}
         </Text>

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { FlatList, Modal, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
+
 interface SelectFieldProps {
   label: string;
   options: string[];
@@ -16,12 +18,13 @@ interface SelectFieldProps {
 //   React Native has no built-in cross-platform dropdown. The Modal + FlatList
 //   pattern gives us consistent look and feel on both iOS and Android.
 export function SelectField({ label, options, value, onChange }: SelectFieldProps) {
+  const { colors } = useTheme();
   // `open` controls whether the picker sheet is visible.
   const [open, setOpen] = useState(false);
 
   return (
     <View className="flex-row items-center justify-between py-3 border-b border-border">
-      <Text className="text-white text-base">{label}</Text>
+      <Text className="text-foreground text-base">{label}</Text>
 
       {/* Trigger button — shows the current value and a down chevron */}
       <TouchableOpacity
@@ -30,8 +33,8 @@ export function SelectField({ label, options, value, onChange }: SelectFieldProp
         style={{ gap: 6 }}
         activeOpacity={0.7}
       >
-        <Text className="text-white text-sm">{value}</Text>
-        <Ionicons name="chevron-down" size={14} color="#6B7280" />
+        <Text className="text-foreground text-sm">{value}</Text>
+        <Ionicons name="chevron-down" size={14} color={colors.muted} />
       </TouchableOpacity>
 
       {/* Modal picker sheet */}
@@ -52,7 +55,7 @@ export function SelectField({ label, options, value, onChange }: SelectFieldProp
               <View className="w-10 h-1 bg-border rounded-full" />
             </View>
 
-            <Text className="text-white font-bold text-base px-4 mb-2">{label}</Text>
+            <Text className="text-foreground font-bold text-base px-4 mb-2">{label}</Text>
 
             <FlatList
               data={options}
@@ -66,9 +69,9 @@ export function SelectField({ label, options, value, onChange }: SelectFieldProp
                   className="flex-row items-center justify-between px-4 py-3 border-b border-border"
                   activeOpacity={0.7}
                 >
-                  <Text className="text-white text-base">{item}</Text>
+                  <Text className="text-foreground text-base">{item}</Text>
                   {item === value && (
-                    <Ionicons name="checkmark" size={18} color="#E8FF47" />
+                    <Ionicons name="checkmark" size={18} color={colors.accent} />
                   )}
                 </TouchableOpacity>
               )}

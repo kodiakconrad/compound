@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
 import { useExercises } from "../../hooks/useExercises";
 import type { Exercise } from "../../lib/types";
 
@@ -41,6 +42,7 @@ export function SubstitutionPickerModal({
   onSelect,
   onCancel,
 }: SubstitutionPickerModalProps) {
+  const { colors } = useTheme();
   const { data: exercises = [] } = useExercises();
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -72,7 +74,7 @@ export function SubstitutionPickerModal({
     <Modal visible={visible} transparent animationType="slide">
       {/* Dark scrim behind the modal so no light background peeks through */}
       <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)" }}>
-      <View style={{ flex: 1, backgroundColor: "#0F0F0F", marginTop: 60, borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
+      <View style={{ flex: 1, backgroundColor: colors.background, marginTop: 60, borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
         {/* Header */}
         <View
           style={{
@@ -81,17 +83,17 @@ export function SubstitutionPickerModal({
             paddingHorizontal: 16,
             paddingVertical: 12,
             borderBottomWidth: 1,
-            borderBottomColor: "#2A2A2A",
+            borderBottomColor: colors.border,
           }}
         >
           <TouchableOpacity onPress={handleCancel} activeOpacity={0.7} style={{ marginRight: 12 }}>
-            <Ionicons name="close" size={24} color="#FFFFFF" />
+            <Ionicons name="close" size={24} color={colors.foreground} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: "#FFFFFF", fontSize: 18, fontWeight: "700" }}>
+            <Text style={{ color: colors.foreground, fontSize: 18, fontWeight: "700" }}>
               Swap Exercise
             </Text>
-            <Text style={{ color: "#6B7280", fontSize: 13, marginTop: 2 }}>
+            <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>
               Replacing {currentExerciseName}
             </Text>
           </View>
@@ -104,19 +106,19 @@ export function SubstitutionPickerModal({
             marginVertical: 12,
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: "#1A1A1A",
+            backgroundColor: colors.surface,
             borderWidth: 1,
-            borderColor: "#2A2A2A",
+            borderColor: colors.border,
             borderRadius: 12,
             paddingHorizontal: 12,
             height: 40,
           }}
         >
-          <Ionicons name="search-outline" size={16} color="#6B7280" />
+          <Ionicons name="search-outline" size={16} color={colors.muted} />
           <TextInput
-            style={{ flex: 1, marginLeft: 8, color: "#FFFFFF", fontSize: 14 }}
+            style={{ flex: 1, marginLeft: 8, color: colors.foreground, fontSize: 14 }}
             placeholder="Search exercises..."
-            placeholderTextColor="#6B7280"
+            placeholderTextColor={colors.muted}
             value={search}
             onChangeText={setSearch}
             autoCorrect={false}
@@ -131,7 +133,7 @@ export function SubstitutionPickerModal({
             style={{ marginHorizontal: 16, marginBottom: 12 }}
             activeOpacity={0.7}
           >
-            <Text style={{ color: "#E8FF47", fontSize: 14 }}>
+            <Text style={{ color: colors.accent, fontSize: 14 }}>
               {showAll ? "Show suggested only" : "Show all exercises"}
             </Text>
           </TouchableOpacity>
@@ -147,19 +149,19 @@ export function SubstitutionPickerModal({
                 paddingHorizontal: 16,
                 paddingVertical: 12,
                 borderBottomWidth: 1,
-                borderBottomColor: "#2A2A2A",
+                borderBottomColor: colors.border,
               }}
               activeOpacity={0.7}
             >
-              <Text style={{ color: "#FFFFFF", fontSize: 16 }}>{ex.name}</Text>
-              <Text style={{ color: "#6B7280", fontSize: 13, marginTop: 2 }}>
+              <Text style={{ color: colors.foreground, fontSize: 16 }}>{ex.name}</Text>
+              <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>
                 {[ex.muscle_group, ex.equipment].filter(Boolean).join(" · ")}
               </Text>
             </TouchableOpacity>
           ))}
           {filtered.length === 0 && (
             <View style={{ alignItems: "center", paddingTop: 48 }}>
-              <Text style={{ color: "#6B7280", fontSize: 14 }}>No exercises found</Text>
+              <Text style={{ color: colors.muted, fontSize: 14 }}>No exercises found</Text>
             </View>
           )}
         </ScrollView>

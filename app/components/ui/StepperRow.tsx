@@ -1,6 +1,8 @@
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
+
 // ---------------------------------------------------------------------------
 // StepperRow — a labelled numeric input with +/− buttons.
 //
@@ -34,6 +36,8 @@ export function StepperRow({
   placeholder = "0",
   suffix,
 }: StepperRowProps) {
+  const { colors } = useTheme();
+
   function adjust(delta: number) {
     onChange(Math.max(min, value + delta));
   }
@@ -52,10 +56,10 @@ export function StepperRow({
           style={{ width: 48, height: 48 }}
           activeOpacity={0.7}
         >
-          <Ionicons name="remove" size={20} color="#FFFFFF" />
+          <Ionicons name="remove" size={20} color={colors.foreground} />
         </TouchableOpacity>
         <TextInput
-          className="flex-1 mx-3 bg-background border border-border rounded-lg text-white text-center"
+          className="flex-1 mx-3 bg-background border border-border rounded-lg text-foreground text-center"
           style={{ height: 48, fontSize: 16, paddingVertical: 0, textAlignVertical: "center" }}
           value={value > 0 ? String(value) : ""}
           onChangeText={(t) => {
@@ -64,7 +68,7 @@ export function StepperRow({
           }}
           keyboardType={keyboardType}
           placeholder={placeholder}
-          placeholderTextColor="#6B7280"
+          placeholderTextColor={colors.muted}
           selectTextOnFocus
         />
         <TouchableOpacity
@@ -73,7 +77,7 @@ export function StepperRow({
           style={{ width: 48, height: 48 }}
           activeOpacity={0.7}
         >
-          <Ionicons name="add" size={20} color="#FFFFFF" />
+          <Ionicons name="add" size={20} color={colors.foreground} />
         </TouchableOpacity>
       </View>
     </View>

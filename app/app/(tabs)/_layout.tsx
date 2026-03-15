@@ -2,6 +2,8 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { CommonActions } from "@react-navigation/native";
 
+import { useTheme } from "../../hooks/useTheme";
+
 // (tabs) is a "route group" in expo-router — the parentheses mean it doesn't
 // appear in the URL. This _layout.tsx renders the bottom tab bar that's visible
 // on all screens.
@@ -13,17 +15,19 @@ import { CommonActions } from "@react-navigation/native";
 // Tapping the already-active tab resets its Stack to the root screen (e.g.,
 // tapping "Programs" while on a program detail screen goes back to the list).
 export default function TabLayout() {
+  const { colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#0F0F0F",
-          borderTopColor: "#2A2A2A",
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
           borderTopWidth: 1,
         },
-        tabBarActiveTintColor: "#E8FF47",
-        tabBarInactiveTintColor: "#6B7280",
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "500",
@@ -99,6 +103,15 @@ export default function TabLayout() {
           title: "Progress",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="trending-up-outline" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" color={color} size={size} />
           ),
         }}
       />

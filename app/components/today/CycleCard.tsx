@@ -1,5 +1,6 @@
 import { ActivityIndicator, Text, View } from "react-native";
 
+import { useTheme } from "../../hooks/useTheme";
 import { UpcomingSession } from "./UpcomingSession";
 import { useCycleDetail } from "../../hooks/useCycles";
 import { useSessionDetail } from "../../hooks/useSession";
@@ -40,6 +41,8 @@ export function CycleCard({
   onStartSession,
   isStarting = false,
 }: CycleCardProps) {
+  const { colors } = useTheme();
+
   // 1. Fetch cycle detail with its sessions.
   const { data: cycleDetail, isLoading: isLoadingCycle } = useCycleDetail(cycleUUID);
 
@@ -70,7 +73,7 @@ export function CycleCard({
     return (
       <View className="px-4 pt-4">
         <View className="bg-surface rounded-xl border border-border p-4 items-center py-8">
-          <ActivityIndicator color="#E8FF47" />
+          <ActivityIndicator color={colors.accent} />
           <Text className="text-muted text-xs mt-3">Loading...</Text>
         </View>
       </View>
@@ -83,7 +86,7 @@ export function CycleCard({
       <View className="px-4 pt-4">
         <View className="bg-surface rounded-xl border border-border p-4">
           <Text className="text-muted text-xs mb-1">{programName}</Text>
-          <Text className="text-white text-base font-semibold mb-1">
+          <Text className="text-foreground text-base font-semibold mb-1">
             Cycle complete!
           </Text>
           <Text className="text-muted text-sm">
@@ -112,7 +115,7 @@ export function CycleCard({
   return (
     <View className="px-4 pt-4">
       <View className="bg-surface rounded-xl border border-border p-4 items-center py-8">
-        <ActivityIndicator color="#E8FF47" />
+        <ActivityIndicator color={colors.accent} />
         <Text className="text-muted text-xs mt-3">Loading workout...</Text>
       </View>
     </View>

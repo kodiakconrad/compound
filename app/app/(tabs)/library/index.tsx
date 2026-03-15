@@ -8,6 +8,7 @@ import { ExerciseRow } from "../../../components/exercise/ExerciseRow";
 import { FilterChips } from "../../../components/exercise/FilterChips";
 import { useExercises } from "../../../hooks/useExercises";
 import { useExerciseFilters } from "../../../hooks/useExerciseFilters";
+import { useTheme } from "../../../hooks/useTheme";
 
 // Fallback chip labels shown while the filters API call is loading.
 // Once loaded, the real muscle group values from the backend replace this list.
@@ -19,6 +20,7 @@ function capitalize(s: string): string {
 
 export default function LibraryScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   const [search, setSearch] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -47,27 +49,27 @@ export default function LibraryScreen() {
     // SafeAreaView only wraps the static header content (title, search, chips) so
     // its top-edge inset padding doesn't leak into the FlatList's scroll context —
     // which on Android causes the content to appear offset from the top of the list.
-    <View style={{ flex: 1, backgroundColor: "#0F0F0F" }}>
-      <SafeAreaView edges={["top"]} style={{ backgroundColor: "#0F0F0F" }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: colors.background }}>
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 py-3">
-          <Text className="text-white text-2xl font-bold">Library</Text>
+          <Text className="text-foreground text-2xl font-bold">Library</Text>
           <TouchableOpacity
             onPress={() => router.push("/library/exercise/create")}
             className="w-8 h-8 items-center justify-center"
             activeOpacity={0.7}
           >
-            <Ionicons name="add" size={26} color="#E8FF47" />
+            <Ionicons name="add" size={26} color={colors.accent} />
           </TouchableOpacity>
         </View>
 
         {/* Search bar */}
         <View className="mx-4 mb-3 flex-row items-center bg-surface border border-border rounded-xl px-3 h-10">
-          <Ionicons name="search-outline" size={16} color="#6B7280" />
+          <Ionicons name="search-outline" size={16} color={colors.muted} />
           <TextInput
-            className="flex-1 ml-2 text-white text-sm"
+            className="flex-1 ml-2 text-foreground text-sm"
             placeholder="Search exercises..."
-            placeholderTextColor="#6B7280"
+            placeholderTextColor={colors.muted}
             value={search}
             onChangeText={setSearch}
             autoCorrect={false}
@@ -76,7 +78,7 @@ export default function LibraryScreen() {
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch("")} activeOpacity={0.7}>
-              <Ionicons name="close-circle" size={16} color="#6B7280" />
+              <Ionicons name="close-circle" size={16} color={colors.muted} />
             </TouchableOpacity>
           )}
         </View>
@@ -107,7 +109,7 @@ export default function LibraryScreen() {
         ListEmptyComponent={
           isLoading ? (
             <View className="items-center justify-center pt-16">
-              <ActivityIndicator color="#E8FF47" />
+              <ActivityIndicator color={colors.accent} />
             </View>
           ) : (
             <View className="items-center justify-center pt-16">

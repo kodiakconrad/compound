@@ -1,6 +1,8 @@
 import { Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
+
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
@@ -19,15 +21,17 @@ interface NoCycleStateProps {
  * It displays a friendly message and a button to navigate to the Programs tab.
  */
 export function NoCycleState({ onBrowsePrograms }: NoCycleStateProps) {
+  const { colors } = useTheme();
+
   return (
     <View className="flex-1 items-center justify-center px-8">
       {/* Icon */}
       <View className="w-16 h-16 rounded-full bg-surface items-center justify-center mb-6">
-        <Ionicons name="barbell-outline" size={32} color="#6B7280" />
+        <Ionicons name="barbell-outline" size={32} color={colors.muted} />
       </View>
 
       {/* Message */}
-      <Text className="text-white text-lg font-semibold text-center mb-2">
+      <Text className="text-foreground text-lg font-semibold text-center mb-2">
         No active program
       </Text>
       <Text className="text-muted text-sm text-center mb-8">

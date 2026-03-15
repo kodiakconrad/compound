@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
 import { ExerciseAnimation } from "../exercise/ExerciseAnimation";
 import { SetButton } from "./SetButton";
 import type { SessionExercise, SetLogResponse } from "../../hooks/useActiveSession";
@@ -72,6 +73,8 @@ interface ExerciseCardProps {
  * simply not logging them before completing the session.
  */
 export function ExerciseCard({ exercise, onLogSet, onDeleteSetLog, onAdjustSet, onExercisePress, onSubstitute, substitutedName }: ExerciseCardProps) {
+  const { colors } = useTheme();
+
   // Use substituted name if the exercise has been swapped, otherwise the original.
   const displayName = substitutedName ?? exercise.exercise_name;
   const target = formatTarget(exercise);
@@ -119,7 +122,7 @@ export function ExerciseCard({ exercise, onLogSet, onDeleteSetLog, onAdjustSet, 
       >
         <ExerciseAnimation exerciseName={displayName} size={32} />
         <View className="flex-1 ml-2">
-          <Text className="text-white text-sm font-medium">
+          <Text className="text-foreground text-sm font-medium">
             {displayName}
           </Text>
           {substitutedName && (
@@ -168,7 +171,7 @@ export function ExerciseCard({ exercise, onLogSet, onDeleteSetLog, onAdjustSet, 
           activeOpacity={0.7}
           className="w-10 h-10 rounded-lg border border-dashed border-border items-center justify-center mx-1"
         >
-          <Ionicons name="add" size={16} color="#6B7280" />
+          <Ionicons name="add" size={16} color={colors.muted} />
         </TouchableOpacity>
       </View>
     </View>

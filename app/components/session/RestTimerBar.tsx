@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Text, TouchableOpacity, Vibration, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
 import { useTimerStore } from "../../store/timer";
 
 // ---------------------------------------------------------------------------
@@ -29,6 +30,7 @@ function formatTime(seconds: number): string {
  * drives the `tick()` function via a `setInterval`.
  */
 export function RestTimerBar() {
+  const { colors } = useTheme();
   const { secondsRemaining, isRunning, stop, tick } = useTimerStore();
 
   // Track previous isRunning to detect when timer completes (transitions
@@ -59,8 +61,8 @@ export function RestTimerBar() {
     <View className="flex-row items-center justify-between px-4 py-3 bg-surface border-t border-border">
       {/* Timer icon + time */}
       <View className="flex-row items-center">
-        <Ionicons name="timer-outline" size={18} color="#E8FF47" />
-        <Text className="text-white font-bold text-base ml-2">
+        <Ionicons name="timer-outline" size={18} color={colors.accent} />
+        <Text className="text-foreground font-bold text-base ml-2">
           REST
         </Text>
         <Text className="text-accent font-bold text-base ml-3">

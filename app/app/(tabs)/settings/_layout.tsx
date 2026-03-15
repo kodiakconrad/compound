@@ -2,10 +2,9 @@ import { Stack } from "expo-router";
 
 import { useTheme } from "../../../hooks/useTheme";
 
-// Nested Stack navigator for the Today tab.
-// The session screen is pushed on top of the homepage, giving it native
-// swipe-back gesture support. The bottom tab bar stays visible.
-export default function TodayLayout() {
+// Nested Stack navigator for the Settings tab.
+// Follows the same directory-based pattern as Today, Programs, and Library.
+export default function SettingsLayout() {
   const { colors } = useTheme();
 
   return (
