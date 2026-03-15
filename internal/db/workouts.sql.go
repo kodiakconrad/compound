@@ -212,7 +212,7 @@ func (q *Queries) GetSectionByUUID(ctx context.Context, uuid string) (Section, e
 }
 
 const getSectionExerciseByUUID = `-- name: GetSectionExerciseByUUID :one
-SELECT id, uuid, section_id, exercise_id, target_sets, target_reps, target_weight, target_duration, target_distance, sort_order, notes, created_at, updated_at
+SELECT id, uuid, section_id, exercise_id, target_sets, target_reps, target_weight, target_duration, target_distance, sort_order, notes, set_scheme, created_at, updated_at
 FROM section_exercises
 WHERE uuid = ?
 `
@@ -232,6 +232,7 @@ func (q *Queries) GetSectionExerciseByUUID(ctx context.Context, uuid string) (Se
 		&i.TargetDistance,
 		&i.SortOrder,
 		&i.Notes,
+		&i.SetScheme,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -242,7 +243,7 @@ const getSectionExercisesWithExerciseBySectionIDs = `-- name: GetSectionExercise
 SELECT se.id, se.uuid, se.section_id, se.exercise_id,
        se.target_sets, se.target_reps, se.target_weight,
        se.target_duration, se.target_distance,
-       se.sort_order, se.notes, se.created_at, se.updated_at,
+       se.sort_order, se.notes, se.set_scheme, se.created_at, se.updated_at,
        e.uuid AS exercise_uuid, e.name AS exercise_name
 FROM section_exercises se
 JOIN exercises e ON e.id = se.exercise_id
@@ -262,6 +263,7 @@ type GetSectionExercisesWithExerciseBySectionIDsRow struct {
 	TargetDistance *float64
 	SortOrder      int64
 	Notes          *string
+	SetScheme      *string
 	CreatedAt      dbutil.Time
 	UpdatedAt      dbutil.Time
 	ExerciseUuid   string
@@ -299,6 +301,7 @@ func (q *Queries) GetSectionExercisesWithExerciseBySectionIDs(ctx context.Contex
 			&i.TargetDistance,
 			&i.SortOrder,
 			&i.Notes,
+			&i.SetScheme,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ExerciseUuid,
@@ -518,8 +521,8 @@ func (q *Queries) InsertSection(ctx context.Context, arg InsertSectionParams) (s
 }
 
 const insertSectionExercise = `-- name: InsertSectionExercise :execresult
-INSERT INTO section_exercises (uuid, section_id, exercise_id, target_sets, target_reps, target_weight, target_duration, target_distance, sort_order, notes, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO section_exercises (uuid, section_id, exercise_id, target_sets, target_reps, target_weight, target_duration, target_distance, sort_order, notes, set_scheme, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type InsertSectionExerciseParams struct {
@@ -533,6 +536,7 @@ type InsertSectionExerciseParams struct {
 	TargetDistance *float64
 	SortOrder      int64
 	Notes          *string
+	SetScheme      *string
 	CreatedAt      dbutil.Time
 	UpdatedAt      dbutil.Time
 }
@@ -549,6 +553,7 @@ func (q *Queries) InsertSectionExercise(ctx context.Context, arg InsertSectionEx
 		arg.TargetDistance,
 		arg.SortOrder,
 		arg.Notes,
+		arg.SetScheme,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -633,7 +638,7 @@ func (q *Queries) UpdateSection(ctx context.Context, arg UpdateSectionParams) (s
 
 const updateSectionExercise = `-- name: UpdateSectionExercise :execresult
 UPDATE section_exercises
-SET target_sets = ?, target_reps = ?, target_weight = ?, target_duration = ?, target_distance = ?, notes = ?, updated_at = ?
+SET target_sets = ?, target_reps = ?, target_weight = ?, target_duration = ?, target_distance = ?, notes = ?, set_scheme = ?, updated_at = ?
 WHERE uuid = ?
 `
 
@@ -644,6 +649,7 @@ type UpdateSectionExerciseParams struct {
 	TargetDuration *int64
 	TargetDistance *float64
 	Notes          *string
+	SetScheme      *string
 	UpdatedAt      dbutil.Time
 	Uuid           string
 }
@@ -656,6 +662,7 @@ func (q *Queries) UpdateSectionExercise(ctx context.Context, arg UpdateSectionEx
 		arg.TargetDuration,
 		arg.TargetDistance,
 		arg.Notes,
+		arg.SetScheme,
 		arg.UpdatedAt,
 		arg.Uuid,
 	)

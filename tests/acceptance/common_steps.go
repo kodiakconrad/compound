@@ -43,6 +43,9 @@ type TestClient struct {
 	// Set log tracking.
 	LastSetLogUUID         string
 	LastSetLogExerciseUUID string
+
+	// Scaffold tracking.
+	ScaffoldedProgramUUID string
 }
 
 // NewTestClient creates a TestClient for a single scenario.

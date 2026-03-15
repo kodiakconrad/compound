@@ -1,9 +1,38 @@
 package store
 
 import (
+	"encoding/json"
+
 	dbgen "compound/internal/db"
 	"compound/internal/domain"
 )
+
+// marshalSetScheme converts a domain SetScheme to a JSON string pointer for storage.
+// Returns nil when the scheme is nil (NULL in the database).
+func marshalSetScheme(ss *domain.SetScheme) (*string, error) {
+	if ss == nil {
+		return nil, nil
+	}
+	b, err := json.Marshal(ss)
+	if err != nil {
+		return nil, err
+	}
+	s := string(b)
+	return &s, nil
+}
+
+// unmarshalSetScheme converts a JSON string pointer from the database to a domain SetScheme.
+// Returns nil when the raw value is nil (NULL in the database).
+func unmarshalSetScheme(raw *string) (*domain.SetScheme, error) {
+	if raw == nil {
+		return nil, nil
+	}
+	var ss domain.SetScheme
+	if err := json.Unmarshal([]byte(*raw), &ss); err != nil {
+		return nil, err
+	}
+	return &ss, nil
+}
 
 // mapExercise converts a dbgen GetExerciseByUUIDRow to a domain Exercise.
 func mapExercise(row dbgen.GetExerciseByUUIDRow) *domain.Exercise {
@@ -82,7 +111,11 @@ func mapSection(row dbgen.Section) *domain.Section {
 }
 
 // mapSectionExercise converts a dbgen.SectionExercise to a domain SectionExercise.
-func mapSectionExercise(row dbgen.SectionExercise) *domain.SectionExercise {
+func mapSectionExercise(row dbgen.SectionExercise) (*domain.SectionExercise, error) {
+	ss, err := unmarshalSetScheme(row.SetScheme)
+	if err != nil {
+		return nil, err
+	}
 	return &domain.SectionExercise{
 		ID:             row.ID,
 		UUID:           row.Uuid,
@@ -95,14 +128,19 @@ func mapSectionExercise(row dbgen.SectionExercise) *domain.SectionExercise {
 		TargetDistance: row.TargetDistance,
 		SortOrder:      int(row.SortOrder),
 		Notes:          row.Notes,
+		SetScheme:      ss,
 		CreatedAt:      row.CreatedAt.Time,
 		UpdatedAt:      row.UpdatedAt.Time,
-	}
+	}, nil
 }
 
 // mapSectionExerciseWithExercise converts a GetSectionExercisesWithExerciseBySectionIDsRow
 // (which joins in exercise UUID and name) to a domain SectionExercise.
-func mapSectionExerciseWithExercise(row dbgen.GetSectionExercisesWithExerciseBySectionIDsRow) *domain.SectionExercise {
+func mapSectionExerciseWithExercise(row dbgen.GetSectionExercisesWithExerciseBySectionIDsRow) (*domain.SectionExercise, error) {
+	ss, err := unmarshalSetScheme(row.SetScheme)
+	if err != nil {
+		return nil, err
+	}
 	return &domain.SectionExercise{
 		ID:             row.ID,
 		UUID:           row.Uuid,
@@ -117,9 +155,10 @@ func mapSectionExerciseWithExercise(row dbgen.GetSectionExercisesWithExerciseByS
 		TargetDistance: row.TargetDistance,
 		SortOrder:      int(row.SortOrder),
 		Notes:          row.Notes,
+		SetScheme:      ss,
 		CreatedAt:      row.CreatedAt.Time,
 		UpdatedAt:      row.UpdatedAt.Time,
-	}
+	}, nil
 }
 
 // mapProgressionRule converts a dbgen.ProgressionRule to a domain ProgressionRule.

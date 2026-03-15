@@ -4,6 +4,7 @@
 
 // TrackingType is now defined in lib/types.ts and re-exported here so that
 // existing component imports (e.g. `from "../../lib/staticData"`) keep working.
+import type { TrackingType } from "./types";
 export type { TrackingType } from "./types";
 
 export interface Exercise {

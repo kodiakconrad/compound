@@ -71,6 +71,7 @@ func TestFeatures(t *testing.T) {
 			InitializeCommonSteps(ctx, client)
 			InitializeExerciseSteps(ctx, client)
 			InitializeProgramSteps(ctx, client)
+			InitializeScaffoldSteps(ctx, client)
 			InitializeCycleSteps(ctx, client)
 			InitializeSessionSteps(ctx, client)
 			InitializeProgressSteps(ctx, client)

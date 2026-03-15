@@ -262,6 +262,11 @@ func (s *Store) CreateSectionExercise(ctx context.Context, db DBTX, se *domain.S
 		se.SortOrder = 1
 	}
 
+	setSchemeJSON, err := marshalSetScheme(se.SetScheme)
+	if err != nil {
+		return err
+	}
+
 	result, err := dbgen.New(db).InsertSectionExercise(ctx, dbgen.InsertSectionExerciseParams{
 		Uuid:           se.UUID,
 		SectionID:      se.SectionID,
@@ -273,6 +278,7 @@ func (s *Store) CreateSectionExercise(ctx context.Context, db DBTX, se *domain.S
 		TargetDistance: se.TargetDistance,
 		SortOrder:      int64(se.SortOrder),
 		Notes:          se.Notes,
+		SetScheme:      setSchemeJSON,
 		CreatedAt:      dbutil.TimeFrom(se.CreatedAt),
 		UpdatedAt:      dbutil.TimeFrom(se.UpdatedAt),
 	})
@@ -292,13 +298,22 @@ func (s *Store) GetSectionExerciseByUUID(ctx context.Context, db DBTX, id string
 	if err != nil {
 		return nil, err
 	}
-	return mapSectionExercise(row), nil
+	se, err := mapSectionExercise(row)
+	if err != nil {
+		return nil, err
+	}
+	return se, nil
 }
 
 // UpdateSectionExercise updates a section exercise's target fields.
 func (s *Store) UpdateSectionExercise(ctx context.Context, db DBTX, id string, se *domain.SectionExercise) error {
 	now := time.Now().UTC()
 	se.UpdatedAt = now
+
+	setSchemeJSON, err := marshalSetScheme(se.SetScheme)
+	if err != nil {
+		return err
+	}
 
 	result, err := dbgen.New(db).UpdateSectionExercise(ctx, dbgen.UpdateSectionExerciseParams{
 		TargetSets:     intToInt64Ptr(se.TargetSets),
@@ -307,6 +322,7 @@ func (s *Store) UpdateSectionExercise(ctx context.Context, db DBTX, id string, s
 		TargetDuration: intToInt64Ptr(se.TargetDuration),
 		TargetDistance: se.TargetDistance,
 		Notes:          se.Notes,
+		SetScheme:      setSchemeJSON,
 		UpdatedAt:      dbutil.TimeFrom(se.UpdatedAt),
 		Uuid:           id,
 	})

@@ -159,7 +159,10 @@ func (s *Store) loadSectionsForWorkout(ctx context.Context, db DBTX, workoutID i
 	seMap := make(map[int64]*domain.SectionExercise)
 	var seIDs []int64
 	for _, sr := range seRows {
-		se := mapSectionExerciseWithExercise(sr)
+		se, err := mapSectionExerciseWithExercise(sr)
+		if err != nil {
+			return nil, nil, err
+		}
 		if sec, ok := sectionMap[se.SectionID]; ok {
 			sec.Exercises = append(sec.Exercises, se)
 		}
