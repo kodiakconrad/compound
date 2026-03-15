@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import type { Workout, Section, SectionExercise } from "../../lib/types";
 import { schemeLabel, formatSchemeSummary } from "../../lib/schemes";
+import { ExerciseAnimation } from "../exercise/ExerciseAnimation";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -79,7 +80,9 @@ function ExerciseItem({
 
   return (
     <View className="flex-row items-center justify-between py-2 pl-12 pr-4">
-      <View className="flex-1 mr-2">
+      {/* Animation thumbnail — small inline preview */}
+      <ExerciseAnimation exerciseName={exercise.exercise_name} size={32} />
+      <View className="flex-1 ml-2 mr-2">
         <View className="flex-row items-center">
           <Text className="text-white text-sm">{exercise.exercise_name}</Text>
           {exercise.set_scheme && (
