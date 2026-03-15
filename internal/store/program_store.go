@@ -66,6 +66,13 @@ func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*do
 		return nil, err
 	}
 
+	// Populate computed field: does this program have a running cycle?
+	active, err := s.HasActiveCycle(ctx, db, p.ID)
+	if err != nil {
+		return nil, err
+	}
+	p.HasActiveCycle = active
+
 	q := dbgen.New(db)
 	workoutRows, err := q.GetWorkoutsForProgram(ctx, p.ID)
 	if err != nil {
@@ -113,7 +120,10 @@ func (s *Store) GetProgramWithTree(ctx context.Context, db DBTX, id string) (*do
 	var seIDs []int64
 	seMap := make(map[int64]*domain.SectionExercise)
 	for _, sr := range seRows {
-		se := mapSectionExerciseWithExercise(sr)
+		se, err := mapSectionExerciseWithExercise(sr)
+		if err != nil {
+			return nil, err
+		}
 		if sec, ok := sectionMap[se.SectionID]; ok {
 			sec.Exercises = append(sec.Exercises, se)
 		}
@@ -174,7 +184,8 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 	query := fmt.Sprintf(
 		`SELECT p.id, p.uuid, p.name, p.description, p.is_prebuilt,
 		        p.created_at, p.updated_at,
-		        COUNT(w.id) AS workout_count
+		        COUNT(w.id) AS workout_count,
+		        EXISTS(SELECT 1 FROM cycles c WHERE c.program_id = p.id AND c.status = 'active') AS has_active_cycle
 		 FROM programs p
 		 LEFT JOIN program_workouts w ON w.program_id = p.id
 		 WHERE %s
@@ -196,16 +207,19 @@ func (s *Store) ListPrograms(ctx context.Context, db DBTX, p ProgramListParams) 
 		var prog domain.Program
 		var description *string
 		var isPrebuilt bool
+		var hasActiveCycle bool
 		var createdAt, updatedAt dbutil.Time
 
 		if err := rows.Scan(
 			&prog.ID, &prog.UUID, &prog.Name, &description,
 			&isPrebuilt, &createdAt, &updatedAt, &prog.WorkoutCount,
+			&hasActiveCycle,
 		); err != nil {
 			return nil, false, err
 		}
 		prog.Description = description
 		prog.IsPrebuilt = isPrebuilt
+		prog.HasActiveCycle = hasActiveCycle
 		prog.CreatedAt = createdAt.Time
 		prog.UpdatedAt = updatedAt.Time
 		programs = append(programs, &prog)
@@ -307,5 +321,44 @@ func (s *Store) CopyProgram(ctx context.Context, db DBTX, sourceUUID string) (*d
 	}
 
 	return s.GetProgramWithTree(ctx, db, cp.UUID)
+}
+
+// ScaffoldProgram creates a program with pre-defined workouts and sections in a
+// single operation. The program tree must already have UUIDs and timestamps set
+// (typically by the DTO's ToProgram method). IDs are zero and assigned by each
+// insert.
+func (s *Store) ScaffoldProgram(ctx context.Context, db DBTX, p *domain.Program) (*domain.Program, error) {
+	if err := s.CreateProgram(ctx, db, p); err != nil {
+		return nil, err
+	}
+
+	for _, w := range p.Workouts {
+		w.ProgramID = p.ID
+		if err := s.CreateWorkout(ctx, db, w); err != nil {
+			return nil, err
+		}
+
+		for _, sec := range w.Sections {
+			sec.ProgramWorkoutID = w.ID
+			if err := s.CreateSection(ctx, db, sec); err != nil {
+				return nil, err
+			}
+
+			for _, se := range sec.Exercises {
+				// Resolve exercise UUID → internal ID.
+				exercise, err := s.GetExerciseByUUID(ctx, db, se.ExerciseUUID)
+				if err != nil {
+					return nil, err
+				}
+				se.SectionID = sec.ID
+				se.ExerciseID = exercise.ID
+				if err := s.CreateSectionExercise(ctx, db, se); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	return s.GetProgramWithTree(ctx, db, p.UUID)
 }
 

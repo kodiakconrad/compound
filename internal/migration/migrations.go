@@ -10,6 +10,9 @@ import (
 //go:embed 001_initial.sql
 var initialSQL string
 
+//go:embed 002_add_set_scheme.sql
+var addSetSchemeSQL string
+
 // migration represents a single schema migration.
 type migration struct {
 	Version int
@@ -20,6 +23,7 @@ type migration struct {
 // allMigrations lists every migration in order. Add new migrations here.
 var allMigrations = []migration{
 	{Version: 1, Name: "001_initial", SQL: initialSQL},
+	{Version: 2, Name: "002_add_set_scheme", SQL: addSetSchemeSQL},
 }
 
 // Run applies any unapplied migrations to db. It creates the

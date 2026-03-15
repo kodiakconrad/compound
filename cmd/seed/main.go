@@ -41,6 +41,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Program/template seeds will be added in Step 3.
+	if err := seed.SeedPrograms(context.Background(), s); err != nil {
+		slog.Error("failed to seed programs", "error", err)
+		os.Exit(1)
+	}
+
 	slog.Info("seed complete")
 }

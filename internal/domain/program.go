@@ -15,8 +15,9 @@ type Program struct {
 	Name         string
 	Description  *string
 	IsPrebuilt   bool
-	WorkoutCount int // populated only in list context
-	Workouts     []*ProgramWorkout
+	WorkoutCount   int  // populated only in list context
+	HasActiveCycle bool // computed — populated by ListPrograms and GetProgramWithTree
+	Workouts       []*ProgramWorkout
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    *time.Time
@@ -87,6 +88,7 @@ func (p *Program) DeepCopy() *Program {
 					TargetDistance: copyFloat64Ptr(se.TargetDistance),
 					SortOrder:      se.SortOrder,
 					Notes:          copyStringPtr(se.Notes),
+					SetScheme:      se.SetScheme.DeepCopy(),
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}

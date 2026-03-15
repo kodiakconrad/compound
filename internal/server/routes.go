@@ -43,6 +43,7 @@ func (s *Server) registerRoutes() {
 		r.Route("/programs", func(r chi.Router) {
 			r.Get("/", ph.HandleListPrograms)
 			r.Post("/", ph.HandleCreateProgram)
+			r.Post("/scaffold", ph.HandleScaffoldProgram)
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", ph.HandleGetProgram)
 				r.Put("/", ph.HandleUpdateProgram)

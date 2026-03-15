@@ -244,6 +244,7 @@ type SectionExerciseResponse struct {
 	TargetDistance  *float64                 `json:"target_distance,omitempty"`
 	SortOrder       int                      `json:"sort_order"`
 	Notes           *string                  `json:"notes,omitempty"`
+	SetScheme       *domain.SetScheme        `json:"set_scheme,omitempty"`
 	ProgressionRule *ProgressionRuleResponse `json:"progression_rule,omitempty"`
 	CreatedAt       string                   `json:"created_at"`
 	UpdatedAt       string                   `json:"updated_at"`
@@ -286,6 +287,7 @@ func ToSectionExerciseResponse(se *domain.SectionExercise) SectionExerciseRespon
 		TargetDistance: se.TargetDistance,
 		SortOrder:      se.SortOrder,
 		Notes:          se.Notes,
+		SetScheme:      se.SetScheme,
 		CreatedAt:      se.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:      se.UpdatedAt.Format(time.RFC3339),
 	}

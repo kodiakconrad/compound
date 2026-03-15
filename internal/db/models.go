@@ -102,6 +102,7 @@ type SectionExercise struct {
 	TargetDistance *float64
 	SortOrder      int64
 	Notes          *string
+	SetScheme      *string
 	CreatedAt      dbutil.Time
 	UpdatedAt      dbutil.Time
 }

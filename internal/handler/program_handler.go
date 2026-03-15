@@ -191,3 +191,28 @@ func (h *ProgramHandler) HandleCopyProgram(w http.ResponseWriter, r *http.Reques
 	slog.Info("program copied", "source_uuid", id, "new_uuid", cp.UUID)
 	respond(w, http.StatusCreated, dto.ToProgramTreeResponse(cp))
 }
+
+// HandleScaffoldProgram handles POST /api/v1/programs/scaffold.
+// Creates a program with pre-defined workouts and sections in a single request.
+func (h *ProgramHandler) HandleScaffoldProgram(w http.ResponseWriter, r *http.Request) {
+	var req dto.ScaffoldProgramRequest
+	if !decodeAndValidate(w, r, &req) {
+		return
+	}
+
+	p := req.ToProgram()
+
+	var result *domain.Program
+	err := h.store.WithTx(r.Context(), func(tx *sql.Tx) error {
+		var txErr error
+		result, txErr = h.store.ScaffoldProgram(r.Context(), tx, p)
+		return txErr
+	})
+	if err != nil {
+		respondError(w, err)
+		return
+	}
+
+	slog.Info("program scaffolded", "uuid", result.UUID, "workouts", len(result.Workouts))
+	respond(w, http.StatusCreated, dto.ToProgramTreeResponse(result))
+}

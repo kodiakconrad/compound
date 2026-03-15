@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS section_exercises (
     target_distance REAL,
     sort_order      INTEGER        NOT NULL,
     notes           TEXT,
+    set_scheme      TEXT,
     created_at      TIMESTAMP  NOT NULL,
     updated_at      TIMESTAMP  NOT NULL
 );
