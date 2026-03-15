@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
+import { ExerciseAnimation } from "../../components/exercise/ExerciseAnimation";
 import { TrackingTypeBadge } from "../../components/exercise/TrackingTypeBadge";
 import { useExercise } from "../../hooks/useExercise";
 
@@ -60,6 +61,11 @@ export default function ExerciseDetailScreen() {
       </View>
 
       <ScrollView>
+        {/* Animation — large preview */}
+        <View className="items-center py-6 border-b border-border">
+          <ExerciseAnimation exerciseName={exercise.name} size={160} />
+        </View>
+
         {/* Metadata — muscle group, equipment, tracking type */}
         <View className="px-4 py-4 border-b border-border">
           {metaParts.length > 0 && (
