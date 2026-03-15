@@ -31,6 +31,7 @@ type Cycle struct {
 	ID          int64
 	UUID        string
 	ProgramID   int64
+	ProgramName string
 	Status      CycleStatus
 	StartedAt   *time.Time
 	CompletedAt *time.Time

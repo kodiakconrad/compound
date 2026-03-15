@@ -3,9 +3,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-import { ExerciseAnimation } from "../../components/exercise/ExerciseAnimation";
-import { TrackingTypeBadge } from "../../components/exercise/TrackingTypeBadge";
-import { useExercise } from "../../hooks/useExercise";
+import { ExerciseAnimation } from "../../../../components/exercise/ExerciseAnimation";
+import { TrackingTypeBadge } from "../../../../components/exercise/TrackingTypeBadge";
+import { useExercise } from "../../../../hooks/useExercise";
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);

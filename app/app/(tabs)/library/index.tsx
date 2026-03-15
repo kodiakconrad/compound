@@ -4,10 +4,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-import { ExerciseRow } from "../../components/exercise/ExerciseRow";
-import { FilterChips } from "../../components/exercise/FilterChips";
-import { useExercises } from "../../hooks/useExercises";
-import { useExerciseFilters } from "../../hooks/useExerciseFilters";
+import { ExerciseRow } from "../../../components/exercise/ExerciseRow";
+import { FilterChips } from "../../../components/exercise/FilterChips";
+import { useExercises } from "../../../hooks/useExercises";
+import { useExerciseFilters } from "../../../hooks/useExerciseFilters";
 
 // Fallback chip labels shown while the filters API call is loading.
 // Once loaded, the real muscle group values from the backend replace this list.
@@ -53,7 +53,7 @@ export default function LibraryScreen() {
         <View className="flex-row items-center justify-between px-4 py-3">
           <Text className="text-white text-2xl font-bold">Library</Text>
           <TouchableOpacity
-            onPress={() => router.push("/exercise/create")}
+            onPress={() => router.push("/library/exercise/create")}
             className="w-8 h-8 items-center justify-center"
             activeOpacity={0.7}
           >
@@ -101,7 +101,7 @@ export default function LibraryScreen() {
             muscleGroup={item.muscle_group}
             equipment={item.equipment}
             trackingType={item.tracking_type}
-            onPress={() => router.push(`/exercise/${item.uuid}`)}
+            onPress={() => router.push(`/library/exercise/${item.uuid}`)}
           />
         )}
         ListEmptyComponent={

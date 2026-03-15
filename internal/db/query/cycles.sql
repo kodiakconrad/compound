@@ -3,9 +3,11 @@ INSERT INTO cycles (uuid, program_id, status, started_at, created_at, updated_at
 VALUES (?, ?, ?, ?, ?, ?);
 
 -- name: GetCycleByUUID :one
-SELECT id, uuid, program_id, status, started_at, completed_at, created_at, updated_at
-FROM cycles
-WHERE uuid = ?;
+SELECT c.id, c.uuid, c.program_id, c.status, c.started_at, c.completed_at, c.created_at, c.updated_at,
+       p.name AS program_name
+FROM cycles c
+JOIN programs p ON p.id = c.program_id
+WHERE c.uuid = ?;
 
 -- name: GetCycleInternalID :one
 SELECT id FROM cycles WHERE uuid = ?;

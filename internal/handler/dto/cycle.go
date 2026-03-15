@@ -77,6 +77,7 @@ func (r *LogSetRequest) Validate() []FieldError {
 type CycleResponse struct {
 	UUID        string  `json:"uuid"`
 	ProgramID   int64   `json:"program_id"`
+	ProgramName string  `json:"program_name"`
 	Status      string  `json:"status"`
 	StartedAt   *string `json:"started_at,omitempty"`
 	CompletedAt *string `json:"completed_at,omitempty"`
@@ -88,6 +89,7 @@ type CycleResponse struct {
 type CycleWithSessionsResponse struct {
 	UUID        string            `json:"uuid"`
 	ProgramID   int64             `json:"program_id"`
+	ProgramName string            `json:"program_name"`
 	Status      string            `json:"status"`
 	StartedAt   *string           `json:"started_at,omitempty"`
 	CompletedAt *string           `json:"completed_at,omitempty"`
@@ -99,11 +101,12 @@ type CycleWithSessionsResponse struct {
 // ToCycleResponse converts a domain Cycle to the flat response DTO.
 func ToCycleResponse(c *domain.Cycle) CycleResponse {
 	r := CycleResponse{
-		UUID:      c.UUID,
-		ProgramID: c.ProgramID,
-		Status:    string(c.Status),
-		CreatedAt: c.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: c.UpdatedAt.Format(time.RFC3339),
+		UUID:        c.UUID,
+		ProgramID:   c.ProgramID,
+		ProgramName: c.ProgramName,
+		Status:      string(c.Status),
+		CreatedAt:   c.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   c.UpdatedAt.Format(time.RFC3339),
 	}
 	if c.StartedAt != nil {
 		s := c.StartedAt.Format(time.RFC3339)
@@ -123,12 +126,13 @@ func ToCycleWithSessionsResponse(c *domain.Cycle) CycleWithSessionsResponse {
 		sessions[i] = ToSessionResponse(s)
 	}
 	r := CycleWithSessionsResponse{
-		UUID:      c.UUID,
-		ProgramID: c.ProgramID,
-		Status:    string(c.Status),
-		Sessions:  sessions,
-		CreatedAt: c.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: c.UpdatedAt.Format(time.RFC3339),
+		UUID:        c.UUID,
+		ProgramID:   c.ProgramID,
+		ProgramName: c.ProgramName,
+		Status:      string(c.Status),
+		Sessions:    sessions,
+		CreatedAt:   c.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   c.UpdatedAt.Format(time.RFC3339),
 	}
 	if c.StartedAt != nil {
 		s := c.StartedAt.Format(time.RFC3339)
@@ -203,7 +207,9 @@ type SetLogResponse struct {
 type SessionDetailResponse struct {
 	UUID             string                        `json:"uuid"`
 	CycleID          int64                         `json:"cycle_id"`
+	CycleUUID        string                        `json:"cycle_uuid"`
 	ProgramWorkoutID int64                         `json:"program_workout_id"`
+	WorkoutName      string                        `json:"workout_name"`
 	SortOrder        int                           `json:"sort_order"`
 	Status           string                        `json:"status"`
 	StartedAt        *string                       `json:"started_at,omitempty"`
@@ -228,6 +234,7 @@ type SessionDetailExerciseResponse struct {
 	SectionExerciseUUID  string           `json:"section_exercise_uuid"`
 	ExerciseUUID         string           `json:"exercise_uuid"`
 	ExerciseName         string           `json:"exercise_name"`
+	TrackingType         string           `json:"tracking_type"`
 	TargetSets           *int             `json:"target_sets,omitempty"`
 	TargetReps           *int             `json:"target_reps,omitempty"`
 	StaticTargetWeight   *float64         `json:"static_target_weight,omitempty"`
@@ -265,6 +272,7 @@ func ToSessionDetailResponse(d *domain.SessionDetail) SessionDetailResponse {
 				SectionExerciseUUID:  ex.SectionExerciseUUID,
 				ExerciseUUID:         ex.ExerciseUUID,
 				ExerciseName:         ex.ExerciseName,
+				TrackingType:         string(ex.TrackingType),
 				TargetSets:           ex.TargetSets,
 				TargetReps:           ex.TargetReps,
 				StaticTargetWeight:   ex.StaticTargetWeight,
@@ -288,7 +296,9 @@ func ToSessionDetailResponse(d *domain.SessionDetail) SessionDetailResponse {
 	r := SessionDetailResponse{
 		UUID:             d.UUID,
 		CycleID:          d.CycleID,
+		CycleUUID:        d.CycleUUID,
 		ProgramWorkoutID: d.ProgramWorkoutID,
+		WorkoutName:      d.WorkoutName,
 		SortOrder:        d.SortOrder,
 		Status:           string(d.Status),
 		Notes:            d.Notes,

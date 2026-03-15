@@ -148,6 +148,18 @@ func (h *SessionHandler) HandleDeleteSetsForExercise(w http.ResponseWriter, r *h
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// HandleDeleteSetLog handles DELETE /api/v1/cycles/{cycleID}/sessions/{sessionID}/sets/{setLogID}.
+// Removes a single logged set. The session must be in_progress.
+func (h *SessionHandler) HandleDeleteSetLog(w http.ResponseWriter, r *http.Request) {
+	setLogUUID := chi.URLParam(r, "setLogID")
+
+	if err := h.store.DeleteSetLog(r.Context(), h.store.DB, setLogUUID); err != nil {
+		respondError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // HandleLogSet handles POST /api/v1/cycles/{cycleID}/sessions/{sessionID}/sets.
 // Logs a performed set. The set can be tied to a planned section_exercise
 // (with optional exercise substitution) or be an ad-hoc set.

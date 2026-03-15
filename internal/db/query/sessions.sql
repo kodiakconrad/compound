@@ -54,8 +54,26 @@ SELECT tracking_type FROM exercises WHERE id = ?;
 DELETE FROM set_logs
 WHERE session_id = ? AND exercise_id = ?;
 
+-- name: DeleteSetLogByUUID :execresult
+DELETE FROM set_logs WHERE uuid = ?;
+
+-- name: GetSetLogByUUID :one
+SELECT id, uuid, session_id FROM set_logs WHERE uuid = ?;
+
+-- name: GetSessionStatusByID :one
+SELECT status FROM sessions WHERE id = ?;
+
 -- name: GetActiveSessionUUID :one
 SELECT uuid FROM sessions WHERE status = 'in_progress' LIMIT 1;
+
+-- name: GetSessionContext :one
+-- Returns the workout name and cycle UUID for a session's foreign keys.
+SELECT pw.name AS workout_name, c.uuid AS cycle_uuid
+FROM program_workouts pw
+JOIN sessions s ON s.program_workout_id = pw.id
+JOIN cycles c ON c.id = s.cycle_id
+WHERE s.cycle_id = ? AND s.program_workout_id = ?
+LIMIT 1;
 
 -- name: GetSetLogProgressionHistory :many
 SELECT sl.section_exercise_id, sl.set_number,

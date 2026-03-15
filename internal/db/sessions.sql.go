@@ -25,6 +25,14 @@ func (q *Queries) CountIncompleteSessionsInCycle(ctx context.Context, cycleID in
 	return count, err
 }
 
+const deleteSetLogByUUID = `-- name: DeleteSetLogByUUID :execresult
+DELETE FROM set_logs WHERE uuid = ?
+`
+
+func (q *Queries) DeleteSetLogByUUID(ctx context.Context, uuid string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteSetLogByUUID, uuid)
+}
+
 const deleteSetLogsForSessionAndExercise = `-- name: DeleteSetLogsForSessionAndExercise :exec
 DELETE FROM set_logs
 WHERE session_id = ? AND exercise_id = ?
@@ -106,6 +114,33 @@ func (q *Queries) GetSessionByUUID(ctx context.Context, uuid string) (Session, e
 	return i, err
 }
 
+const getSessionContext = `-- name: GetSessionContext :one
+SELECT pw.name AS workout_name, c.uuid AS cycle_uuid
+FROM program_workouts pw
+JOIN sessions s ON s.program_workout_id = pw.id
+JOIN cycles c ON c.id = s.cycle_id
+WHERE s.cycle_id = ? AND s.program_workout_id = ?
+LIMIT 1
+`
+
+type GetSessionContextParams struct {
+	CycleID          int64
+	ProgramWorkoutID int64
+}
+
+type GetSessionContextRow struct {
+	WorkoutName string
+	CycleUuid   string
+}
+
+// Returns the workout name and cycle UUID for a session's foreign keys.
+func (q *Queries) GetSessionContext(ctx context.Context, arg GetSessionContextParams) (GetSessionContextRow, error) {
+	row := q.db.QueryRowContext(ctx, getSessionContext, arg.CycleID, arg.ProgramWorkoutID)
+	var i GetSessionContextRow
+	err := row.Scan(&i.WorkoutName, &i.CycleUuid)
+	return i, err
+}
+
 const getSessionInternalID = `-- name: GetSessionInternalID :one
 SELECT id FROM sessions WHERE uuid = ?
 `
@@ -115,6 +150,34 @@ func (q *Queries) GetSessionInternalID(ctx context.Context, uuid string) (int64,
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const getSessionStatusByID = `-- name: GetSessionStatusByID :one
+SELECT status FROM sessions WHERE id = ?
+`
+
+func (q *Queries) GetSessionStatusByID(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRowContext(ctx, getSessionStatusByID, id)
+	var status string
+	err := row.Scan(&status)
+	return status, err
+}
+
+const getSetLogByUUID = `-- name: GetSetLogByUUID :one
+SELECT id, uuid, session_id FROM set_logs WHERE uuid = ?
+`
+
+type GetSetLogByUUIDRow struct {
+	ID        int64
+	Uuid      string
+	SessionID int64
+}
+
+func (q *Queries) GetSetLogByUUID(ctx context.Context, uuid string) (GetSetLogByUUIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getSetLogByUUID, uuid)
+	var i GetSetLogByUUIDRow
+	err := row.Scan(&i.ID, &i.Uuid, &i.SessionID)
+	return i, err
 }
 
 const getSetLogProgressionHistory = `-- name: GetSetLogProgressionHistory :many

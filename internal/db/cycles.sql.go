@@ -28,14 +28,28 @@ func (q *Queries) AutoCompleteCycle(ctx context.Context, arg AutoCompleteCyclePa
 }
 
 const getCycleByUUID = `-- name: GetCycleByUUID :one
-SELECT id, uuid, program_id, status, started_at, completed_at, created_at, updated_at
-FROM cycles
-WHERE uuid = ?
+SELECT c.id, c.uuid, c.program_id, c.status, c.started_at, c.completed_at, c.created_at, c.updated_at,
+       p.name AS program_name
+FROM cycles c
+JOIN programs p ON p.id = c.program_id
+WHERE c.uuid = ?
 `
 
-func (q *Queries) GetCycleByUUID(ctx context.Context, uuid string) (Cycle, error) {
+type GetCycleByUUIDRow struct {
+	ID          int64
+	Uuid        string
+	ProgramID   int64
+	Status      string
+	StartedAt   dbutil.NullableTime
+	CompletedAt dbutil.NullableTime
+	CreatedAt   dbutil.Time
+	UpdatedAt   dbutil.Time
+	ProgramName string
+}
+
+func (q *Queries) GetCycleByUUID(ctx context.Context, uuid string) (GetCycleByUUIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getCycleByUUID, uuid)
-	var i Cycle
+	var i GetCycleByUUIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Uuid,
@@ -45,6 +59,7 @@ func (q *Queries) GetCycleByUUID(ctx context.Context, uuid string) (Cycle, error
 		&i.CompletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProgramName,
 	)
 	return i, err
 }

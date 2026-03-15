@@ -5,11 +5,11 @@ import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 
-import { ProgramCard } from "../../components/program/ProgramCard";
-import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
-import { usePrograms } from "../../hooks/usePrograms";
-import { useDeleteProgram } from "../../hooks/useDeleteProgram";
-import type { ProgramListItem } from "../../lib/types";
+import { ProgramCard } from "../../../components/program/ProgramCard";
+import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
+import { usePrograms } from "../../../hooks/usePrograms";
+import { useDeleteProgram } from "../../../hooks/useDeleteProgram";
+import type { ProgramListItem } from "../../../lib/types";
 
 export default function ProgramsScreen() {
   const router = useRouter();

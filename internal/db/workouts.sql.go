@@ -244,7 +244,7 @@ SELECT se.id, se.uuid, se.section_id, se.exercise_id,
        se.target_sets, se.target_reps, se.target_weight,
        se.target_duration, se.target_distance,
        se.sort_order, se.notes, se.set_scheme, se.created_at, se.updated_at,
-       e.uuid AS exercise_uuid, e.name AS exercise_name
+       e.uuid AS exercise_uuid, e.name AS exercise_name, e.tracking_type AS exercise_tracking_type
 FROM section_exercises se
 JOIN exercises e ON e.id = se.exercise_id
 WHERE se.section_id IN (/*SLICE:section_ids*/?)
@@ -252,22 +252,23 @@ ORDER BY se.sort_order
 `
 
 type GetSectionExercisesWithExerciseBySectionIDsRow struct {
-	ID             int64
-	Uuid           string
-	SectionID      int64
-	ExerciseID     int64
-	TargetSets     *int64
-	TargetReps     *int64
-	TargetWeight   *float64
-	TargetDuration *int64
-	TargetDistance *float64
-	SortOrder      int64
-	Notes          *string
-	SetScheme      *string
-	CreatedAt      dbutil.Time
-	UpdatedAt      dbutil.Time
-	ExerciseUuid   string
-	ExerciseName   string
+	ID                   int64
+	Uuid                 string
+	SectionID            int64
+	ExerciseID           int64
+	TargetSets           *int64
+	TargetReps           *int64
+	TargetWeight         *float64
+	TargetDuration       *int64
+	TargetDistance       *float64
+	SortOrder            int64
+	Notes                *string
+	SetScheme            *string
+	CreatedAt            dbutil.Time
+	UpdatedAt            dbutil.Time
+	ExerciseUuid         string
+	ExerciseName         string
+	ExerciseTrackingType string
 }
 
 func (q *Queries) GetSectionExercisesWithExerciseBySectionIDs(ctx context.Context, sectionIds []int64) ([]GetSectionExercisesWithExerciseBySectionIDsRow, error) {
@@ -306,6 +307,7 @@ func (q *Queries) GetSectionExercisesWithExerciseBySectionIDs(ctx context.Contex
 			&i.UpdatedAt,
 			&i.ExerciseUuid,
 			&i.ExerciseName,
+			&i.ExerciseTrackingType,
 		); err != nil {
 			return nil, err
 		}
