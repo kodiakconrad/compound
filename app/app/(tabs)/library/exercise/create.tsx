@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { SelectField } from "../../../../components/ui/SelectField";
 import { useExerciseFilters } from "../../../../hooks/useExerciseFilters";
 import { useCreateExercise } from "../../../../hooks/useCreateExercise";
+import { useTheme } from "../../../../hooks/useTheme";
 import type { TrackingType } from "../../../../lib/staticData";
 
 // The 4 tracking types with labels and example descriptions shown next to each radio button.
@@ -35,6 +36,7 @@ function capitalize(s: string): string {
 
 export default function CreateExerciseScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   // Form state — all inputs are "controlled", meaning React owns the value.
   // Every keystroke calls setName/setTrackingType/etc., and the input always
@@ -83,9 +85,9 @@ export default function CreateExerciseScreen() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-border">
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} className="mr-3">
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={24} color={colors.foreground} />
         </TouchableOpacity>
-        <Text className="text-white text-xl font-bold">New Exercise</Text>
+        <Text className="text-foreground text-xl font-bold">New Exercise</Text>
       </View>
 
       {/* KeyboardAvoidingView shifts the content up when the keyboard appears,
@@ -98,9 +100,9 @@ export default function CreateExerciseScreen() {
           {/* Name field */}
           <Text className="text-muted text-xs font-semibold tracking-widest mb-2">NAME</Text>
           <TextInput
-            className="bg-surface border border-border rounded-xl px-4 h-12 text-white text-base mb-6"
+            className="bg-surface border border-border rounded-xl px-4 h-12 text-foreground text-base mb-6"
             placeholder="e.g., Incline Bench Press"
-            placeholderTextColor="#6B7280"
+            placeholderTextColor={colors.muted}
             value={name}
             onChangeText={setName}
             autoCorrect={false}
@@ -131,7 +133,7 @@ export default function CreateExerciseScreen() {
                     {isSelected && <View className="w-2.5 h-2.5 rounded-full bg-accent" />}
                   </View>
                   <View>
-                    <Text className="text-white text-base">{opt.label}</Text>
+                    <Text className="text-foreground text-base">{opt.label}</Text>
                     <Text className="text-muted text-xs">{opt.description}</Text>
                   </View>
                 </TouchableOpacity>

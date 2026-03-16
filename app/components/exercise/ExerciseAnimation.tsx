@@ -3,6 +3,7 @@ import { Modal, Pressable, Text, TouchableOpacity, View } from "react-native";
 import LottieView from "lottie-react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
 import { getAnimationForExercise } from "../../assets/animations";
 
 // ---------------------------------------------------------------------------
@@ -29,6 +30,7 @@ interface ExerciseAnimationProps {
  * but shows a "no animation available" message in the expanded view.
  */
 export function ExerciseAnimation({ exerciseName, size = 40 }: ExerciseAnimationProps) {
+  const { colors } = useTheme();
   const [expanded, setExpanded] = useState(false);
   const animationSource = getAnimationForExercise(exerciseName);
 
@@ -49,7 +51,7 @@ export function ExerciseAnimation({ exerciseName, size = 40 }: ExerciseAnimation
             style={{ width: size - 4, height: size - 4 }}
           />
         ) : (
-          <Ionicons name="barbell-outline" size={size * 0.5} color="#6B7280" />
+          <Ionicons name="barbell-outline" size={size * 0.5} color={colors.muted} />
         )}
       </TouchableOpacity>
 
@@ -74,11 +76,11 @@ export function ExerciseAnimation({ exerciseName, size = 40 }: ExerciseAnimation
               className="absolute top-3 right-3 z-10"
               activeOpacity={0.7}
             >
-              <Ionicons name="close" size={22} color="#6B7280" />
+              <Ionicons name="close" size={22} color={colors.muted} />
             </TouchableOpacity>
 
             {/* Exercise name */}
-            <Text className="text-white text-lg font-semibold mb-4">
+            <Text className="text-foreground text-lg font-semibold mb-4">
               {exerciseName}
             </Text>
 
@@ -100,7 +102,7 @@ export function ExerciseAnimation({ exerciseName, size = 40 }: ExerciseAnimation
                 className="items-center justify-center rounded-xl bg-black/40"
                 style={{ width: 200, height: 200 }}
               >
-                <Ionicons name="barbell-outline" size={64} color="#6B7280" />
+                <Ionicons name="barbell-outline" size={64} color={colors.muted} />
                 <Text className="text-muted text-sm mt-3">
                   Animation coming soon
                 </Text>

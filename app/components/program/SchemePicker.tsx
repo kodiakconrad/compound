@@ -1,6 +1,8 @@
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
+
 // ---------------------------------------------------------------------------
 // SchemePicker — modal to choose a set progression scheme.
 //
@@ -48,6 +50,8 @@ const OPTIONS: { choice: SchemeChoice; label: string; desc: string; icon: string
 ];
 
 export function SchemePicker({ visible, exerciseName, onSelect, onCancel }: SchemePickerProps) {
+  const { colors } = useTheme();
+
   return (
     <Modal visible={visible} transparent animationType="fade">
       <TouchableOpacity
@@ -58,7 +62,7 @@ export function SchemePicker({ visible, exerciseName, onSelect, onCancel }: Sche
         <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24 }}>
           <TouchableOpacity activeOpacity={1}>
             <View className="bg-surface border border-border rounded-2xl p-5">
-              <Text className="text-white font-semibold text-lg mb-1">Set Scheme</Text>
+              <Text className="text-foreground font-semibold text-lg mb-1">Set Scheme</Text>
               <Text className="text-muted text-sm mb-5">{exerciseName}</Text>
 
               {OPTIONS.map((opt) => (
@@ -71,11 +75,11 @@ export function SchemePicker({ visible, exerciseName, onSelect, onCancel }: Sche
                   <Ionicons
                     name={opt.icon as any}
                     size={20}
-                    color="#E8FF47"
+                    color={colors.accent}
                     style={{ marginRight: 12 }}
                   />
                   <View style={{ flex: 1 }}>
-                    <Text className="text-white font-semibold text-sm">{opt.label}</Text>
+                    <Text className="text-foreground font-semibold text-sm">{opt.label}</Text>
                     <Text className="text-muted text-xs mt-0.5">{opt.desc}</Text>
                   </View>
                 </TouchableOpacity>

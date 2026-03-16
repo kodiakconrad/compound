@@ -1,6 +1,8 @@
 import { Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
+
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
@@ -40,6 +42,8 @@ export function SetButton({
   onPress,
   onLongPress,
 }: SetButtonProps) {
+  const { colors } = useTheme();
+
   if (isLogged) {
     return (
       <TouchableOpacity
@@ -50,7 +54,7 @@ export function SetButton({
         className="w-12 h-10 rounded-lg border border-accent bg-accent/10 items-center justify-center mx-1"
       >
         <View className="flex-row items-center">
-          <Ionicons name="checkmark" size={12} color="#E8FF47" />
+          <Ionicons name="checkmark" size={12} color={colors.accent} />
           <Text className="text-accent text-xs font-bold ml-0.5">
             {actualReps ?? "✓"}
           </Text>

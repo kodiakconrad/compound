@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
+import { useTheme } from "../../hooks/useTheme";
 import { SessionHeader } from "./SessionHeader";
 import { SectionCard } from "./SectionCard";
 import { RestTimerBar } from "./RestTimerBar";
@@ -53,6 +54,7 @@ interface SessionViewProps {
  * bottom tab bar stays visible and tab switching preserves the view.
  */
 export function SessionView({ session, onCompleted, onBack }: SessionViewProps) {
+  const { colors } = useTheme();
   const router = useRouter();
   const logSetMutation = useLogSet();
   const deleteSetLogMutation = useDeleteSetLog();
@@ -289,7 +291,7 @@ export function SessionView({ session, onCompleted, onBack }: SessionViewProps) 
   // --- Render ---
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#0F0F0F" }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <SessionHeader
         workoutName={session.workout_name}
         onDone={handleDone}

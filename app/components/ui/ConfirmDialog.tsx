@@ -35,7 +35,7 @@ export function ConfirmDialog({
         <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24 }}>
           <TouchableOpacity activeOpacity={1}>
             <View className="bg-surface border border-border rounded-2xl p-5">
-              <Text className="text-white font-semibold text-lg mb-2">{title}</Text>
+              <Text className="text-foreground font-semibold text-lg mb-2">{title}</Text>
               <Text className="text-muted text-sm mb-5">{message}</Text>
 
               <View className="flex-row justify-end">

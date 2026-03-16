@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
 import type { Workout, Section, SectionExercise } from "../../lib/types";
 import { schemeLabel, formatSchemeSummary } from "../../lib/schemes";
 import { ExerciseAnimation } from "../exercise/ExerciseAnimation";
@@ -76,6 +77,7 @@ function ExerciseItem({
   isEditMode: boolean;
   onDelete?: () => void;
 }) {
+  const { colors } = useTheme();
   const target = formatTarget(exercise);
 
   return (
@@ -84,7 +86,7 @@ function ExerciseItem({
       <ExerciseAnimation exerciseName={exercise.exercise_name} size={32} />
       <View className="flex-1 ml-2 mr-2">
         <View className="flex-row items-center">
-          <Text className="text-white text-sm">{exercise.exercise_name}</Text>
+          <Text className="text-foreground text-sm">{exercise.exercise_name}</Text>
           {exercise.set_scheme && (
             <Text className="text-accent text-xs font-semibold ml-2">
               {schemeLabel(exercise.set_scheme)}
@@ -97,7 +99,7 @@ function ExerciseItem({
       </View>
       {isEditMode && onDelete && (
         <TouchableOpacity onPress={onDelete} activeOpacity={0.7}>
-          <Ionicons name="trash-outline" size={16} color="#6B7280" />
+          <Ionicons name="trash-outline" size={16} color={colors.muted} />
         </TouchableOpacity>
       )}
     </View>
@@ -125,6 +127,8 @@ function SectionItem({
   onDeleteExercise?: (exerciseUuid: string) => void;
   onRenameSection?: () => void;
 }) {
+  const { colors } = useTheme();
+
   return (
     <View>
       {/* Section header */}
@@ -136,7 +140,7 @@ function SectionItem({
         <Ionicons
           name={isExpanded ? "chevron-down" : "chevron-forward"}
           size={14}
-          color="#6B7280"
+          color={colors.muted}
         />
         <Text className="text-muted text-xs font-semibold uppercase tracking-wider ml-2 flex-1">
           {section.name}
@@ -145,12 +149,12 @@ function SectionItem({
           <View className="flex-row items-center">
             {onRenameSection && (
               <TouchableOpacity onPress={onRenameSection} className="ml-3" activeOpacity={0.7}>
-                <Ionicons name="pencil-outline" size={14} color="#6B7280" />
+                <Ionicons name="pencil-outline" size={14} color={colors.muted} />
               </TouchableOpacity>
             )}
             {onDeleteSection && (
               <TouchableOpacity onPress={onDeleteSection} className="ml-3" activeOpacity={0.7}>
-                <Ionicons name="trash-outline" size={14} color="#6B7280" />
+                <Ionicons name="trash-outline" size={14} color={colors.muted} />
               </TouchableOpacity>
             )}
           </View>
@@ -214,6 +218,8 @@ function WorkoutItem({
   onRenameWorkout?: () => void;
   onRenameSection?: (sectionUuid: string) => void;
 }) {
+  const { colors } = useTheme();
+
   return (
     <View className="mb-2">
       {/* Workout header */}
@@ -225,21 +231,21 @@ function WorkoutItem({
         <Ionicons
           name={isExpanded ? "chevron-down" : "chevron-forward"}
           size={18}
-          color="#E8FF47"
+          color={colors.accent}
         />
-        <Text className="text-white font-semibold text-sm ml-2 flex-1">
+        <Text className="text-foreground font-semibold text-sm ml-2 flex-1">
           {workout.name}
         </Text>
         {isEditMode && (
           <View className="flex-row items-center">
             {onRenameWorkout && (
               <TouchableOpacity onPress={onRenameWorkout} className="ml-3" activeOpacity={0.7}>
-                <Ionicons name="pencil-outline" size={16} color="#6B7280" />
+                <Ionicons name="pencil-outline" size={16} color={colors.muted} />
               </TouchableOpacity>
             )}
             {onDeleteWorkout && (
               <TouchableOpacity onPress={onDeleteWorkout} className="ml-3" activeOpacity={0.7}>
-                <Ionicons name="trash-outline" size={16} color="#6B7280" />
+                <Ionicons name="trash-outline" size={16} color={colors.muted} />
               </TouchableOpacity>
             )}
           </View>

@@ -2,6 +2,8 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
+
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
@@ -30,19 +32,21 @@ interface SessionHeaderProps {
  * Uses SafeAreaView to respect the top notch/status bar.
  */
 export function SessionHeader({ workoutName, onDone, onBack }: SessionHeaderProps) {
+  const { colors } = useTheme();
+
   return (
-    <SafeAreaView edges={["top"]} style={{ backgroundColor: "#0F0F0F" }}>
+    <SafeAreaView edges={["top"]} style={{ backgroundColor: colors.background }}>
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-border">
         {/* Back arrow */}
         {onBack && (
           <TouchableOpacity onPress={onBack} activeOpacity={0.7} className="mr-3">
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={24} color={colors.foreground} />
           </TouchableOpacity>
         )}
 
         {/* Workout name */}
         <Text
-          className="text-white font-semibold text-base flex-1 mr-3"
+          className="text-foreground font-semibold text-base flex-1 mr-3"
           numberOfLines={1}
         >
           {workoutName}

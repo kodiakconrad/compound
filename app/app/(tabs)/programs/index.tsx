@@ -9,10 +9,12 @@ import { ProgramCard } from "../../../components/program/ProgramCard";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { usePrograms } from "../../../hooks/usePrograms";
 import { useDeleteProgram } from "../../../hooks/useDeleteProgram";
+import { useTheme } from "../../../hooks/useTheme";
 import type { ProgramListItem } from "../../../lib/types";
 
 export default function ProgramsScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const queryClient = useQueryClient();
   const { data: programs = [], isLoading } = usePrograms();
   const deleteMutation = useDeleteProgram();
@@ -26,16 +28,16 @@ export default function ProgramsScreen() {
   return (
     // Same layout pattern as Library: outer View owns flex:1, SafeAreaView
     // wraps only the static header, FlatList is a sibling.
-    <View style={{ flex: 1, backgroundColor: "#0F0F0F" }}>
-      <SafeAreaView edges={["top"]} style={{ backgroundColor: "#0F0F0F" }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: colors.background }}>
         <View className="flex-row items-center justify-between px-4 py-3">
-          <Text className="text-white text-2xl font-bold">Programs</Text>
+          <Text className="text-foreground text-2xl font-bold">Programs</Text>
           <TouchableOpacity
             onPress={() => router.push("/programs/create")}
             className="w-8 h-8 items-center justify-center"
             activeOpacity={0.7}
           >
-            <Ionicons name="add" size={26} color="#E8FF47" />
+            <Ionicons name="add" size={26} color={colors.accent} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -61,7 +63,7 @@ export default function ProgramsScreen() {
         ListEmptyComponent={
           isLoading ? (
             <View className="items-center justify-center pt-16">
-              <ActivityIndicator color="#E8FF47" />
+              <ActivityIndicator color={colors.accent} />
             </View>
           ) : (
             <View className="items-center justify-center pt-16 px-8">

@@ -1,6 +1,7 @@
 import { Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
 import type { SessionSection } from "../../hooks/useActiveSession";
 
 // ---------------------------------------------------------------------------
@@ -73,6 +74,8 @@ export function UpcomingSession({
   onStart,
   isStarting = false,
 }: UpcomingSessionProps) {
+  const { colors } = useTheme();
+
   // Flatten all exercises across sections for the preview.
   const allExercises = sections.flatMap((sec) => sec.exercises);
   const previewExercises = allExercises.slice(0, 2);
@@ -101,7 +104,7 @@ export function UpcomingSession({
         )}
 
         {/* Workout name */}
-        <Text className="text-white text-lg font-bold mb-1">
+        <Text className="text-foreground text-lg font-bold mb-1">
           {workoutName}
         </Text>
 
@@ -120,7 +123,7 @@ export function UpcomingSession({
                 i < previewExercises.length - 1 ? "border-b border-border" : ""
               }`}
             >
-              <Text className="text-white text-sm flex-1" numberOfLines={1}>
+              <Text className="text-foreground text-sm flex-1" numberOfLines={1}>
                 {ex.exercise_name}
               </Text>
               {target.length > 0 && (

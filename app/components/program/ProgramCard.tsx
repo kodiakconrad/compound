@@ -3,6 +3,8 @@ import { Animated, Text, TouchableOpacity, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
+
 interface ProgramCardProps {
   name: string;
   workoutCount: number;
@@ -23,6 +25,7 @@ interface ProgramCardProps {
 // Swipe left to reveal a red delete action. Prebuilt programs don't show
 // the delete action because they can't be deleted.
 export function ProgramCard({ name, workoutCount, isPrebuilt, hasActiveCycle, onPress, onDeleteRequest }: ProgramCardProps) {
+  const { colors } = useTheme();
   const swipeableRef = useRef<Swipeable>(null);
 
   /** Close the swipeable programmatically (e.g. after cancel). */
@@ -50,7 +53,7 @@ export function ProgramCard({ name, workoutCount, isPrebuilt, hasActiveCycle, on
         style={{ width: 72, backgroundColor: "#EF4444" }}
       >
         <Animated.View style={{ transform: [{ scale }] }}>
-          <Ionicons name="trash-outline" size={22} color="#FFFFFF" />
+          <Ionicons name="trash-outline" size={22} color={colors.foreground} />
         </Animated.View>
       </TouchableOpacity>
     );
@@ -63,11 +66,11 @@ export function ProgramCard({ name, workoutCount, isPrebuilt, hasActiveCycle, on
       activeOpacity={0.7}
     >
       <View className="flex-row items-center justify-between">
-        <Text className="text-white font-semibold text-base flex-1 mr-2" numberOfLines={1}>
+        <Text className="text-foreground font-semibold text-base flex-1 mr-2" numberOfLines={1}>
           {name}
         </Text>
         {isPrebuilt && (
-          <Ionicons name="lock-closed-outline" size={16} color="#6B7280" />
+          <Ionicons name="lock-closed-outline" size={16} color={colors.muted} />
         )}
       </View>
       <View className="flex-row items-center mt-0.5">

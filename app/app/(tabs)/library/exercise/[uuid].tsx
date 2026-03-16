@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ExerciseAnimation } from "../../../../components/exercise/ExerciseAnimation";
 import { TrackingTypeBadge } from "../../../../components/exercise/TrackingTypeBadge";
 import { useExercise } from "../../../../hooks/useExercise";
+import { useTheme } from "../../../../hooks/useTheme";
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -16,6 +17,7 @@ function capitalize(s: string): string {
 export default function ExerciseDetailScreen() {
   const { uuid } = useLocalSearchParams<{ uuid: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
 
   const { data: exercise, isLoading, isError } = useExercise(uuid ?? "");
 
@@ -23,7 +25,7 @@ export default function ExerciseDetailScreen() {
     return (
       <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#E8FF47" />
+          <ActivityIndicator color={colors.accent} />
         </View>
       </SafeAreaView>
     );
@@ -34,9 +36,9 @@ export default function ExerciseDetailScreen() {
       <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
         <View className="flex-row items-center px-4 py-3">
           <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} className="mr-3">
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={24} color={colors.foreground} />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold flex-1">Exercise not found</Text>
+          <Text className="text-foreground text-xl font-bold flex-1">Exercise not found</Text>
         </View>
       </SafeAreaView>
     );
@@ -53,9 +55,9 @@ export default function ExerciseDetailScreen() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3">
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} className="mr-3">
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={24} color={colors.foreground} />
         </TouchableOpacity>
-        <Text className="text-white text-xl font-bold flex-1" numberOfLines={1}>
+        <Text className="text-foreground text-xl font-bold flex-1" numberOfLines={1}>
           {exercise.name}
         </Text>
       </View>

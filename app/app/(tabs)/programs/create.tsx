@@ -28,6 +28,7 @@ import { useCopyProgram } from "../../../hooks/useCopyProgram";
 import { useUpdateProgram } from "../../../hooks/useUpdateProgram";
 import { useScaffoldProgram } from "../../../hooks/useScaffoldProgram";
 import { useExercises } from "../../../hooks/useExercises";
+import { useTheme } from "../../../hooks/useTheme";
 import { schemeLabel, formatSchemeSummary } from "../../../lib/schemes";
 import type { Exercise, SetScheme } from "../../../lib/types";
 
@@ -131,6 +132,7 @@ function BuilderExercisePicker({
   onCancel: () => void;
 }) {
   const { data: exercises = [] } = useExercises();
+  const { colors } = useTheme();
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
 
@@ -147,23 +149,23 @@ function BuilderExercisePicker({
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={{ flex: 1, backgroundColor: "#0F0F0F", marginTop: 60 }}>
+      <View style={{ flex: 1, backgroundColor: colors.background, marginTop: 60 }}>
         <SafeAreaView edges={[]} style={{ flex: 1 }}>
           {/* Header */}
           <View className="flex-row items-center px-4 py-3 border-b border-border">
             <TouchableOpacity onPress={onCancel} activeOpacity={0.7} className="mr-3">
-              <Ionicons name="close" size={24} color="#FFFFFF" />
+              <Ionicons name="close" size={24} color={colors.foreground} />
             </TouchableOpacity>
-            <Text className="text-white text-lg font-bold flex-1">Pick Exercise</Text>
+            <Text className="text-foreground text-lg font-bold flex-1">Pick Exercise</Text>
           </View>
 
           {/* Search */}
           <View className="mx-4 my-3 flex-row items-center bg-surface border border-border rounded-xl px-3 h-10">
-            <Ionicons name="search-outline" size={16} color="#6B7280" />
+            <Ionicons name="search-outline" size={16} color={colors.muted} />
             <TextInput
-              className="flex-1 ml-2 text-white text-sm"
+              className="flex-1 ml-2 text-foreground text-sm"
               placeholder="Search exercises..."
-              placeholderTextColor="#6B7280"
+              placeholderTextColor={colors.muted}
               value={search}
               onChangeText={setSearch}
               autoCorrect={false}
@@ -197,7 +199,7 @@ function BuilderExercisePicker({
                 className="px-4 py-3 border-b border-border"
                 activeOpacity={0.7}
               >
-                <Text className="text-white text-base">{ex.name}</Text>
+                <Text className="text-foreground text-base">{ex.name}</Text>
                 <Text className="text-muted text-sm mt-0.5">
                   {[ex.muscle_group, ex.equipment].filter(Boolean).join(" · ")}
                 </Text>
@@ -221,6 +223,7 @@ function BuilderExercisePicker({
 
 export default function CreateProgramScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const navigation = useNavigation();
 
   // Shared state
@@ -484,9 +487,9 @@ export default function CreateProgramScreen() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-border">
         <TouchableOpacity onPress={handleBack} activeOpacity={0.7} className="mr-3">
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={24} color={colors.foreground} />
         </TouchableOpacity>
-        <Text className="text-white text-xl font-bold">{headerTitle()}</Text>
+        <Text className="text-foreground text-xl font-bold">{headerTitle()}</Text>
       </View>
 
       {/* ================================================================== */}
@@ -499,12 +502,12 @@ export default function CreateProgramScreen() {
             className="bg-surface border border-border rounded-xl px-4 py-4 mb-3 flex-row items-center"
             activeOpacity={0.7}
           >
-            <Ionicons name="document-outline" size={22} color="#E8FF47" />
+            <Ionicons name="document-outline" size={22} color={colors.accent} />
             <View className="ml-3 flex-1">
-              <Text className="text-white font-semibold text-base">Start from scratch</Text>
+              <Text className="text-foreground font-semibold text-base">Start from scratch</Text>
               <Text className="text-muted text-sm mt-0.5">Build your own program</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -512,12 +515,12 @@ export default function CreateProgramScreen() {
             className="bg-surface border border-border rounded-xl px-4 py-4 flex-row items-center"
             activeOpacity={0.7}
           >
-            <Ionicons name="copy-outline" size={22} color="#E8FF47" />
+            <Ionicons name="copy-outline" size={22} color={colors.accent} />
             <View className="ml-3 flex-1">
-              <Text className="text-white font-semibold text-base">Copy a program</Text>
+              <Text className="text-foreground font-semibold text-base">Copy a program</Text>
               <Text className="text-muted text-sm mt-0.5">Customize an existing one</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
           </TouchableOpacity>
         </View>
       )}
@@ -535,9 +538,9 @@ export default function CreateProgramScreen() {
               PROGRAM NAME
             </Text>
             <TextInput
-              className="bg-surface border border-border rounded-xl px-4 h-12 text-white text-base mb-6"
+              className="bg-surface border border-border rounded-xl px-4 h-12 text-foreground text-base mb-6"
               placeholder="e.g., Push Pull Legs"
-              placeholderTextColor="#6B7280"
+              placeholderTextColor={colors.muted}
               value={programName}
               onChangeText={setProgramName}
               autoCorrect={false}
@@ -574,7 +577,7 @@ export default function CreateProgramScreen() {
       {/* ================================================================== */}
       {mode === "sections" && (
         <View className="px-4 pt-6 flex-1">
-          <Text className="text-white text-lg font-semibold text-center mb-2">
+          <Text className="text-foreground text-lg font-semibold text-center mb-2">
             What sections should each workout have?
           </Text>
           <Text className="text-muted text-sm text-center mb-6">
@@ -600,7 +603,7 @@ export default function CreateProgramScreen() {
                       <Ionicons name="checkmark" size={14} color="#0F0F0F" />
                     )}
                   </View>
-                  <Text className="text-white text-base">{opt.key}</Text>
+                  <Text className="text-foreground text-base">{opt.key}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -621,7 +624,7 @@ export default function CreateProgramScreen() {
       {/* ================================================================== */}
       {mode === "days" && (
         <View className="pt-8">
-          <Text className="text-white text-lg font-semibold text-center mb-2 px-4">
+          <Text className="text-foreground text-lg font-semibold text-center mb-2 px-4">
             How many training days?
           </Text>
           <Text className="text-muted text-sm text-center mb-8 px-4">
@@ -641,7 +644,7 @@ export default function CreateProgramScreen() {
                 style={{ width: 64, height: 64 }}
                 activeOpacity={0.7}
               >
-                <Text className="text-white text-2xl font-bold">{n}</Text>
+                <Text className="text-foreground text-2xl font-bold">{n}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -662,7 +665,7 @@ export default function CreateProgramScreen() {
                 key={dayIndex}
                 className="bg-surface border border-border rounded-xl mb-3 px-4 py-3"
               >
-                <Text className="text-white font-semibold text-base mb-2">
+                <Text className="text-foreground font-semibold text-base mb-2">
                   Day {dayIndex + 1}
                 </Text>
 
@@ -701,7 +704,7 @@ export default function CreateProgramScreen() {
         <View style={{ flex: 1 }}>
           {/* Day sub-header */}
           <View className="px-4 pt-4 pb-2">
-            <Text className="text-white text-lg font-semibold">
+            <Text className="text-foreground text-lg font-semibold">
               Day {builderDayIndex + 1} — {currentFocus}
             </Text>
             <Text className="text-muted text-sm mt-1">
@@ -735,7 +738,7 @@ export default function CreateProgramScreen() {
                     >
                       <View className="flex-1">
                         <View className="flex-row items-center">
-                          <Text className="text-white text-sm flex-shrink" numberOfLines={1}>
+                          <Text className="text-foreground text-sm flex-shrink" numberOfLines={1}>
                             {ex.exerciseName}
                           </Text>
                           {ex.setScheme && (
@@ -758,7 +761,7 @@ export default function CreateProgramScreen() {
                         activeOpacity={0.7}
                         className="p-1"
                       >
-                        <Ionicons name="close-circle-outline" size={20} color="#6B7280" />
+                        <Ionicons name="close-circle-outline" size={20} color={colors.muted} />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -769,7 +772,7 @@ export default function CreateProgramScreen() {
                     className="flex-row items-center py-2 mt-1"
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="add-circle-outline" size={18} color="#E8FF47" />
+                    <Ionicons name="add-circle-outline" size={18} color={colors.accent} />
                     <Text className="text-accent text-sm ml-2">Add Exercise</Text>
                   </TouchableOpacity>
                 </View>
@@ -914,7 +917,7 @@ export default function CreateProgramScreen() {
       {/* ================================================================== */}
       {mode === "creating" && (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#E8FF47" size="large" />
+          <ActivityIndicator color={colors.accent} size="large" />
           <Text className="text-muted text-sm mt-4">Building your program...</Text>
         </View>
       )}
@@ -934,13 +937,13 @@ export default function CreateProgramScreen() {
               activeOpacity={0.7}
             >
               <View className="flex-1">
-                <Text className="text-white text-base">{item.name}</Text>
+                <Text className="text-foreground text-base">{item.name}</Text>
                 <Text className="text-muted text-sm mt-0.5">
                   {item.workout_count} {item.workout_count === 1 ? "workout" : "workouts"}
                 </Text>
               </View>
               {item.is_prebuilt && (
-                <Ionicons name="lock-closed-outline" size={14} color="#6B7280" />
+                <Ionicons name="lock-closed-outline" size={14} color={colors.muted} />
               )}
             </TouchableOpacity>
           )}
@@ -965,9 +968,9 @@ export default function CreateProgramScreen() {
               PROGRAM NAME
             </Text>
             <TextInput
-              className="bg-surface border border-border rounded-xl px-4 h-12 text-white text-base mb-6"
+              className="bg-surface border border-border rounded-xl px-4 h-12 text-foreground text-base mb-6"
               placeholder="Name for your copy"
-              placeholderTextColor="#6B7280"
+              placeholderTextColor={colors.muted}
               value={programName}
               onChangeText={setProgramName}
               autoCorrect={false}

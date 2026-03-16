@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
 import { ExerciseCard } from "./ExerciseCard";
 import type { SessionSection, SetLogResponse } from "../../hooks/useActiveSession";
 
@@ -49,6 +50,7 @@ export function SectionCard({
   onSubstitute,
   substitutions,
 }: SectionCardProps) {
+  const { colors } = useTheme();
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
@@ -62,7 +64,7 @@ export function SectionCard({
         <Ionicons
           name={expanded ? "chevron-down" : "chevron-forward"}
           size={14}
-          color="#6B7280"
+          color={colors.muted}
         />
         <Text className="text-muted text-xs font-semibold uppercase tracking-wider ml-2 flex-1">
           {section.name}

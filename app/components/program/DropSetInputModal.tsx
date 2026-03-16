@@ -61,7 +61,7 @@ export function DropSetInputModal({
         <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24 }}>
           <TouchableOpacity activeOpacity={1}>
             <View className="bg-surface border border-border rounded-2xl p-5">
-              <Text className="text-white font-semibold text-lg mb-1">Drop Set Setup</Text>
+              <Text className="text-foreground font-semibold text-lg mb-1">Drop Set Setup</Text>
               <Text className="text-muted text-sm mb-5">{exerciseName}</Text>
 
               <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
@@ -96,7 +96,7 @@ export function DropSetInputModal({
                     PREVIEW
                   </Text>
                   {scheme.sets.map((s, i) => (
-                    <Text key={i} className="text-white text-sm mb-0.5">
+                    <Text key={i} className="text-foreground text-sm mb-0.5">
                       Set {i + 1}: {s.reps} x {s.weight} kg
                     </Text>
                   ))}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Modal, Pressable, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useTheme } from "../../hooks/useTheme";
 import type { SessionExercise, SetLogResponse } from "../../hooks/useActiveSession";
 
 // ---------------------------------------------------------------------------
@@ -33,6 +34,7 @@ function StepperInput({
   keyboardType = "number-pad",
   placeholder = "0",
 }: StepperInputProps) {
+  const { colors } = useTheme();
   const isInteger = keyboardType === "number-pad";
 
   function adjust(delta: number) {
@@ -44,7 +46,7 @@ function StepperInput({
 
   return (
     <View style={{ flex: 1 }}>
-      <Text style={{ color: "#6B7280", fontSize: 12, marginBottom: 4 }}>{label}</Text>
+      <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 4 }}>{label}</Text>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         {/* Minus button */}
         <TouchableOpacity
@@ -56,12 +58,12 @@ function StepperInput({
             borderRadius: 8,
             backgroundColor: "rgba(0,0,0,0.4)",
             borderWidth: 1,
-            borderColor: "#2A2A2A",
+            borderColor: colors.border,
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Ionicons name="remove" size={18} color="#FFFFFF" />
+          <Ionicons name="remove" size={18} color={colors.foreground} />
         </TouchableOpacity>
 
         {/* Text input */}
@@ -69,20 +71,20 @@ function StepperInput({
           value={value}
           onChangeText={onChangeText}
           keyboardType={keyboardType}
-          placeholderTextColor="#6B7280"
+          placeholderTextColor={colors.muted}
           placeholder={placeholder}
           style={{
             flex: 1,
             marginHorizontal: 8,
             height: 44,
             backgroundColor: "rgba(0,0,0,0.4)",
-            color: "#FFFFFF",
+            color: colors.foreground,
             fontSize: 18,
             fontWeight: "600",
             textAlign: "center",
             borderRadius: 8,
             borderWidth: 1,
-            borderColor: "#2A2A2A",
+            borderColor: colors.border,
           }}
         />
 
@@ -96,12 +98,12 @@ function StepperInput({
             borderRadius: 8,
             backgroundColor: "rgba(0,0,0,0.4)",
             borderWidth: 1,
-            borderColor: "#2A2A2A",
+            borderColor: colors.border,
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Ionicons name="add" size={18} color="#FFFFFF" />
+          <Ionicons name="add" size={18} color={colors.foreground} />
         </TouchableOpacity>
       </View>
     </View>
@@ -158,6 +160,8 @@ export function AdjustSetSheet({
   onLog,
   onClose,
 }: AdjustSetSheetProps) {
+  const { colors } = useTheme();
+
   // Determine initial values: prefer existing log, fall back to targets.
   const targetWeight =
     exercise.computed_target_weight ?? exercise.static_target_weight;
@@ -214,7 +218,7 @@ export function AdjustSetSheet({
           {/* Header */}
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
             <View>
-              <Text className="text-white text-lg font-semibold">
+              <Text className="text-foreground text-lg font-semibold">
                 Log Set {setNumber}
               </Text>
               <Text className="text-muted text-sm mt-0.5">
@@ -222,7 +226,7 @@ export function AdjustSetSheet({
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
-              <Ionicons name="close" size={22} color="#6B7280" />
+              <Ionicons name="close" size={22} color={colors.muted} />
             </TouchableOpacity>
           </View>
 
