@@ -71,13 +71,18 @@ func (s *Store) GetPersonalRecord(ctx context.Context, db DBTX, exerciseUUID str
 	return mapPersonalRecord(row), nil
 }
 
-// GetProgressSummary returns aggregate stats: total completed sessions and
-// current streak of consecutive completed sessions from most recent backward.
+// GetProgressSummary returns aggregate stats: total completed sessions,
+// distinct weeks trained, and current consecutive session streak.
 // A skipped session breaks the streak.
 func (s *Store) GetProgressSummary(ctx context.Context, db DBTX) (*domain.ProgressSummary, error) {
 	q := dbgen.New(db)
 
 	total, err := q.CountCompletedSessions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	weeks, err := q.CountDistinctWeeksTrained(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -98,6 +103,52 @@ func (s *Store) GetProgressSummary(ctx context.Context, db DBTX) (*domain.Progre
 
 	return &domain.ProgressSummary{
 		TotalSessions: total,
+		WeeksTrained:  weeks,
 		CurrentStreak: streak,
 	}, nil
+}
+
+// GetAllPersonalRecords returns the heaviest eligible set for each exercise
+// that has logged sets across all completed sessions.
+func (s *Store) GetAllPersonalRecords(ctx context.Context, db DBTX) ([]*domain.PersonalRecordListEntry, error) {
+	rows, err := dbgen.New(db).GetAllPersonalRecords(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*domain.PersonalRecordListEntry, len(rows))
+	for i, r := range rows {
+		out[i] = mapPersonalRecordListEntry(r)
+	}
+	return out, nil
+}
+
+// GetRecentSessions returns the most recently completed/skipped sessions with
+// workout and program names for display.
+func (s *Store) GetRecentSessions(ctx context.Context, db DBTX, limit int) ([]*domain.RecentSession, error) {
+	rows, err := dbgen.New(db).GetRecentSessions(ctx, int64(limit))
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*domain.RecentSession, len(rows))
+	for i, r := range rows {
+		out[i] = mapRecentSession(r)
+	}
+	return out, nil
+}
+
+// GetExerciseChartData returns chart-ready data points for a given exercise UUID.
+// Each point represents the best eligible set from one completed session.
+func (s *Store) GetExerciseChartData(ctx context.Context, db DBTX, exerciseUUID string) ([]*domain.ExerciseChartPoint, error) {
+	rows, err := dbgen.New(db).GetExerciseChartData(ctx, exerciseUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*domain.ExerciseChartPoint, len(rows))
+	for i, r := range rows {
+		out[i] = mapExerciseChartPoint(r)
+	}
+	return out, nil
 }

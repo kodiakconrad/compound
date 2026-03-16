@@ -22,6 +22,132 @@ func (q *Queries) CountCompletedSessions(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countDistinctWeeksTrained = `-- name: CountDistinctWeeksTrained :one
+SELECT COUNT(DISTINCT strftime('%Y-%W', completed_at)) AS weeks
+FROM sessions
+WHERE status = 'completed' AND completed_at IS NOT NULL
+`
+
+func (q *Queries) CountDistinctWeeksTrained(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countDistinctWeeksTrained)
+	var weeks int64
+	err := row.Scan(&weeks)
+	return weeks, err
+}
+
+const getAllPersonalRecords = `-- name: GetAllPersonalRecords :many
+SELECT e.uuid AS exercise_uuid,
+       e.name AS exercise_name,
+       sl.weight,
+       sl.actual_reps,
+       s.completed_at
+FROM set_logs sl
+JOIN sessions s ON s.id = sl.session_id
+JOIN exercises e ON e.id = sl.exercise_id
+WHERE s.status = 'completed'
+  AND sl.weight IS NOT NULL
+  AND (sl.target_reps IS NULL OR sl.actual_reps >= sl.target_reps)
+  AND sl.weight = (
+    SELECT MAX(sl2.weight)
+    FROM set_logs sl2
+    JOIN sessions s2 ON s2.id = sl2.session_id
+    WHERE sl2.exercise_id = sl.exercise_id
+      AND s2.status = 'completed'
+      AND sl2.weight IS NOT NULL
+      AND (sl2.target_reps IS NULL OR sl2.actual_reps >= sl2.target_reps)
+  )
+GROUP BY sl.exercise_id
+ORDER BY e.name
+`
+
+type GetAllPersonalRecordsRow struct {
+	ExerciseUuid string
+	ExerciseName string
+	Weight       *float64
+	ActualReps   *int64
+	CompletedAt  dbutil.NullableTime
+}
+
+func (q *Queries) GetAllPersonalRecords(ctx context.Context) ([]GetAllPersonalRecordsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllPersonalRecords)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllPersonalRecordsRow
+	for rows.Next() {
+		var i GetAllPersonalRecordsRow
+		if err := rows.Scan(
+			&i.ExerciseUuid,
+			&i.ExerciseName,
+			&i.Weight,
+			&i.ActualReps,
+			&i.CompletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getExerciseChartData = `-- name: GetExerciseChartData :many
+SELECT DATE(s.completed_at) AS date,
+       MAX(sl.weight) AS weight,
+       sl.actual_reps,
+       CAST(MAX(sl.weight) * sl.actual_reps AS REAL) AS volume
+FROM set_logs sl
+JOIN sessions s ON s.id = sl.session_id
+JOIN exercises e ON e.id = sl.exercise_id
+WHERE e.uuid = ?
+  AND s.status = 'completed'
+  AND sl.weight IS NOT NULL
+  AND (sl.target_reps IS NULL OR sl.actual_reps >= sl.target_reps)
+GROUP BY s.id
+ORDER BY s.completed_at ASC
+`
+
+type GetExerciseChartDataRow struct {
+	Date       interface{}
+	Weight     interface{}
+	ActualReps *int64
+	Volume     float64
+}
+
+func (q *Queries) GetExerciseChartData(ctx context.Context, uuid string) ([]GetExerciseChartDataRow, error) {
+	rows, err := q.db.QueryContext(ctx, getExerciseChartData, uuid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetExerciseChartDataRow
+	for rows.Next() {
+		var i GetExerciseChartDataRow
+		if err := rows.Scan(
+			&i.Date,
+			&i.Weight,
+			&i.ActualReps,
+			&i.Volume,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getExerciseHistoryPage = `-- name: GetExerciseHistoryPage :many
 SELECT s.id, s.uuid, s.completed_at, MAX(sl.weight) AS weight
 FROM set_logs sl
@@ -162,6 +288,61 @@ func (q *Queries) GetPersonalRecord(ctx context.Context, uuid string) (GetPerson
 		&i.CompletedAt,
 	)
 	return i, err
+}
+
+const getRecentSessions = `-- name: GetRecentSessions :many
+SELECT s.uuid,
+       s.status,
+       s.completed_at,
+       pw.name AS workout_name,
+       p.name AS program_name,
+       c.uuid AS cycle_uuid
+FROM sessions s
+JOIN program_workouts pw ON pw.id = s.program_workout_id
+JOIN cycles c ON c.id = s.cycle_id
+JOIN programs p ON p.id = c.program_id
+WHERE s.status IN ('completed', 'skipped')
+ORDER BY s.completed_at DESC, s.id DESC
+LIMIT ?
+`
+
+type GetRecentSessionsRow struct {
+	Uuid        string
+	Status      string
+	CompletedAt dbutil.NullableTime
+	WorkoutName string
+	ProgramName string
+	CycleUuid   string
+}
+
+func (q *Queries) GetRecentSessions(ctx context.Context, limit int64) ([]GetRecentSessionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRecentSessions, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRecentSessionsRow
+	for rows.Next() {
+		var i GetRecentSessionsRow
+		if err := rows.Scan(
+			&i.Uuid,
+			&i.Status,
+			&i.CompletedAt,
+			&i.WorkoutName,
+			&i.ProgramName,
+			&i.CycleUuid,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listSessionStatusNewestFirst = `-- name: ListSessionStatusNewestFirst :many

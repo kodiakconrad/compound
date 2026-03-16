@@ -46,5 +46,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := seed.SeedProgress(context.Background(), s); err != nil {
+		slog.Error("failed to seed progress", "error", err)
+		os.Exit(1)
+	}
+
 	slog.Info("seed complete")
 }

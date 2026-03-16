@@ -267,6 +267,49 @@ func mapPersonalRecord(row dbgen.GetPersonalRecordRow) *domain.PersonalRecord {
 	return pr
 }
 
+// mapPersonalRecordListEntry converts a GetAllPersonalRecordsRow to a domain PersonalRecordListEntry.
+func mapPersonalRecordListEntry(row dbgen.GetAllPersonalRecordsRow) *domain.PersonalRecordListEntry {
+	entry := &domain.PersonalRecordListEntry{
+		ExerciseUUID: row.ExerciseUuid,
+		ExerciseName: row.ExerciseName,
+		Weight:       derefFloat64(row.Weight),
+		CompletedAt:  row.CompletedAt.Time,
+	}
+	if row.ActualReps != nil {
+		v := int(*row.ActualReps)
+		entry.ActualReps = &v
+	}
+	return entry
+}
+
+// mapExerciseChartPoint converts a GetExerciseChartDataRow to a domain ExerciseChartPoint.
+func mapExerciseChartPoint(row dbgen.GetExerciseChartDataRow) *domain.ExerciseChartPoint {
+	reps := 0
+	if row.ActualReps != nil {
+		reps = int(*row.ActualReps)
+	}
+	weight := interfaceToFloat64(row.Weight)
+	dateStr, _ := row.Date.(string)
+	return &domain.ExerciseChartPoint{
+		Date:   dateStr,
+		Weight: weight,
+		Reps:   reps,
+		Volume: row.Volume,
+	}
+}
+
+// mapRecentSession converts a GetRecentSessionsRow to a domain RecentSession.
+func mapRecentSession(row dbgen.GetRecentSessionsRow) *domain.RecentSession {
+	return &domain.RecentSession{
+		UUID:        row.Uuid,
+		CycleUUID:   row.CycleUuid,
+		Status:      domain.SessionStatus(row.Status),
+		CompletedAt: row.CompletedAt.ToTimePtr(),
+		WorkoutName: row.WorkoutName,
+		ProgramName: row.ProgramName,
+	}
+}
+
 // derefFloat64 dereferences a *float64 safely, returning 0 if nil.
 func derefFloat64(v *float64) float64 {
 	if v == nil {
