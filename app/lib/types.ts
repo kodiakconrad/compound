@@ -173,3 +173,41 @@ export interface ProgramResponse {
   created_at: string;
   updated_at: string;
 }
+
+// ---------------------------------------------------------------------------
+// Progress types — mirror backend DTOs from dto/progress.go
+// ---------------------------------------------------------------------------
+
+// ProgressSummary matches GET /api/v1/progress/summary response.
+export interface ProgressSummary {
+  total_sessions: number;
+  weeks_trained: number;
+  current_streak: number;
+}
+
+// PersonalRecordEntry matches one item from GET /api/v1/progress/records.
+export interface PersonalRecordEntry {
+  exercise_uuid: string;
+  exercise_name: string;
+  weight: number;
+  actual_reps?: number;
+  completed_at: string;
+}
+
+// ExerciseChartPoint matches one item from GET /api/v1/progress/exercise/{uuid}.
+export interface ExerciseChartPoint {
+  date: string;
+  weight: number;
+  reps: number;
+  volume: number;
+}
+
+// RecentSession matches one item from GET /api/v1/progress/recent.
+export interface RecentSession {
+  uuid: string;
+  cycle_uuid: string;
+  status: string;
+  completed_at?: string;
+  workout_name: string;
+  program_name: string;
+}

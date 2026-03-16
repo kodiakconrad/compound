@@ -105,6 +105,18 @@ export default function TabLayout() {
             <Ionicons name="trending-up-outline" color={color} size={size} />
           ),
         }}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            const state = navigation.getState();
+            const isActive = state.routes[state.index]?.name === route.name;
+            if (isActive) {
+              e.preventDefault();
+              navigation.dispatch(
+                CommonActions.navigate({ name: route.name, params: { screen: "index" } })
+              );
+            }
+          },
+        })}
       />
       <Tabs.Screen
         name="settings"

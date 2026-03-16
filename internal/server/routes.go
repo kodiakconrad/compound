@@ -107,7 +107,10 @@ func (s *Server) registerRoutes() {
 		r.Get("/sessions/active", sh.HandleGetActiveSession)
 		r.Delete("/sessions/{sid}/sets", sh.HandleDeleteSetsForExercise)
 
-		// Progress summary route (Step 5)
+		// Progress routes (Step 5 + Step 6)
 		r.Get("/progress/summary", prh.HandleGetSummary)
+		r.Get("/progress/records", prh.HandleGetRecords)
+		r.Get("/progress/recent", prh.HandleGetRecentSessions)
+		r.Get("/progress/exercise/{id}", prh.HandleGetExerciseChart)
 	})
 }
