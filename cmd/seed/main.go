@@ -9,7 +9,6 @@ import (
 	"compound/internal/config"
 	"compound/internal/migration"
 	"compound/internal/seed"
-	"compound/internal/store"
 
 	_ "modernc.org/sqlite"
 )
@@ -34,19 +33,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	s := store.New(db)
-
-	if err := seed.SeedExercises(context.Background(), s); err != nil {
+	if err := seed.SeedExercises(context.Background(), db); err != nil {
 		slog.Error("failed to seed exercises", "error", err)
 		os.Exit(1)
 	}
 
-	if err := seed.SeedPrograms(context.Background(), s); err != nil {
+	if err := seed.SeedPrograms(context.Background(), db); err != nil {
 		slog.Error("failed to seed programs", "error", err)
 		os.Exit(1)
 	}
 
-	if err := seed.SeedProgress(context.Background(), s); err != nil {
+	if err := seed.SeedProgress(context.Background(), db); err != nil {
 		slog.Error("failed to seed progress", "error", err)
 		os.Exit(1)
 	}

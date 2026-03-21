@@ -1,6 +1,6 @@
 import { Text, TouchableOpacity, View } from "react-native";
 
-import type { TrackingType } from "../../lib/staticData";
+import type { TrackingType } from "../../domain/exercise";
 import { ExerciseAnimation } from "./ExerciseAnimation";
 
 // Short inline labels for tracking types — used in the metadata line of the row.
