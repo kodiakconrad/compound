@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "../../hooks/useTheme";
 import { useExercises } from "../../hooks/useExercises";
-import type { Exercise } from "../../lib/types";
+import type { Exercise } from "../../domain/exercise";
 
 // ---------------------------------------------------------------------------
 // Props

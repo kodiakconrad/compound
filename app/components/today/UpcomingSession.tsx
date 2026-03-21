@@ -34,10 +34,10 @@ function totalExerciseCount(sections: SessionSection[]): number {
 
 /** Build a short target string like "3×5 @ 100kg" for the preview. */
 function formatPreviewTarget(ex: {
-  target_sets?: number;
-  target_reps?: number;
-  computed_target_weight?: number;
-  static_target_weight?: number;
+  target_sets?: number | null;
+  target_reps?: number | null;
+  computed_target_weight?: number | null;
+  static_target_weight?: number | null;
 }): string {
   const parts: string[] = [];
 

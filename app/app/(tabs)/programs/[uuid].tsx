@@ -21,8 +21,8 @@ import { useUpdateWorkout } from "../../../hooks/useUpdateWorkout";
 import { useUpdateSection } from "../../../hooks/useUpdateSection";
 import { useExercises } from "../../../hooks/useExercises";
 import { useTheme } from "../../../hooks/useTheme";
-import { ApiError } from "../../../lib/api";
-import type { Exercise } from "../../../lib/types";
+import { ConflictError } from "../../../domain/errors";
+import type { Exercise } from "../../../domain/exercise";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -293,7 +293,7 @@ export default function ProgramDetailScreen() {
         router.replace("/(tabs)/");
       },
       onError: (err) => {
-        if (err instanceof ApiError && err.code === "conflict") {
+        if (err instanceof ConflictError) {
           setErrorDialog({ visible: true, title: "Already Active", message: "This program already has an active cycle." });
         } else {
           setErrorDialog({ visible: true, title: "Error", message: "Failed to start cycle. Please try again." });

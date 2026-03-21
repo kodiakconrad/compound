@@ -1,17 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
-import type { ProgramDetail } from "../lib/types";
+import { getProgramDetail } from "../db/repositories/program_repository";
+import type { Program } from "../domain/program";
 
-// useProgramDetail fetches the full program tree (workouts -> sections ->
-// exercises) from GET /api/v1/programs/{uuid}.
-//
-// The query is disabled when uuid is falsy so you can safely call this hook
-// before the uuid is available (e.g., during initial render).
+// useProgramDetail loads the full program tree from local SQLite.
+// Disabled when uuid is falsy.
 export function useProgramDetail(uuid: string) {
-  return useQuery<ProgramDetail>({
+  return useQuery<Program>({
     queryKey: ["program", uuid],
-    queryFn: () => api.get<ProgramDetail>(`/api/v1/programs/${uuid}`),
+    queryFn: () => getProgramDetail(uuid),
     enabled: !!uuid,
   });
 }

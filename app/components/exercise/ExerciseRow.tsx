@@ -18,8 +18,8 @@ function capitalize(s: string): string {
 
 interface ExerciseRowProps {
   name: string;
-  muscleGroup: string | undefined;
-  equipment: string | undefined;
+  muscleGroup: string | null | undefined;
+  equipment: string | null | undefined;
   trackingType: TrackingType;
   onPress: () => void;
 }
