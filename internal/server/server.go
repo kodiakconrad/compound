@@ -11,21 +11,18 @@ import (
 	"github.com/go-chi/cors"
 
 	"compound/internal/config"
-	"compound/internal/store"
 )
 
 // Server holds the HTTP router and dependencies.
 type Server struct {
 	router *chi.Mux
-	store  *store.Store
 	cfg    *config.ServerConfig
 }
 
 // NewServer creates a Server with middleware and routes configured.
-func NewServer(cfg *config.ServerConfig, s *store.Store) *Server {
+func NewServer(cfg *config.ServerConfig) *Server {
 	srv := &Server{
 		router: chi.NewRouter(),
-		store:  s,
 		cfg:    cfg,
 	}
 
@@ -35,7 +32,7 @@ func NewServer(cfg *config.ServerConfig, s *store.Store) *Server {
 	srv.router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   cfg.AllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Idempotency-Key"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
 		MaxAge:           300,

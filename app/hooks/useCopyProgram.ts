@@ -1,20 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
-import type { ProgramDetail } from "../lib/types";
+import { copyProgram } from "../db/repositories/program_repository";
+import type { Program } from "../domain/program";
 
-// useCopyProgram wraps POST /api/v1/programs/{uuid}/copy.
-//
-// The backend performs a deep copy — new UUIDs, fresh timestamps, independent
-// from the source. The response is a full ProgramTreeResponse (ProgramDetail).
-//
-// The mutation argument is the source program's uuid.
+// useCopyProgram deep-copies a program in local SQLite.
+// Returns the full new program tree.
 export function useCopyProgram() {
   const queryClient = useQueryClient();
 
-  return useMutation<ProgramDetail, Error, string>({
-    mutationFn: (sourceUuid) =>
-      api.post<ProgramDetail>(`/api/v1/programs/${sourceUuid}/copy`, {}),
+  return useMutation<Program, Error, string>({
+    mutationFn: async (sourceUuid) => copyProgram(sourceUuid),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["programs"] });
     },

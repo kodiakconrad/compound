@@ -9,7 +9,6 @@ import (
 	"compound/internal/config"
 	"compound/internal/migration"
 	"compound/internal/server"
-	"compound/internal/store"
 
 	_ "modernc.org/sqlite"
 )
@@ -48,11 +47,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 5. Build store and server.
-	s := store.New(db)
-	srv := server.NewServer(&cfg.Server, s)
+	// 5. Build server and start.
+	srv := server.NewServer(&cfg.Server)
 
-	// 6. Start HTTP server.
 	if err := srv.Start(); err != nil {
 		slog.Error("server stopped", "error", err)
 		os.Exit(1)

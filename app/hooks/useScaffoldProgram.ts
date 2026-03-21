@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
-import type { ProgramDetail, SetScheme } from "../lib/types";
+import {
+  scaffoldProgram,
+  type ScaffoldInput,
+} from "../db/repositories/program_repository";
+import type { Program, SetScheme } from "../domain/program";
 
-// The body sent to POST /api/v1/programs/scaffold.
-// Creates a program with workouts, sections, and optionally exercises in a
-// single request.
-
+// Re-export scaffold types for component use.
 export interface ScaffoldExercise {
   exercise_uuid: string;
   target_sets?: number;
@@ -31,17 +31,32 @@ export interface ScaffoldProgramBody {
   workouts: ScaffoldWorkout[];
 }
 
-// useScaffoldProgram wraps POST /api/v1/programs/scaffold.
-//
-// The backend creates the program, all workouts, all sections, and all
-// exercises atomically in a single transaction. Returns the full ProgramDetail
-// tree.
+// useScaffoldProgram creates a full program tree in local SQLite.
 export function useScaffoldProgram() {
   const queryClient = useQueryClient();
 
-  return useMutation<ProgramDetail, Error, ScaffoldProgramBody>({
-    mutationFn: (body) =>
-      api.post<ProgramDetail>("/api/v1/programs/scaffold", body),
+  return useMutation<Program, Error, ScaffoldProgramBody>({
+    mutationFn: async (body) => {
+      // Map scaffold body to repository input format.
+      const input: ScaffoldInput = {
+        name: body.name,
+        workouts: body.workouts.map((w) => ({
+          name: w.name,
+          day_number: w.day_number,
+          sections: w.sections.map((s) => ({
+            name: s.name,
+            exercises: (s.exercises ?? []).map((e) => ({
+              exercise_uuid: e.exercise_uuid,
+              target_sets: e.target_sets,
+              target_reps: e.target_reps,
+              target_weight: e.target_weight,
+              set_scheme: e.set_scheme,
+            })),
+          })),
+        })),
+      };
+      return scaffoldProgram(input);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["programs"] });
     },

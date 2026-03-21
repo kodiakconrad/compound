@@ -3,7 +3,7 @@ import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { StepperRow } from "../ui/StepperRow";
 import { build531, estimate1RM, trainingMax } from "../../lib/schemes";
-import type { SetScheme } from "../../lib/types";
+import type { SetScheme } from "../../domain/program";
 
 // ---------------------------------------------------------------------------
 // FiveThreeOneInputModal — configure a Wendler 5/3/1 progression scheme.

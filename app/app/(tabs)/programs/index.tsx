@@ -10,7 +10,7 @@ import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { usePrograms } from "../../../hooks/usePrograms";
 import { useDeleteProgram } from "../../../hooks/useDeleteProgram";
 import { useTheme } from "../../../hooks/useTheme";
-import type { ProgramListItem } from "../../../lib/types";
+import type { ProgramListItem } from "../../../domain/program";
 
 export default function ProgramsScreen() {
   const router = useRouter();

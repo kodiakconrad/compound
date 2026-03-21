@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
-import type { Exercise } from "../lib/types";
+import { getExercise } from "../db/repositories/exercise_repository";
+import type { Exercise } from "../domain/exercise";
 
-// useExercise fetches a single exercise by UUID from GET /api/v1/exercises/:uuid.
-// The hook is disabled when uuid is empty (e.g. before the route param is available).
+// useExercise loads a single exercise by UUID from local SQLite.
+// Disabled when uuid is empty (e.g. before a route param is available).
 export function useExercise(uuid: string) {
   return useQuery<Exercise>({
     queryKey: ["exercise", uuid],
-    queryFn: () => api.get<Exercise>(`/api/v1/exercises/${uuid}`),
+    queryFn: () => getExercise(uuid),
     enabled: !!uuid,
   });
 }

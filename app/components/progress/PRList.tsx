@@ -2,7 +2,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "../../hooks/useTheme";
-import type { PersonalRecordEntry } from "../../lib/types";
+import type { PersonalRecordListEntry as PersonalRecordEntry } from "../../domain/progress";
 
 interface PRListProps {
   records: PersonalRecordEntry[];

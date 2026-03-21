@@ -1,31 +1,19 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
-import type { ProgramResponse } from "../lib/types";
+import { updateProgram } from "../db/repositories/program_repository";
+import type { Program } from "../domain/program";
 
-// The body sent to PUT /api/v1/programs/{uuid}.
-// Both fields are optional — only provided fields are updated.
-export interface UpdateProgramBody {
-  name?: string;
-  description?: string;
-}
-
-// Mutation argument bundles the target uuid with the update body.
 interface UpdateProgramArgs {
   uuid: string;
-  body: UpdateProgramBody;
+  body: { name?: string; description?: string | null };
 }
 
-// useUpdateProgram wraps PUT /api/v1/programs/{uuid}.
-//
-// On success it invalidates both the list and the individual detail cache
-// so the UI reflects the changes everywhere.
+// useUpdateProgram updates a program in local SQLite.
 export function useUpdateProgram() {
   const queryClient = useQueryClient();
 
-  return useMutation<ProgramResponse, Error, UpdateProgramArgs>({
-    mutationFn: ({ uuid, body }) =>
-      api.put<ProgramResponse>(`/api/v1/programs/${uuid}`, body),
+  return useMutation<Program, Error, UpdateProgramArgs>({
+    mutationFn: async ({ uuid, body }) => updateProgram(uuid, body),
     onSuccess: (_data, { uuid }) => {
       queryClient.invalidateQueries({ queryKey: ["programs"] });
       queryClient.invalidateQueries({ queryKey: ["program", uuid] });

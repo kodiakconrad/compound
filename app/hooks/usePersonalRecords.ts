@@ -1,14 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
-import type { PersonalRecordEntry } from "../lib/types";
+import { getAllPersonalRecords } from "../db/repositories/progress_repository";
+import type { PersonalRecordListEntry } from "../domain/progress";
 
-// usePersonalRecords fetches the heaviest eligible set for every exercise
-// from GET /api/v1/progress/records. Returns an array of PR entries sorted
-// by exercise name.
+// usePersonalRecords loads all PRs from local SQLite.
 export function usePersonalRecords() {
-  return useQuery<PersonalRecordEntry[]>({
+  return useQuery<PersonalRecordListEntry[]>({
     queryKey: ["progress", "records"],
-    queryFn: () => api.get<PersonalRecordEntry[]>("/api/v1/progress/records"),
+    queryFn: () => getAllPersonalRecords(),
   });
 }
