@@ -10,6 +10,8 @@ import { vars } from "nativewind";
 
 import { queryClient } from "../lib/queryClient";
 import { useTheme } from "../hooks/useTheme";
+import { useOfflineQueue } from "../hooks/useOfflineQueue";
+import { OfflineBanner } from "../components/ui/OfflineBanner";
 
 // ---------------------------------------------------------------------------
 // Inner layout — uses the theme hook (must be inside providers)
@@ -27,6 +29,12 @@ import { useTheme } from "../hooks/useTheme";
  */
 function InnerLayout() {
   const { colors, vars: themeVars, colorMode } = useTheme();
+
+  // Mounted once here so the connectivity listener + queue flush are always
+  // active regardless of which screen is on top. The banner itself reads
+  // pendingCount from the shared store, so it doesn't need this hook's return
+  // value — but calling it here is what keeps that store's flush wired up.
+  useOfflineQueue();
 
   // Build a React Navigation theme from the resolved colors. This controls the
   // background behind all navigation containers (Stack, Tab, etc.).
@@ -57,6 +65,7 @@ function InnerLayout() {
               contentStyle: { backgroundColor: colors.background },
             }}
           />
+          <OfflineBanner />
         </View>
       </GestureHandlerRootView>
     </ThemeProvider>
