@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
+import { ApiError, api, generateIdempotencyKey } from "../lib/api";
+import { enqueue } from "../lib/offlineQueue";
 import type { ActiveSession, SetLogResponse } from "./useActiveSession";
 
 // ---------------------------------------------------------------------------
@@ -37,17 +38,46 @@ interface LogSetArgs {
  *
  * On success, invalidates the active session query so the set buttons update.
  * Uses optimistic updates: the set immediately appears as logged in the UI,
- * and rolls back if the server rejects it.
+ * and rolls back if the server rejects it (a real validation error).
+ *
+ * If the request fails because there's no network (not a server rejection),
+ * it's queued via the offline queue instead of rolling back — the set stays
+ * showing as logged, and the queue replays it once connectivity returns.
  */
 export function useLogSet() {
   const queryClient = useQueryClient();
 
   return useMutation<SetLogResponse, Error, LogSetArgs, { previousSession: ActiveSession | null | undefined }>({
-    mutationFn: ({ cycleUUID, sessionUUID, body }) =>
-      api.post<SetLogResponse>(
-        `/api/v1/cycles/${cycleUUID}/sessions/${sessionUUID}/sets`,
-        body
-      ),
+    mutationFn: async ({ cycleUUID, sessionUUID, body }) => {
+      const path = `/api/v1/cycles/${cycleUUID}/sessions/${sessionUUID}/sets`;
+      // Generated up front so that if this attempt fails and gets queued, the
+      // replay reuses the exact same key — see lib/offlineQueue.ts.
+      const idempotencyKey = generateIdempotencyKey();
+      try {
+        return await api.post<SetLogResponse>(path, body, idempotencyKey);
+      } catch (err) {
+        // A real server rejection (e.g. validation error) — surface it so
+        // onError rolls back the optimistic update.
+        if (err instanceof ApiError) throw err;
+
+        // No network — queue for later and treat this as locally successful.
+        // The optimistic set_log already applied in onMutate stays in place.
+        await enqueue("POST", path, body, idempotencyKey);
+        return {
+          uuid: `offline-${idempotencyKey}`,
+          exercise_uuid: body.exercise_uuid ?? "",
+          section_exercise_uuid: body.section_exercise_uuid,
+          set_number: body.set_number,
+          target_reps: body.target_reps,
+          actual_reps: body.actual_reps,
+          weight: body.weight,
+          duration: body.duration,
+          distance: body.distance,
+          rpe: body.rpe,
+          completed_at: new Date().toISOString(),
+        };
+      }
+    },
 
     // Optimistic update: immediately show the set as logged.
     onMutate: async ({ body }) => {

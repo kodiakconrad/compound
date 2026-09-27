@@ -6,6 +6,10 @@ export class ApiError extends Error {
   constructor(
     public readonly code: string,
     message: string,
+    /** The HTTP status the server responded with. Lets callers (like the
+     * offline queue) tell a permanent rejection (4xx) apart from a transient
+     * server error (5xx) that's worth retrying. */
+    public readonly status: number,
     public readonly details?: unknown[]
   ) {
     super(message);
@@ -16,7 +20,7 @@ export class ApiError extends Error {
 // generateIdempotencyKey creates a UUID v4 for use as an Idempotency-Key header.
 // This ensures that retried write requests (POST/PATCH/DELETE) are not applied
 // twice on the backend.
-function generateIdempotencyKey(): string {
+export function generateIdempotencyKey(): string {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
@@ -26,7 +30,12 @@ function generateIdempotencyKey(): string {
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-async function request<T>(method: Method, path: string, body?: unknown): Promise<T> {
+async function request<T>(
+  method: Method,
+  path: string,
+  body?: unknown,
+  idempotencyKey?: string
+): Promise<T> {
   const isMutation = method !== "GET";
 
   const headers: Record<string, string> = {
@@ -36,11 +45,14 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
   };
 
   if (isMutation) {
-    // Every write request gets a unique idempotency key. If the network drops
-    // after the server processes the request but before the client receives the
-    // response, the client can safely retry with the same key and the server
+    // Every write request gets an idempotency key. If the network drops after
+    // the server processes the request but before the client receives the
+    // response, the client can safely retry with the SAME key and the server
     // will return the original response without re-applying the mutation.
-    headers["Idempotency-Key"] = generateIdempotencyKey();
+    // Callers that may need to retry (e.g. the offline queue) should generate
+    // the key up front and pass it in here, so every attempt for that same
+    // logical request — live or replayed — uses one consistent key.
+    headers["Idempotency-Key"] = idempotencyKey ?? generateIdempotencyKey();
   }
 
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -62,6 +74,7 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
     throw new ApiError(
       err?.code ?? "unknown_error",
       err?.message ?? `Request failed with status ${response.status}`,
+      response.status,
       err?.details
     );
   }
@@ -72,8 +85,12 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
 
 export const api = {
   get: <T>(path: string) => request<T>("GET", path),
-  post: <T>(path: string, body: unknown) => request<T>("POST", path, body),
-  put: <T>(path: string, body: unknown) => request<T>("PUT", path, body),
-  patch: <T>(path: string, body: unknown) => request<T>("PATCH", path, body),
-  delete: <T>(path: string) => request<T>("DELETE", path),
+  post: <T>(path: string, body: unknown, idempotencyKey?: string) =>
+    request<T>("POST", path, body, idempotencyKey),
+  put: <T>(path: string, body: unknown, idempotencyKey?: string) =>
+    request<T>("PUT", path, body, idempotencyKey),
+  patch: <T>(path: string, body: unknown, idempotencyKey?: string) =>
+    request<T>("PATCH", path, body, idempotencyKey),
+  delete: <T>(path: string, idempotencyKey?: string) =>
+    request<T>("DELETE", path, undefined, idempotencyKey),
 };
