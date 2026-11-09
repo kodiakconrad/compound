@@ -1,5 +1,8 @@
 # Schema Design Decisions
 
+> **ℹ️ Still accurate, execution engine changed.** The table design and rationale below still hold. What changed in Phase 2: this schema is no longer served by the Go backend over HTTP — it's created directly on-device by migrations in `app/db/` (expo-sqlite). The Go copy (`internal/db/schema.sql`, `internal/migration/`) remains as the source of truth for seed data generation. See [testing-strategy.md](testing-strategy.md) and `CLAUDE.md` for the current architecture.
+
+
 Design rationale for the Compound database schema. Each decision is numbered for easy reference.
 
 ## Entity Relationship Diagram

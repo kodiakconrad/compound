@@ -1,5 +1,8 @@
 # Implementation Patterns
 
+> **⚠️ Superseded (Phase 2+).** This doc describes the Phase 1 Go HTTP backend. Phase 2 moved to a **local-first architecture**: all app data lives on-device in SQLite (`expo-sqlite`), with the domain/repository layers ported to TypeScript under `app/domain/` and `app/db/repositories/`. The Go code in this repo still exists for schema reference and seed data generation, but the app no longer calls an HTTP API for reads or writes. See [testing-strategy.md](testing-strategy.md) and `CLAUDE.md` for the current architecture.
+
+
 Cross-cutting implementation conventions for the Compound Go backend: DTOs, two-layer validation, logging, and configuration.
 
 ## DTOs — Separate Request/Response Types

@@ -1,5 +1,7 @@
 # Phase 2 — React Native Frontend
 
+> **⚠️ Superseded decision.** This doc's "Decision: Hybrid A + C" below (local network + Fly.io deploy, HTTP offline queue with idempotency keys) was the original call but was **reversed**: Phase 2 shipped as **Option B — local-first**, all data on-device in SQLite, no Go backend in the data path at all. See [testing-strategy.md](testing-strategy.md) and `CLAUDE.md` for the architecture that actually shipped. Kept below for history.
+
 High-level plan for the React Native (Expo) frontend. The goal here is not to fully spec Phase 2, but to identify decisions that need to be made before Phase 1 is locked in.
 
 ## Stack
