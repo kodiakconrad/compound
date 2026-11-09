@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "../../hooks/useTheme";
-import type { RecentSession } from "../../lib/types";
+import type { RecentSession } from "../../domain/progress";
 
 interface RecentSessionsProps {
   sessions: RecentSession[];

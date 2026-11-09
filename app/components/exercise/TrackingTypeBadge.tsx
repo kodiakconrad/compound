@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-import type { TrackingType } from "../../lib/staticData";
+import type { TrackingType } from "../../domain/exercise";
 
 // Human-readable labels for each tracking type enum value from the backend.
 const LABELS: Record<TrackingType, string> = {

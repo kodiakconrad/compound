@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
+import { addSection } from "../db/repositories/program_repository";
+import type { Program } from "../domain/program";
 
 export interface AddSectionBody {
   name: string;
@@ -13,16 +14,13 @@ interface AddSectionArgs {
   body: AddSectionBody;
 }
 
-// useAddSection wraps POST /api/v1/programs/{pid}/workouts/{wid}/sections.
+// useAddSection creates a section in local SQLite.
 export function useAddSection() {
   const queryClient = useQueryClient();
 
-  return useMutation<unknown, Error, AddSectionArgs>({
-    mutationFn: ({ programUuid, workoutUuid, body }) =>
-      api.post(
-        `/api/v1/programs/${programUuid}/workouts/${workoutUuid}/sections`,
-        body
-      ),
+  return useMutation<Program, Error, AddSectionArgs>({
+    mutationFn: async ({ programUuid, workoutUuid, body }) =>
+      addSection(programUuid, workoutUuid, body),
     onSuccess: (_data, { programUuid }) => {
       queryClient.invalidateQueries({ queryKey: ["program", programUuid] });
     },

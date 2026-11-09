@@ -1,7 +1,7 @@
 // Pure calculation functions for set progression schemes.
 // No React dependencies — can be unit tested independently.
 
-import type { SetScheme, SchemeSet } from "./types";
+import type { SetScheme, SchemeSet } from "../domain/program";
 
 // ---------------------------------------------------------------------------
 // 1RM estimation helpers

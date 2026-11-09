@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
+import { addSectionExercise } from "../db/repositories/program_repository";
+import type { Program } from "../domain/program";
 
 export interface AddSectionExerciseBody {
   exercise_uuid: string;
@@ -19,16 +20,13 @@ interface AddSectionExerciseArgs {
   body: AddSectionExerciseBody;
 }
 
-// useAddSectionExercise wraps POST .../sections/{sid}/exercises.
+// useAddSectionExercise adds an exercise to a section in local SQLite.
 export function useAddSectionExercise() {
   const queryClient = useQueryClient();
 
-  return useMutation<unknown, Error, AddSectionExerciseArgs>({
-    mutationFn: ({ programUuid, workoutUuid, sectionUuid, body }) =>
-      api.post(
-        `/api/v1/programs/${programUuid}/workouts/${workoutUuid}/sections/${sectionUuid}/exercises`,
-        body
-      ),
+  return useMutation<Program, Error, AddSectionExerciseArgs>({
+    mutationFn: async ({ programUuid, sectionUuid, body }) =>
+      addSectionExercise(programUuid, sectionUuid, body),
     onSuccess: (_data, { programUuid }) => {
       queryClient.invalidateQueries({ queryKey: ["program", programUuid] });
     },

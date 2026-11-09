@@ -30,7 +30,8 @@ import { useScaffoldProgram } from "../../../hooks/useScaffoldProgram";
 import { useExercises } from "../../../hooks/useExercises";
 import { useTheme } from "../../../hooks/useTheme";
 import { schemeLabel, formatSchemeSummary } from "../../../lib/schemes";
-import type { Exercise, SetScheme } from "../../../lib/types";
+import type { Exercise } from "../../../domain/exercise";
+import type { SetScheme } from "../../../domain/program";
 
 // ---------------------------------------------------------------------------
 // Constants

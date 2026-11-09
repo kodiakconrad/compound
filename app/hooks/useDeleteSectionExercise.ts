@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
+import { deleteSectionExercise } from "../db/repositories/program_repository";
+import type { Program } from "../domain/program";
 
 interface DeleteSectionExerciseArgs {
   programUuid: string;
@@ -9,15 +10,13 @@ interface DeleteSectionExerciseArgs {
   exerciseUuid: string;
 }
 
-// useDeleteSectionExercise wraps DELETE .../sections/{sid}/exercises/{eid}.
+// useDeleteSectionExercise removes an exercise from a section in local SQLite.
 export function useDeleteSectionExercise() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, DeleteSectionExerciseArgs>({
-    mutationFn: ({ programUuid, workoutUuid, sectionUuid, exerciseUuid }) =>
-      api.delete(
-        `/api/v1/programs/${programUuid}/workouts/${workoutUuid}/sections/${sectionUuid}/exercises/${exerciseUuid}`
-      ),
+  return useMutation<Program, Error, DeleteSectionExerciseArgs>({
+    mutationFn: async ({ programUuid, exerciseUuid }) =>
+      deleteSectionExercise(programUuid, exerciseUuid),
     onSuccess: (_data, { programUuid }) => {
       queryClient.invalidateQueries({ queryKey: ["program", programUuid] });
     },

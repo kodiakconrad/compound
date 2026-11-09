@@ -3,7 +3,7 @@ import { Dimensions, Text, TouchableOpacity, View } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 
 import { useTheme } from "../../hooks/useTheme";
-import type { ExerciseChartPoint } from "../../lib/types";
+import type { ExerciseChartPoint } from "../../domain/progress";
 
 type ChartMode = "weight" | "volume";
 

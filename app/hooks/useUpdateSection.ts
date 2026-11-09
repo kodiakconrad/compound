@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
+import { updateSection } from "../db/repositories/program_repository";
+import type { Program } from "../domain/program";
 
 export interface UpdateSectionBody {
   name?: string;
@@ -14,16 +15,13 @@ interface UpdateSectionArgs {
   body: UpdateSectionBody;
 }
 
-// useUpdateSection wraps PUT .../workouts/{wid}/sections/{sid}.
+// useUpdateSection updates a section in local SQLite.
 export function useUpdateSection() {
   const queryClient = useQueryClient();
 
-  return useMutation<unknown, Error, UpdateSectionArgs>({
-    mutationFn: ({ programUuid, workoutUuid, sectionUuid, body }) =>
-      api.put(
-        `/api/v1/programs/${programUuid}/workouts/${workoutUuid}/sections/${sectionUuid}`,
-        body
-      ),
+  return useMutation<Program, Error, UpdateSectionArgs>({
+    mutationFn: async ({ programUuid, sectionUuid, body }) =>
+      updateSection(programUuid, sectionUuid, body),
     onSuccess: (_data, { programUuid }) => {
       queryClient.invalidateQueries({ queryKey: ["program", programUuid] });
     },

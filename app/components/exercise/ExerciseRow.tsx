@@ -1,6 +1,6 @@
 import { Text, TouchableOpacity, View } from "react-native";
 
-import type { TrackingType } from "../../lib/staticData";
+import type { TrackingType } from "../../domain/exercise";
 import { ExerciseAnimation } from "./ExerciseAnimation";
 
 // Short inline labels for tracking types — used in the metadata line of the row.
@@ -18,8 +18,8 @@ function capitalize(s: string): string {
 
 interface ExerciseRowProps {
   name: string;
-  muscleGroup: string | undefined;
-  equipment: string | undefined;
+  muscleGroup: string | null | undefined;
+  equipment: string | null | undefined;
   trackingType: TrackingType;
   onPress: () => void;
 }

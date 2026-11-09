@@ -1,5 +1,7 @@
 # Implementation Plan — Phase 2 (React Native Frontend)
 
+> **⚠️ Steps 7 & 8 superseded.** Steps 1–6 shipped as planned. Step 7 (HTTP offline queue) shipped, then was **removed** when the architecture pivoted to local-first (on-device SQLite, no HTTP API for data) — offline support is now inherent rather than a queue-and-replay layer, so there's nothing to harden. Step 8 (Clerk JWT middleware + Fly.io deploy) assumed a server in the data path that no longer exists; auth and any multi-device sync are deferred to Phase 4 and need a fresh design. See [testing-strategy.md](testing-strategy.md) and `CLAUDE.md` for the shipped architecture.
+
 Follows the same BDD-first development flow as Phase 1:
 1. Write acceptance/integration tests where applicable
 2. Implement feature

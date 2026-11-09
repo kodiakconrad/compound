@@ -3,7 +3,7 @@ import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { StepperRow } from "../ui/StepperRow";
 import { buildDropSet } from "../../lib/schemes";
-import type { SetScheme } from "../../lib/types";
+import type { SetScheme } from "../../domain/program";
 
 // ---------------------------------------------------------------------------
 // DropSetInputModal — configure a drop set progression scheme.

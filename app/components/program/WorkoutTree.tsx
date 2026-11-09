@@ -3,7 +3,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "../../hooks/useTheme";
-import type { Workout, Section, SectionExercise } from "../../lib/types";
+import type { ProgramWorkout as Workout, Section, SectionExercise } from "../../domain/program";
 import { schemeLabel, formatSchemeSummary } from "../../lib/schemes";
 import { ExerciseAnimation } from "../exercise/ExerciseAnimation";
 

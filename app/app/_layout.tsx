@@ -4,14 +4,14 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { vars } from "nativewind";
 
+import { runMigrations } from "../db";
 import { queryClient } from "../lib/queryClient";
 import { useTheme } from "../hooks/useTheme";
-import { useOfflineQueue } from "../hooks/useOfflineQueue";
-import { OfflineBanner } from "../components/ui/OfflineBanner";
 
 // ---------------------------------------------------------------------------
 // Inner layout — uses the theme hook (must be inside providers)
@@ -29,12 +29,6 @@ import { OfflineBanner } from "../components/ui/OfflineBanner";
  */
 function InnerLayout() {
   const { colors, vars: themeVars, colorMode } = useTheme();
-
-  // Mounted once here so the connectivity listener + queue flush are always
-  // active regardless of which screen is on top. The banner itself reads
-  // pendingCount from the shared store, so it doesn't need this hook's return
-  // value — but calling it here is what keeps that store's flush wired up.
-  useOfflineQueue();
 
   // Build a React Navigation theme from the resolved colors. This controls the
   // background behind all navigation containers (Stack, Tab, etc.).
@@ -65,7 +59,6 @@ function InnerLayout() {
               contentStyle: { backgroundColor: colors.background },
             }}
           />
-          <OfflineBanner />
         </View>
       </GestureHandlerRootView>
     </ThemeProvider>
@@ -82,6 +75,28 @@ function InnerLayout() {
  * throughout the app do. Keeping it at the top ensures every screen has access.
  */
 export default function RootLayout() {
+  const [dbReady, setDbReady] = useState(false);
+
+  useEffect(() => {
+    // Run database migrations synchronously on first render.
+    // The app shows a loading indicator until the schema is ready.
+    try {
+      runMigrations();
+      setDbReady(true);
+    } catch (err) {
+      console.error("Database migration failed:", err);
+      throw err;
+    }
+  }, []);
+
+  if (!dbReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <InnerLayout />

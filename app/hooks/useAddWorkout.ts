@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
+import { addWorkout } from "../db/repositories/program_repository";
+import type { Program } from "../domain/program";
 
 export interface AddWorkoutBody {
   name: string;
@@ -12,14 +13,12 @@ interface AddWorkoutArgs {
   body: AddWorkoutBody;
 }
 
-// useAddWorkout wraps POST /api/v1/programs/{uuid}/workouts.
-// Invalidates the program detail cache so the tree refreshes.
+// useAddWorkout creates a workout in local SQLite.
 export function useAddWorkout() {
   const queryClient = useQueryClient();
 
-  return useMutation<unknown, Error, AddWorkoutArgs>({
-    mutationFn: ({ programUuid, body }) =>
-      api.post(`/api/v1/programs/${programUuid}/workouts`, body),
+  return useMutation<Program, Error, AddWorkoutArgs>({
+    mutationFn: async ({ programUuid, body }) => addWorkout(programUuid, body),
     onSuccess: (_data, { programUuid }) => {
       queryClient.invalidateQueries({ queryKey: ["program", programUuid] });
       queryClient.invalidateQueries({ queryKey: ["programs"] });

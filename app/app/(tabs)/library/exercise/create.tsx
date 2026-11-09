@@ -16,7 +16,7 @@ import { SelectField } from "../../../../components/ui/SelectField";
 import { useExerciseFilters } from "../../../../hooks/useExerciseFilters";
 import { useCreateExercise } from "../../../../hooks/useCreateExercise";
 import { useTheme } from "../../../../hooks/useTheme";
-import type { TrackingType } from "../../../../lib/staticData";
+import type { TrackingType } from "../../../../domain/exercise";
 
 // The 4 tracking types with labels and example descriptions shown next to each radio button.
 const TRACKING_OPTIONS: { type: TrackingType; label: string; description: string }[] = [

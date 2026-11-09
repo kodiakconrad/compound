@@ -1,19 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
+import { deleteWorkout } from "../db/repositories/program_repository";
+import type { Program } from "../domain/program";
 
 interface DeleteWorkoutArgs {
   programUuid: string;
   workoutUuid: string;
 }
 
-// useDeleteWorkout wraps DELETE /api/v1/programs/{pid}/workouts/{wid}.
+// useDeleteWorkout deletes a workout from local SQLite.
 export function useDeleteWorkout() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, DeleteWorkoutArgs>({
-    mutationFn: ({ programUuid, workoutUuid }) =>
-      api.delete(`/api/v1/programs/${programUuid}/workouts/${workoutUuid}`),
+  return useMutation<Program, Error, DeleteWorkoutArgs>({
+    mutationFn: async ({ programUuid, workoutUuid }) =>
+      deleteWorkout(programUuid, workoutUuid),
     onSuccess: (_data, { programUuid }) => {
       queryClient.invalidateQueries({ queryKey: ["program", programUuid] });
       queryClient.invalidateQueries({ queryKey: ["programs"] });

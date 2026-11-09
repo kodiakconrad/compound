@@ -2,12 +2,11 @@ package seed
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"math/rand"
 	"time"
-
-	"compound/internal/store"
 
 	"github.com/google/uuid"
 )
@@ -18,10 +17,10 @@ import (
 //
 // Simulates ~8 weeks of training on the first prebuilt program, with gradual
 // weight progression on each exercise.
-func SeedProgress(ctx context.Context, s *store.Store) error {
+func SeedProgress(ctx context.Context, db *sql.DB) error {
 	// Idempotent guard — skip if completed sessions already exist.
 	var count int
-	err := s.DB.QueryRowContext(ctx,
+	err := db.QueryRowContext(ctx,
 		"SELECT COUNT(*) FROM sessions WHERE status = 'completed'",
 	).Scan(&count)
 	if err != nil {
@@ -34,7 +33,7 @@ func SeedProgress(ctx context.Context, s *store.Store) error {
 
 	// Find the first prebuilt program with its workouts.
 	var programID int64
-	err = s.DB.QueryRowContext(ctx,
+	err = db.QueryRowContext(ctx,
 		"SELECT id FROM programs WHERE is_prebuilt = 1 AND deleted_at IS NULL ORDER BY id LIMIT 1",
 	).Scan(&programID)
 	if err != nil {
@@ -46,7 +45,7 @@ func SeedProgress(ctx context.Context, s *store.Store) error {
 		id   int64
 		name string
 	}
-	rows, err := s.DB.QueryContext(ctx,
+	rows, err := db.QueryContext(ctx,
 		"SELECT id, name FROM program_workouts WHERE program_id = ? ORDER BY sort_order",
 		programID,
 	)
@@ -81,7 +80,7 @@ func SeedProgress(ctx context.Context, s *store.Store) error {
 	}
 	workoutExercises := make(map[int64][]sectionExercise)
 	for _, w := range workouts {
-		exRows, err := s.DB.QueryContext(ctx, `
+		exRows, err := db.QueryContext(ctx, `
 			SELECT se.id, se.exercise_id,
 				   COALESCE(se.target_sets, 3),
 				   COALESCE(se.target_reps, 5),
@@ -121,7 +120,7 @@ func SeedProgress(ctx context.Context, s *store.Store) error {
 	// Track weight progression per exercise across all sessions.
 	exerciseWeights := make(map[int64]float64)
 
-	tx, err := s.DB.BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}

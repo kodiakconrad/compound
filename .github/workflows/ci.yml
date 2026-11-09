@@ -42,6 +42,14 @@ jobs:
         run: npm ci --legacy-peer-deps
         working-directory: app
 
-      - name: Test
+      - name: Type check
+        run: npx tsc --noEmit
+        working-directory: app
+
+      - name: Unit & integration tests
         run: npm test
+        working-directory: app
+
+      - name: BDD acceptance tests
+        run: npm run test:bdd
         working-directory: app

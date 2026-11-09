@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { api } from "../lib/api";
-import type { ProgressSummary } from "../lib/types";
+import { getProgressSummary } from "../db/repositories/progress_repository";
+import type { ProgressSummary } from "../domain/progress";
 
-// useProgressSummary fetches aggregate stats from GET /api/v1/progress/summary.
-// Returns total completed sessions, distinct weeks trained, and current streak.
+// useProgressSummary loads aggregate stats from local SQLite.
 export function useProgressSummary() {
   return useQuery<ProgressSummary>({
     queryKey: ["progress", "summary"],
-    queryFn: () => api.get<ProgressSummary>("/api/v1/progress/summary"),
+    queryFn: () => getProgressSummary(),
   });
 }
