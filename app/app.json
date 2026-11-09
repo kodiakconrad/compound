@@ -13,6 +13,7 @@
       "backgroundColor": "#0F0F0F"
     },
     "ios": {
+      "bundleIdentifier": "com.kodiakconrad.compound",
       "supportsTablet": true
     },
     "android": {
