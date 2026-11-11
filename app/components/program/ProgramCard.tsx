@@ -1,9 +1,48 @@
 import { useRef } from "react";
-import { Animated, Text, TouchableOpacity, View } from "react-native";
-import { Swipeable } from "react-native-gesture-handler";
+import { Text, TouchableOpacity, View } from "react-native";
+import Swipeable, {
+  type SwipeableMethods,
+} from "react-native-gesture-handler/ReanimatedSwipeable";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  type SharedValue,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "../../hooks/useTheme";
+
+// Scales the delete icon up as the user drags further — split into its own
+// component because the scale animation needs useAnimatedStyle, a hook, and
+// renderRightActions (below) is a plain callback, not a component.
+function DeleteAction({
+  translation,
+  color,
+  onPress,
+}: {
+  translation: SharedValue<number>;
+  color: string;
+  onPress: () => void;
+}) {
+  const style = useAnimatedStyle(() => ({
+    transform: [
+      { scale: interpolate(translation.value, [-100, -50], [1, 0.8], "clamp") },
+    ],
+  }));
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      className="items-center justify-center rounded-xl mr-4 mb-3"
+      style={{ width: 72, backgroundColor: "#EF4444" }}
+    >
+      <Animated.View style={style}>
+        <Ionicons name="trash-outline" size={22} color={color} />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
 
 interface ProgramCardProps {
   name: string;
@@ -26,7 +65,7 @@ interface ProgramCardProps {
 // the delete action because they can't be deleted.
 export function ProgramCard({ name, workoutCount, isPrebuilt, hasActiveCycle, onPress, onDeleteRequest }: ProgramCardProps) {
   const { colors } = useTheme();
-  const swipeableRef = useRef<Swipeable>(null);
+  const swipeableRef = useRef<SwipeableMethods>(null);
 
   /** Close the swipeable programmatically (e.g. after cancel). */
   function close() {
@@ -35,27 +74,15 @@ export function ProgramCard({ name, workoutCount, isPrebuilt, hasActiveCycle, on
 
   // Renders the red delete button that appears behind the card on swipe-left.
   function renderRightActions(
-    _progress: Animated.AnimatedInterpolation<number>,
-    dragX: Animated.AnimatedInterpolation<number>,
+    _progress: SharedValue<number>,
+    translation: SharedValue<number>,
   ) {
-    // Scale the icon up as the user drags further.
-    const scale = dragX.interpolate({
-      inputRange: [-100, -50],
-      outputRange: [1, 0.8],
-      extrapolate: "clamp",
-    });
-
     return (
-      <TouchableOpacity
+      <DeleteAction
+        translation={translation}
+        color={colors.foreground}
         onPress={() => onDeleteRequest?.()}
-        activeOpacity={0.8}
-        className="items-center justify-center rounded-xl mr-4 mb-3"
-        style={{ width: 72, backgroundColor: "#EF4444" }}
-      >
-        <Animated.View style={{ transform: [{ scale }] }}>
-          <Ionicons name="trash-outline" size={22} color={colors.foreground} />
-        </Animated.View>
-      </TouchableOpacity>
+      />
     );
   }
 

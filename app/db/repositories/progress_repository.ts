@@ -6,6 +6,7 @@ import type {
   ProgressSummary,
   PersonalRecordListEntry,
   ExerciseChartPoint,
+  LastExercisePerformance,
   RecentSession,
 } from "../../domain/progress";
 
@@ -104,6 +105,35 @@ export function getExerciseChartData(exerciseUuid: string): ExerciseChartPoint[]
      GROUP BY s.id
      ORDER BY s.completed_at ASC`,
     exerciseUuid
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Last performance (for "last time" display during an active session)
+// ---------------------------------------------------------------------------
+
+/**
+ * Heaviest set logged for this exercise in the most recently completed
+ * session, regardless of whether it hit the target reps — this is a
+ * reference for the user, not a PR.
+ */
+export function getLastExercisePerformance(
+  exerciseUuid: string
+): LastExercisePerformance | null {
+  const db = getDatabase();
+  return (
+    db.getFirstSync<LastExercisePerformance>(
+      `SELECT sl.weight AS weight, sl.actual_reps AS reps, s.completed_at AS completed_at
+       FROM set_logs sl
+       JOIN sessions s ON s.id = sl.session_id
+       JOIN exercises e ON e.id = sl.exercise_id
+       WHERE e.uuid = ?
+         AND s.status = 'completed'
+         AND sl.weight IS NOT NULL
+       ORDER BY s.completed_at DESC, sl.weight DESC
+       LIMIT 1`,
+      exerciseUuid
+    ) ?? null
   );
 }
 

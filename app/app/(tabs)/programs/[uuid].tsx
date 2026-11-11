@@ -3,8 +3,7 @@ import { ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity
 import { TargetInputModal } from "../../../components/ui/TargetInputModal";
 import { ConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter, useNavigation } from "expo-router";
-import { usePreventRemove } from "@react-navigation/core";
+import { useLocalSearchParams, useRouter, useNavigation, usePreventRemove } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { WorkoutTree } from "../../../components/program/WorkoutTree";

@@ -11,6 +11,7 @@ import { vars } from "nativewind";
 
 import { runMigrations } from "../db";
 import { queryClient } from "../lib/queryClient";
+import { requestRestTimerPermissions } from "../lib/restTimerNotifications";
 import { useTheme } from "../hooks/useTheme";
 
 // ---------------------------------------------------------------------------
@@ -87,6 +88,12 @@ export default function RootLayout() {
       console.error("Database migration failed:", err);
       throw err;
     }
+
+    // Ask up front so the rest timer's background alert works the first
+    // time a session is started, not just after the user notices it's silent.
+    requestRestTimerPermissions().catch(() => {
+      // Denied or unsupported — the in-app countdown still works.
+    });
   }, []);
 
   if (!dbReady) {

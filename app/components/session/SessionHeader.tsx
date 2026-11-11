@@ -46,7 +46,7 @@ export function SessionHeader({ workoutName, onDone, onBack }: SessionHeaderProp
 
         {/* Workout name */}
         <Text
-          className="text-foreground font-semibold text-base flex-1 mr-3"
+          className="text-foreground text-xl font-bold flex-1 mr-3"
           numberOfLines={1}
         >
           {workoutName}

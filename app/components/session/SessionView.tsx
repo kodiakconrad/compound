@@ -107,6 +107,22 @@ export function SessionView({ session, onCompleted, onBack }: SessionViewProps) 
     return ex?.muscle_group ?? null;
   }
 
+  /**
+   * Resolve the target reps/weight for a specific set number. Scheme-based
+   * exercises (pyramid, 5/3/1, dropset) have a different target per set;
+   * flat-target exercises use the same target_reps/weight for every set.
+   */
+  function getSetTarget(exercise: SessionExercise, setNumber: number) {
+    const schemeSet = exercise.set_scheme?.sets[setNumber - 1];
+    return {
+      reps: schemeSet?.reps ?? exercise.target_reps,
+      weight:
+        schemeSet?.weight ??
+        exercise.computed_target_weight ??
+        exercise.static_target_weight,
+    };
+  }
+
   // --- Handlers ---
 
   function handleDone() {
@@ -140,7 +156,7 @@ export function SessionView({ session, onCompleted, onBack }: SessionViewProps) 
     if (!found) return;
 
     const { exercise, section } = found;
-    const weight = exercise.computed_target_weight ?? exercise.static_target_weight;
+    const { reps: targetReps, weight } = getSetTarget(exercise, setNumber);
     const sub = substitutions.get(sectionExerciseUUID);
 
     logSetMutation.mutate(
@@ -151,8 +167,8 @@ export function SessionView({ session, onCompleted, onBack }: SessionViewProps) 
           section_exercise_uuid: sectionExerciseUUID,
           exercise_uuid: sub?.exerciseUuid,
           set_number: setNumber,
-          target_reps: exercise.target_reps ?? undefined,
-          actual_reps: exercise.target_reps ?? undefined,
+          target_reps: targetReps ?? undefined,
+          actual_reps: targetReps ?? undefined,
           weight: weight ?? undefined,
           duration: exercise.target_duration ?? undefined,
           distance: exercise.target_distance ?? undefined,
@@ -197,6 +213,7 @@ export function SessionView({ session, onCompleted, onBack }: SessionViewProps) 
 
     const { section } = found;
     const sub = substitutions.get(adjustSheet.sectionExerciseUUID);
+    const { reps: targetReps } = getSetTarget(adjustSheet.exercise, values.setNumber);
 
     logSetMutation.mutate(
       {
@@ -206,7 +223,7 @@ export function SessionView({ session, onCompleted, onBack }: SessionViewProps) 
           section_exercise_uuid: adjustSheet.sectionExerciseUUID,
           exercise_uuid: sub?.exerciseUuid,
           set_number: values.setNumber,
-          target_reps: adjustSheet.exercise.target_reps ?? undefined,
+          target_reps: targetReps ?? undefined,
           actual_reps: values.actualReps,
           weight: values.weight,
           duration: values.duration,

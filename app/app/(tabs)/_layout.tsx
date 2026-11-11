@@ -39,7 +39,7 @@ export default function TabLayout() {
         options={{
           title: "Today",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="today-outline" color={color} size={size} />
+            <Ionicons name="today-outline" color={color as string} size={size} />
           ),
         }}
         listeners={({ navigation, route }) => ({
@@ -60,7 +60,7 @@ export default function TabLayout() {
         options={{
           title: "Programs",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list-outline" color={color} size={size} />
+            <Ionicons name="list-outline" color={color as string} size={size} />
           ),
         }}
         listeners={({ navigation, route }) => ({
@@ -81,7 +81,7 @@ export default function TabLayout() {
         options={{
           title: "Library",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="barbell-outline" color={color} size={size} />
+            <Ionicons name="barbell-outline" color={color as string} size={size} />
           ),
         }}
         listeners={({ navigation, route }) => ({
@@ -102,7 +102,7 @@ export default function TabLayout() {
         options={{
           title: "Progress",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="trending-up-outline" color={color} size={size} />
+            <Ionicons name="trending-up-outline" color={color as string} size={size} />
           ),
         }}
         listeners={({ navigation, route }) => ({
@@ -123,7 +123,7 @@ export default function TabLayout() {
         options={{
           title: "Settings",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" color={color} size={size} />
+            <Ionicons name="settings-outline" color={color as string} size={size} />
           ),
         }}
       />

@@ -12,9 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { usePreventRemove } from "@react-navigation/core";
-import { useNavigation } from "expo-router";
+import { useRouter, useNavigation, usePreventRemove } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { SelectField } from "../../../components/ui/SelectField";

@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../hooks/useTheme";
 import { ExerciseAnimation } from "../exercise/ExerciseAnimation";
 import { SetButton } from "./SetButton";
+import { useLastExercisePerformance } from "../../hooks/useLastExercisePerformance";
 import type { SessionExercise, SetLogResponse } from "../../hooks/useActiveSession";
 
 // ---------------------------------------------------------------------------
@@ -17,6 +18,18 @@ import type { SessionExercise, SetLogResponse } from "../../hooks/useActiveSessi
  */
 function formatTarget(ex: SessionExercise): string {
   const parts: string[] = [];
+
+  // Scheme-based exercises (pyramid, 5/3/1, dropset) have per-set reps/weight
+  // instead of a single flat target — summarize as a range.
+  if (ex.set_scheme) {
+    const { sets } = ex.set_scheme;
+    const firstReps = sets[0].reps;
+    const lastReps = sets[sets.length - 1].reps;
+    const repsLabel =
+      firstReps === lastReps ? `${firstReps} reps` : `${firstReps}→${lastReps} reps`;
+    parts.push(`${sets.length} sets · ${repsLabel}`);
+    return parts.join(" ");
+  }
 
   if (ex.target_sets != null && ex.target_reps != null) {
     parts.push(`${ex.target_sets}×${ex.target_reps}`);
@@ -78,7 +91,14 @@ export function ExerciseCard({ exercise, onLogSet, onDeleteSetLog, onAdjustSet, 
   // Use substituted name if the exercise has been swapped, otherwise the original.
   const displayName = substitutedName ?? exercise.exercise_name;
   const target = formatTarget(exercise);
-  const programSets = exercise.target_sets ?? 0;
+  const programSets = exercise.target_sets ?? exercise.set_scheme?.sets.length ?? 0;
+
+  // Heaviest set from the last completed session, for reference ("Last: 70kg × 6").
+  // Skipped when substituted — showing the original exercise's history under
+  // the swapped-in exercise's name would be misleading.
+  const { data: lastPerformance } = useLastExercisePerformance(
+    substitutedName ? null : exercise.exercise_uuid
+  );
 
   // Track how many extra slots the user has added via the "+" button.
   const [extraSlots, setExtraSlots] = useState(0);
@@ -132,6 +152,12 @@ export function ExerciseCard({ exercise, onLogSet, onDeleteSetLog, onAdjustSet, 
           )}
           {target.length > 0 && !substitutedName && (
             <Text className="text-muted text-xs mt-0.5">{target}</Text>
+          )}
+          {lastPerformance && !substitutedName && (
+            <Text className="text-muted text-xs mt-0.5">
+              Last: {lastPerformance.weight}kg
+              {lastPerformance.reps != null ? ` × ${lastPerformance.reps}` : ""}
+            </Text>
           )}
         </View>
       </TouchableOpacity>

@@ -196,6 +196,9 @@ function loadSectionsForWorkout(
         target_distance: ser.target_distance,
         sort_order: ser.sort_order,
         notes: ser.notes,
+        set_scheme: ser.set_scheme
+          ? (JSON.parse(ser.set_scheme) as SetScheme)
+          : null,
         set_logs: setLogs,
       };
     });

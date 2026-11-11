@@ -163,11 +163,17 @@ export function AdjustSetSheet({
   const { colors } = useTheme();
 
   // Determine initial values: prefer existing log, fall back to targets.
+  // Scheme-based exercises (pyramid, 5/3/1, dropset) have a different
+  // target reps/weight per set number instead of one flat target.
+  const schemeSet = exercise.set_scheme?.sets[setNumber - 1];
+  const targetReps = schemeSet?.reps ?? exercise.target_reps;
   const targetWeight =
-    exercise.computed_target_weight ?? exercise.static_target_weight;
+    schemeSet?.weight ??
+    exercise.computed_target_weight ??
+    exercise.static_target_weight;
 
   const [reps, setReps] = useState(
-    String(existingLog?.actual_reps ?? exercise.target_reps ?? "")
+    String(existingLog?.actual_reps ?? targetReps ?? "")
   );
   const [weight, setWeight] = useState(
     String(existingLog?.weight ?? targetWeight ?? "")
