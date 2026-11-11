@@ -2,6 +2,7 @@
 
 import { UnprocessableError } from "./errors";
 import { type TrackingType } from "./exercise";
+import { type SetScheme } from "./program";
 
 // ---------------------------------------------------------------------------
 // Value objects
@@ -87,6 +88,13 @@ export interface SessionDetailExercise {
   target_distance: number | null;
   sort_order: number;
   notes: string | null;
+  /**
+   * Per-set targets (pyramid, 5/3/1, dropset) when the program defines this
+   * exercise as a scheme instead of flat target_sets/target_reps/target_weight.
+   * When set, target_sets/target_reps/static_target_weight above are null and
+   * the UI must read reps/weight per set from `sets[setNumber - 1]`.
+   */
+  set_scheme: SetScheme | null;
   set_logs: SetLog[];
 }
 

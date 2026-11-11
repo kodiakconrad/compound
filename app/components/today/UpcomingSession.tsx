@@ -2,7 +2,8 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "../../hooks/useTheme";
-import type { SessionSection } from "../../hooks/useActiveSession";
+import { formatSchemeSummary } from "../../lib/schemes";
+import type { SessionSection, SessionExercise } from "../../hooks/useActiveSession";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -32,13 +33,16 @@ function totalExerciseCount(sections: SessionSection[]): number {
   return sections.reduce((sum, sec) => sum + sec.exercises.length, 0);
 }
 
-/** Build a short target string like "3×5 @ 100kg" for the preview. */
-function formatPreviewTarget(ex: {
-  target_sets?: number | null;
-  target_reps?: number | null;
-  computed_target_weight?: number | null;
-  static_target_weight?: number | null;
-}): string {
+/**
+ * Build a short target string for the preview, e.g. "3×5 @ 100kg" for a flat
+ * target, or "12×40 → 10×50 → 8×60 → 6×70" for a scheme-based exercise
+ * (pyramid, 5/3/1, dropset) where each set has its own reps/weight.
+ */
+function formatPreviewTarget(ex: SessionExercise): string {
+  if (ex.set_scheme) {
+    return formatSchemeSummary(ex.set_scheme);
+  }
+
   const parts: string[] = [];
 
   if (ex.target_sets != null && ex.target_reps != null) {
@@ -54,6 +58,12 @@ function formatPreviewTarget(ex: {
   if (weight != null) {
     parts.push(`@ ${weight}kg`);
   }
+  if (ex.target_duration != null) {
+    parts.push(`${ex.target_duration}s`);
+  }
+  if (ex.target_distance != null) {
+    parts.push(`${ex.target_distance}m`);
+  }
 
   return parts.join(" ");
 }
@@ -64,7 +74,9 @@ function formatPreviewTarget(ex: {
 
 /**
  * UpcomingSession shows a preview of the next session to start.
- * Displays workout name, first 2 exercises, and a "Start Session" button.
+ * Displays workout name, every exercise grouped by section, and a
+ * "Start Session" button — the full session, so there's nothing to discover
+ * for the first time only after pressing Start.
  */
 export function UpcomingSession({
   programName,
@@ -75,11 +87,6 @@ export function UpcomingSession({
   isStarting = false,
 }: UpcomingSessionProps) {
   const { colors } = useTheme();
-
-  // Flatten all exercises across sections for the preview.
-  const allExercises = sections.flatMap((sec) => sec.exercises);
-  const previewExercises = allExercises.slice(0, 2);
-  const remaining = allExercises.length - previewExercises.length;
   const total = totalExerciseCount(sections);
 
   return (
@@ -109,36 +116,38 @@ export function UpcomingSession({
         </Text>
 
         {/* Exercise count */}
-        <Text className="text-muted text-xs mb-4">
+        <Text className="text-muted text-xs mb-3">
           {total} exercise{total !== 1 ? "s" : ""}
         </Text>
 
-        {/* Exercise previews */}
-        {previewExercises.map((ex, i) => {
-          const target = formatPreviewTarget(ex);
-          return (
-            <View
-              key={ex.section_exercise_uuid}
-              className={`flex-row items-center justify-between py-2.5 ${
-                i < previewExercises.length - 1 ? "border-b border-border" : ""
-              }`}
-            >
-              <Text className="text-foreground text-sm flex-1" numberOfLines={1}>
-                {ex.exercise_name}
-              </Text>
-              {target.length > 0 && (
-                <Text className="text-muted text-sm ml-3">{target}</Text>
-              )}
-            </View>
-          );
-        })}
-
-        {/* Remaining count */}
-        {remaining > 0 && (
-          <Text className="text-muted text-xs mt-2">
-            + {remaining} more exercise{remaining !== 1 ? "s" : ""}
-          </Text>
-        )}
+        {/* Every exercise, grouped by section (Compound/Isolation/Burnout) */}
+        {sections.map((sec) => (
+          <View key={sec.uuid} className="mb-3">
+            <Text className="text-muted text-xs font-semibold uppercase tracking-wider mb-1.5">
+              {sec.name}
+            </Text>
+            {sec.exercises.map((ex, i) => {
+              const target = formatPreviewTarget(ex);
+              return (
+                <View
+                  key={ex.section_exercise_uuid}
+                  className={`flex-row items-center justify-between py-2 ${
+                    i < sec.exercises.length - 1 ? "border-b border-border" : ""
+                  }`}
+                >
+                  <Text className="text-foreground text-sm flex-1 mr-3" numberOfLines={1}>
+                    {ex.exercise_name}
+                  </Text>
+                  {target.length > 0 && (
+                    <Text className="text-muted text-xs" numberOfLines={1}>
+                      {target}
+                    </Text>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        ))}
 
         {/* Start button */}
         <TouchableOpacity

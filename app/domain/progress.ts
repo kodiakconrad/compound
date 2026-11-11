@@ -30,6 +30,12 @@ export interface ExerciseChartPoint {
   volume: number;
 }
 
+export interface LastExercisePerformance {
+  weight: number;
+  reps: number | null;
+  completed_at: string;
+}
+
 export interface RecentSession {
   uuid: string;
   cycle_uuid: string;

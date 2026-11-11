@@ -66,6 +66,45 @@ function buildSessionScenario() {
 }
 
 // ---------------------------------------------------------------------------
+// getSessionDetail — set_scheme resolution
+// ---------------------------------------------------------------------------
+
+describe("getSessionDetail with a set_scheme exercise", () => {
+  it("surfaces set_scheme on the session exercise instead of leaving target_sets/reps null", () => {
+    const exercise = createExercise({ name: "Barbell Row", muscle_group: "back", equipment: "barbell" });
+    const program = createProgram({ name: "Push/Pull" });
+    const p2 = addWorkout(program.uuid, { name: "Pull", day_number: 1 });
+    const workoutUuid = p2.workouts[0].uuid;
+    const p3 = addSection(program.uuid, workoutUuid, { name: "Compound" });
+    const sectionUuid = p3.workouts[0].sections[0].uuid;
+
+    addSectionExercise(program.uuid, sectionUuid, {
+      exercise_uuid: exercise.uuid,
+      set_scheme: {
+        type: "pyramid",
+        sets: [
+          { reps: 12, weight: 40 },
+          { reps: 10, weight: 50 },
+          { reps: 8, weight: 60 },
+          { reps: 6, weight: 70 },
+        ],
+      },
+    });
+
+    const cycle = createCycle(program.uuid);
+    const detail = getSessionDetail(cycle.sessions[0].uuid);
+
+    const [sessionExercise] = detail.sections[0].exercises;
+    expect(sessionExercise.target_sets).toBeNull();
+    expect(sessionExercise.target_reps).toBeNull();
+    expect(sessionExercise.set_scheme).not.toBeNull();
+    expect(sessionExercise.set_scheme!.sets).toHaveLength(4);
+    expect(sessionExercise.set_scheme!.sets[0]).toEqual({ reps: 12, weight: 40 });
+    expect(sessionExercise.set_scheme!.sets[3]).toEqual({ reps: 6, weight: 70 });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // getActiveSession
 // ---------------------------------------------------------------------------
 
