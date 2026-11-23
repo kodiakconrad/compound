@@ -60,6 +60,22 @@ export default function ExerciseDetailScreen() {
         <Text className="text-foreground text-xl font-bold flex-1" numberOfLines={1}>
           {exercise.name}
         </Text>
+        {/* Only exercises you created are editable — seeded ones are shared
+            reference content, like prebuilt programs. */}
+        {exercise.is_custom && (
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/library/exercise/create",
+                params: { uuid: exercise.uuid },
+              })
+            }
+            activeOpacity={0.7}
+            className="ml-3"
+          >
+            <Ionicons name="create-outline" size={22} color={colors.foreground} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView>
