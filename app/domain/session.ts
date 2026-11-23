@@ -128,3 +128,36 @@ export function skipSession(s: Session): UnprocessableError | null {
   }
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// Rest timing
+// ---------------------------------------------------------------------------
+
+/** Rest used when a section has no rest_seconds of its own. */
+export const DEFAULT_REST_SECONDS = 90;
+
+/**
+ * Minimum rest after the final set of an exercise, before moving on to the
+ * next one. Changing exercises also means setting up new equipment, so this
+ * gap is longer than a typical between-sets rest.
+ */
+export const BETWEEN_EXERCISE_REST_SECONDS = 120;
+
+/**
+ * How long to rest after logging `setNumber` of `exercise`.
+ *
+ * Between sets of the same exercise this is the section's rest (or the
+ * default). After the exercise's last planned set it is at least
+ * BETWEEN_EXERCISE_REST_SECONDS — a section with a longer rest (e.g. 180s
+ * for heavy squats) keeps its longer value.
+ */
+export function restSecondsAfterSet(
+  exercise: Pick<SessionDetailExercise, "target_sets" | "set_scheme">,
+  setNumber: number,
+  sectionRestSeconds: number | null
+): number {
+  const setRest = sectionRestSeconds ?? DEFAULT_REST_SECONDS;
+  const totalSets = exercise.set_scheme?.sets.length ?? exercise.target_sets;
+  const isLastSet = totalSets != null && setNumber >= totalSets;
+  return isLastSet ? Math.max(setRest, BETWEEN_EXERCISE_REST_SECONDS) : setRest;
+}
