@@ -5,7 +5,7 @@ import { ThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, LogBox, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { vars } from "nativewind";
 
@@ -13,15 +13,6 @@ import { runMigrations } from "../db";
 import { queryClient } from "../lib/queryClient";
 import { requestRestTimerPermissions } from "../lib/restTimerNotifications";
 import { useTheme } from "../hooks/useTheme";
-
-// NativeWind's style-interop layer (react-native-css-interop) remaps props on
-// every core RN component it supports, including ImageBackground, at module
-// load — unconditionally, whether or not the app actually renders one. As of
-// React Native 0.88, touching ImageBackground at all logs a deprecation
-// warning, so this fires on every bundle load regardless of what we render.
-// Harmless (LogBox only runs in dev), but noisy — silence it here until
-// nativewind stops touching the deprecated component upstream.
-LogBox.ignoreLogs([/ImageBackground is deprecated/]);
 
 // ---------------------------------------------------------------------------
 // Inner layout — uses the theme hook (must be inside providers)
