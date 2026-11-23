@@ -29,6 +29,7 @@
     "@react-navigation/native": "^7.5.1",
     "@tanstack/react-query": "^5.90.21",
     "expo": "^58.0.0",
+    "expo-audio": "~58.0.12",
     "expo-constants": "~58.0.16",
     "expo-crypto": "~58.0.8",
     "expo-font": "~58.0.12",
