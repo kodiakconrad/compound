@@ -1,4 +1,9 @@
-import { startSession, completeSession, skipSession } from "../session";
+import {
+  startSession,
+  completeSession,
+  skipSession,
+  restSecondsAfterSet,
+} from "../session";
 import type { Session } from "../session";
 
 function makeSession(status: string): Session {
@@ -64,5 +69,45 @@ describe("skipSession", () => {
 
   it("rejects skipping a skipped session", () => {
     expect(skipSession(makeSession("skipped"))).not.toBeNull();
+  });
+});
+
+describe("restSecondsAfterSet", () => {
+  const flat = { target_sets: 3, set_scheme: null };
+
+  it("uses the section rest between sets of the same exercise", () => {
+    expect(restSecondsAfterSet(flat, 1, 60)).toBe(60);
+  });
+
+  it("falls back to 90s when the section has no rest", () => {
+    expect(restSecondsAfterSet(flat, 2, null)).toBe(90);
+  });
+
+  it("rests 2 minutes after the last set of an exercise", () => {
+    expect(restSecondsAfterSet(flat, 3, 60)).toBe(120);
+  });
+
+  it("keeps a longer section rest after the last set", () => {
+    expect(restSecondsAfterSet(flat, 3, 180)).toBe(180);
+  });
+
+  it("treats extra sets beyond the target as the last set", () => {
+    expect(restSecondsAfterSet(flat, 4, 60)).toBe(120);
+  });
+
+  it("counts sets from the scheme when the exercise uses one", () => {
+    const scheme = {
+      target_sets: null,
+      set_scheme: {
+        type: "pyramid" as const,
+        sets: [{ reps: 10, weight: 40 }, { reps: 8, weight: 45 }],
+      },
+    };
+    expect(restSecondsAfterSet(scheme, 1, 60)).toBe(60);
+    expect(restSecondsAfterSet(scheme, 2, 60)).toBe(120);
+  });
+
+  it("uses the section rest when the set count is unknown", () => {
+    expect(restSecondsAfterSet({ target_sets: null, set_scheme: null }, 5, 60)).toBe(60);
   });
 });

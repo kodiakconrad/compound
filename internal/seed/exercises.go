@@ -52,6 +52,13 @@ func Exercises() []SeedExercise {
 		{Name: "Leg Curl", MuscleGroup: "legs", Equipment: "machine", TrackingType: domain.TrackingWeightReps},
 		{Name: "Calf Raise (Standing)", MuscleGroup: "legs", Equipment: "machine", TrackingType: domain.TrackingWeightReps},
 		{Name: "Calf Raise (Seated)", MuscleGroup: "legs", Equipment: "machine", TrackingType: domain.TrackingWeightReps},
+		{Name: "Single-Leg Calf Raise", MuscleGroup: "legs", Equipment: "dumbbell", TrackingType: domain.TrackingWeightReps},
+		{Name: "Tibialis Raise", MuscleGroup: "legs", Equipment: "bodyweight", TrackingType: domain.TrackingBodyweightReps},
+		{Name: "Banded Ankle Dorsiflexion", MuscleGroup: "legs", Equipment: "band", TrackingType: domain.TrackingBodyweightReps},
+		{Name: "Banded Ankle Inversion", MuscleGroup: "legs", Equipment: "band", TrackingType: domain.TrackingBodyweightReps},
+		{Name: "Banded Ankle Eversion", MuscleGroup: "legs", Equipment: "band", TrackingType: domain.TrackingBodyweightReps},
+		{Name: "Knee-to-Wall Ankle Mobilization", MuscleGroup: "legs", Equipment: "bodyweight", TrackingType: domain.TrackingBodyweightReps},
+		{Name: "Single-Leg Balance", MuscleGroup: "legs", Equipment: "bodyweight", TrackingType: domain.TrackingDuration},
 		{Name: "Hip Thrust", MuscleGroup: "legs", Equipment: "barbell", TrackingType: domain.TrackingWeightReps},
 		{Name: "Sumo Deadlift", MuscleGroup: "legs", Equipment: "barbell", TrackingType: domain.TrackingWeightReps},
 

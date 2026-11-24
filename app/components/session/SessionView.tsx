@@ -19,6 +19,7 @@ import { useDeleteSetLog } from "../../hooks/useDeleteSetLog";
 import { useCompleteSession } from "../../hooks/useCompleteSession";
 import { useExercises } from "../../hooks/useExercises";
 import { useTimerStore } from "../../store/timer";
+import { restSecondsAfterSet } from "../../domain/session";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -176,8 +177,7 @@ export function SessionView({ session, onCompleted, onBack }: SessionViewProps) 
       },
       {
         onSuccess: () => {
-          const restSeconds = section.rest_seconds ?? 90;
-          timerStart(restSeconds);
+          timerStart(restSecondsAfterSet(exercise, setNumber, section.rest_seconds));
         },
       }
     );
@@ -232,8 +232,9 @@ export function SessionView({ session, onCompleted, onBack }: SessionViewProps) 
       },
       {
         onSuccess: () => {
-          const restSeconds = section.rest_seconds ?? 90;
-          timerStart(restSeconds);
+          timerStart(
+            restSecondsAfterSet(found.exercise, values.setNumber, section.rest_seconds)
+          );
         },
       }
     );

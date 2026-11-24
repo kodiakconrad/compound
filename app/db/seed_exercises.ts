@@ -49,6 +49,13 @@ const SEED_EXERCISES: SeedExercise[] = [
   { name: "Leg Curl", muscle_group: "legs", equipment: "machine", tracking_type: "weight_reps" },
   { name: "Calf Raise (Standing)", muscle_group: "legs", equipment: "machine", tracking_type: "weight_reps" },
   { name: "Calf Raise (Seated)", muscle_group: "legs", equipment: "machine", tracking_type: "weight_reps" },
+  { name: "Single-Leg Calf Raise", muscle_group: "legs", equipment: "dumbbell", tracking_type: "weight_reps" },
+  { name: "Tibialis Raise", muscle_group: "legs", equipment: "bodyweight", tracking_type: "bodyweight_reps" },
+  { name: "Banded Ankle Dorsiflexion", muscle_group: "legs", equipment: "band", tracking_type: "bodyweight_reps" },
+  { name: "Banded Ankle Inversion", muscle_group: "legs", equipment: "band", tracking_type: "bodyweight_reps" },
+  { name: "Banded Ankle Eversion", muscle_group: "legs", equipment: "band", tracking_type: "bodyweight_reps" },
+  { name: "Knee-to-Wall Ankle Mobilization", muscle_group: "legs", equipment: "bodyweight", tracking_type: "bodyweight_reps" },
+  { name: "Single-Leg Balance", muscle_group: "legs", equipment: "bodyweight", tracking_type: "duration" },
   { name: "Hip Thrust", muscle_group: "legs", equipment: "barbell", tracking_type: "weight_reps" },
   { name: "Sumo Deadlift", muscle_group: "legs", equipment: "barbell", tracking_type: "weight_reps" },
   // --- Shoulders ---

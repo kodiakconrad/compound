@@ -33,7 +33,12 @@
       "expo-router",
       "expo-sqlite",
       "expo-font",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "enableRemoteNotifications": false
+        }
+      ],
       "./plugins/withPodDeploymentTargetFix.js"
     ]
   }

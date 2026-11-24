@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -9,12 +9,14 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { SelectField } from "../../../../components/ui/SelectField";
 import { useExerciseFilters } from "../../../../hooks/useExerciseFilters";
 import { useCreateExercise } from "../../../../hooks/useCreateExercise";
+import { useExercise } from "../../../../hooks/useExercise";
+import { useUpdateExercise } from "../../../../hooks/useUpdateExercise";
 import { useTheme } from "../../../../hooks/useTheme";
 import type { TrackingType } from "../../../../domain/exercise";
 
@@ -34,9 +36,14 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+// This screen doubles as the edit screen. Opened as /exercise/create it makes
+// a new exercise; opened as /exercise/create?uuid=abc it loads that exercise
+// into the form and saves changes to it instead.
 export default function CreateExerciseScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { uuid: editUuid } = useLocalSearchParams<{ uuid?: string }>();
+  const isEditing = !!editUuid;
 
   // Form state — all inputs are "controlled", meaning React owns the value.
   // Every keystroke calls setName/setTrackingType/etc., and the input always
@@ -45,6 +52,17 @@ export default function CreateExerciseScreen() {
   const [trackingType, setTrackingType] = useState<TrackingType>("weight_reps");
   const [muscleGroup, setMuscleGroup] = useState("Chest");
   const [equipment, setEquipment] = useState("Barbell");
+
+  // In edit mode, copy the saved exercise into the form once it loads.
+  // useExercise is disabled (fetches nothing) when the uuid is empty.
+  const { data: existing } = useExercise(editUuid ?? "");
+  useEffect(() => {
+    if (!existing) return;
+    setName(existing.name);
+    setTrackingType(existing.tracking_type);
+    if (existing.muscle_group) setMuscleGroup(capitalize(existing.muscle_group));
+    if (existing.equipment) setEquipment(capitalize(existing.equipment));
+  }, [existing]);
 
   // useExerciseFilters provides the real enum values from the backend.
   // Falls back to hardcoded lists while loading (staleTime is 1 day, so this
@@ -59,25 +77,29 @@ export default function CreateExerciseScreen() {
 
   // useCreateExercise wraps POST /api/v1/exercises.
   // isPending is true while the request is in-flight — we disable the button during this time.
-  const { mutate: createExercise, isPending, error } = useCreateExercise();
+  const createMutation = useCreateExercise();
+  const updateMutation = useUpdateExercise();
+  const { isPending, error } = isEditing ? updateMutation : createMutation;
 
   // The submit button is disabled until the user has entered a name (and not while submitting).
   const canSubmit = name.trim().length > 0 && !isPending;
 
   function handleSubmit() {
-    createExercise(
-      {
-        name: name.trim(),
-        // The backend expects lowercase enum values ("chest", "barbell", etc.).
-        // SelectField shows capitalized labels so we lowercase before sending.
-        muscle_group: muscleGroup.toLowerCase(),
-        equipment: equipment.toLowerCase(),
-        tracking_type: trackingType,
-      },
-      {
-        onSuccess: () => router.back(),
-      }
-    );
+    const input = {
+      name: name.trim(),
+      // The backend expects lowercase enum values ("chest", "barbell", etc.).
+      // SelectField shows capitalized labels so we lowercase before sending.
+      muscle_group: muscleGroup.toLowerCase(),
+      equipment: equipment.toLowerCase(),
+      tracking_type: trackingType,
+    };
+    const onSuccess = () => router.back();
+
+    if (editUuid) {
+      updateMutation.mutate({ uuid: editUuid, updates: input }, { onSuccess });
+    } else {
+      createMutation.mutate(input, { onSuccess });
+    }
   }
 
   return (
@@ -87,7 +109,9 @@ export default function CreateExerciseScreen() {
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} className="mr-3">
           <Ionicons name="arrow-back" size={24} color={colors.foreground} />
         </TouchableOpacity>
-        <Text className="text-foreground text-xl font-bold">New Exercise</Text>
+        <Text className="text-foreground text-xl font-bold">
+          {isEditing ? "Edit Exercise" : "New Exercise"}
+        </Text>
       </View>
 
       {/* KeyboardAvoidingView shifts the content up when the keyboard appears,
@@ -173,7 +197,9 @@ export default function CreateExerciseScreen() {
             activeOpacity={0.8}
           >
             <Text className={`text-base font-bold ${canSubmit ? "text-background" : "text-muted"}`}>
-              {isPending ? "Creating…" : "Create Exercise"}
+              {isEditing
+                ? isPending ? "Saving…" : "Save Changes"
+                : isPending ? "Creating…" : "Create Exercise"}
             </Text>
           </TouchableOpacity>
         </ScrollView>

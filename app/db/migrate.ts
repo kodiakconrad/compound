@@ -142,6 +142,10 @@ const migrations: Migration[] = [
   { version: 1, sql: MIGRATION_001 },
   { version: 2, fn: () => require("./seed_exercises").seedExercises() },
   { version: 3, fn: () => require("./seed_programs").seedPrograms() },
+  // Re-run the exercise seed to add exercises appended to SEED_EXERCISES
+  // after install (ankle work). INSERT OR IGNORE + deterministic UUIDs means
+  // existing rows are untouched — only the new names are inserted.
+  { version: 4, fn: () => require("./seed_exercises").seedExercises() },
 ];
 
 function ensureMigrationsTable(db: SQLiteDatabase): void {
